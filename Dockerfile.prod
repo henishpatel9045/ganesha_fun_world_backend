@@ -1,0 +1,15 @@
+FROM python:3.12
+
+ENV PYTHONUNBUFFERED = 1
+
+RUN apt-get update && apt-get install supervisor -y
+
+WORKDIR /home/ganesha
+
+COPY ./requirements.txt .
+
+RUN pip3 install -r requirements.txt
+
+COPY ./supervisor.conf /etc/supervisor/conf.d/
+
+COPY . .

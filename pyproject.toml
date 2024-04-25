@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "ganesha-fun-world-backend"
+version = "0.1.0"
+description = ""
+authors = ["Henish Patel <200120107182@git.org.in>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+django = "^5.0.4"
+psycopg2 = "^2.9.9"
+requests = "^2.31.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

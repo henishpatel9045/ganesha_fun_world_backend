@@ -1,0 +1,6 @@
+static
+*.pyc
+__pycache__
+
+.env
+.env.test
