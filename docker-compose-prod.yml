@@ -44,45 +44,12 @@ services:
       - prod_network
     command: /usr/bin/supervisord
 
-  # nginx:
-  #   image: nginx:1.25
-  #   container_name: backend_nginx
-  #   ports:
-  #     - "80:80"
-  #     - "443:443"
-  #   volumes:
-  #     - ./nginx_conf:/etc/nginx/conf.d
-  #     - static_volume:/home/ganesha/static
-  #     - test_static_volume:/home/django_test/static
-  #   depends_on:
-  #     - api
-  #   networks:
-  #     - prod_network
-  #     - test_network
-
-  # jenkins:
-  #   image: jenkins/jenkins:lts
-  #   container_name: jenkins
-  #   ports:
-  #     - "8080:8080"
-  #     - "50000:50000"
-  #   volumes:
-  #     - jenkins_home:/var/jenkins_home
-  #   networks:
-  #     - prod_network
-  #     - test_network
-
 volumes:
   postgres_data:
   redis_data:
   static_volume:
     external: true
-  test_static_volume:
-    external: true
-  jenkins_home:
 
 networks:
   prod_network:
-    external: true
-  test_network:
     external: true

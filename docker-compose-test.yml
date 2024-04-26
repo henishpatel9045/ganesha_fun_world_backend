@@ -51,7 +51,6 @@ volumes:
   test_static_volume:
     external: true
 
-
 networks:
   test_network:
     external: true

@@ -52,7 +52,26 @@ cd server_config
 git clone SERVER_CONFIG_REPO .
 ```
 
-2. Start applications
+2. Upload env files
+
+- Upload .env file to production_api folder
+- Upload .env.test file to test_api folder
+
+3. Start applications
+
+Create external network
+
+```bash
+docker network create prod_network
+docker network create test_network
+```
+
+Create external volume
+
+```bash
+docker volume create static_volume
+docker volume create test_static_volume
+```
 
 For Production
 
