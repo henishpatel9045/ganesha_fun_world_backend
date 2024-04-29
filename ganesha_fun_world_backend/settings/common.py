@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "drf_yasg",
     "custom_auth",
+    "management_core",
     "bookings",
 ]
 
