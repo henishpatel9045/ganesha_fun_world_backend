@@ -1,6 +1,9 @@
+from typing import Any
 from django.shortcuts import render
 from django.http import HttpResponse, HttpRequest
 from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import FormView
+from .forms import BookingForm
 import requests
 
 
@@ -42,3 +45,16 @@ def whatsapp_handler(request: HttpRequest):
     print(res.json())
 
     return HttpResponse("Hello, world. You're at the bookings index.")
+
+
+class BookingFormView(FormView):
+    template_name = "booking/booking.html"
+    form_class = BookingForm
+    success_url = "/admin"
+
+    def form_valid(self, form):
+        form.save()
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        return super().form_invalid(form)

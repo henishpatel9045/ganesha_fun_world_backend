@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Booking{% endblock %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+    
+    <div class="mx-5 mb-2">
+    
+  <h1 class="mb-2">Booking</h1>
+    {% crispy form %}
+    </div>
+{% endblock %}
