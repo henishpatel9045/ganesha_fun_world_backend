@@ -13,3 +13,8 @@ PAYMENT_FOR = [
     ("booking", "booking"),
     ("locker", "locker"),
 ]
+
+
+
+# CACHE_KEYS
+COSTUME_CACHE_KEY = "costume_table_data"
