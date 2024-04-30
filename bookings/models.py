@@ -64,9 +64,6 @@ class Payment(DateTimeBaseModel):
 
 
 class BookingCostume(DateTimeBaseModel):
-    id = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, editable=False, db_index=True
-    )
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE, db_index=True)
     costume = models.ForeignKey(
         "management_core.Costume", on_delete=models.DO_NOTHING, db_index=True
@@ -82,9 +79,6 @@ class BookingCostume(DateTimeBaseModel):
 
 
 class BookingLocker(DateTimeBaseModel):
-    id = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, editable=False, db_index=True
-    )
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE, db_index=True)
     locker = models.ForeignKey(
         "management_core.Locker", on_delete=models.DO_NOTHING, db_index=True
