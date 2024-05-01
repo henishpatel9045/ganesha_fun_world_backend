@@ -40,14 +40,14 @@ class Booking(DateTimeBaseModel):
         return self.date == timezone.datetime.today().date()
 
     def __str__(self) -> str:
-        return f"{self.wa_number} - {self.date}"
+        return f"{self.wa_number} - {self.date.strftime('%d-%m-%Y')}"
 
 
 class Payment(DateTimeBaseModel):
     id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False, db_index=True
     )
-    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, db_index=True)
+    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, db_index=True, related_name="booking_payment")
     payment_mode = models.CharField(
         max_length=50, choices=PAYMENT_MODES, default=PAYMENT_MODES[0][0]
     )
@@ -64,7 +64,7 @@ class Payment(DateTimeBaseModel):
 
 
 class BookingCostume(DateTimeBaseModel):
-    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, db_index=True)
+    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, db_index=True, related_name="booking_costume")
     costume = models.ForeignKey(
         "management_core.Costume", on_delete=models.DO_NOTHING, db_index=True
     )
@@ -79,7 +79,7 @@ class BookingCostume(DateTimeBaseModel):
 
 
 class BookingLocker(DateTimeBaseModel):
-    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, db_index=True)
+    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, db_index=True, related_name="booking_locker")
     locker = models.ForeignKey(
         "management_core.Locker", on_delete=models.DO_NOTHING, db_index=True
     )
@@ -95,7 +95,7 @@ class BookingCanteen(DateTimeBaseModel):
     id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False, db_index=True
     )
-    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, db_index=True)
+    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, db_index=True, related_name="booking_canteen")
     breakfast_quantity_used = models.PositiveIntegerField(default=0)
     lunch_quantity_used = models.PositiveIntegerField(default=0)
     evening_snacks_quantity_used = models.PositiveIntegerField(default=0)

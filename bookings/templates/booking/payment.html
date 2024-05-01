@@ -1,0 +1,110 @@
+{% extends 'base.html' %} {% block title %}Payment for Booking {{ booking_id }}{% endblock %} {% load crispy_forms_tags %} {% block content %}
+
+<div class="mx-5 mb-2">
+  <h1 class="mb-2">Payment for booking</h1>
+    <div>
+      <div class="">
+        {% crispy form %}
+        <div class="accordion mt-5" id="bookingDetailsAccordian">
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOne">
+              <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                Bill Details
+              </button>
+            </h2>
+            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#bookingDetailsAccordian">
+              <div class="accordion-body">
+                <table class="table mb-5">
+                    <tbody>
+                      <tr>
+                        <th>Ticket Amout: </th>
+                        <td>{{booking.ticket_amount}}</td>
+                      </tr>
+                      <tr>
+                        <th>Costume Amount: </th>
+                        <td>{{booking.costume_amount}}</td>
+                      </tr>
+                      <tr>
+                        <th>Total Amount: </th>
+                        <td>{{booking.total_amount}}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+              </div>
+            </div>
+          </div>
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingTwo">
+              <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
+                Booking Details
+              </button>
+            </h2>
+            <div id="collapseTwo" class="accordion-collapse collapse show" aria-labelledby="headingTwo" data-bs-parent="#bookingDetailsAccordian">
+              <div class="accordion-body">
+                <table class="table mb-5">
+                    <tbody>
+                      <tr>
+                        <th>WhatsApp Number: </th>
+                        <td>{{booking.wa_number}}</td>
+                      </tr>
+                      <tr>
+                        <th>Date: </th>
+                        <td>{{booking.date}}</td>
+                      </tr>
+                      <tr>
+                        <th>Adults: </th>
+                        <td>{{booking.adult}}</td>
+                      </tr>
+                      <tr>
+                        <th>Child: </th>
+                        <td>{{booking.child}}</td>
+                      </tr>
+                      <tr>
+                        <th>BookingType: </th>
+                        <td>{{booking.booking_type}}</td>
+                      </tr>
+                      <tr>
+                        <th>Amount Received: </th>
+                        <td>{{booking.received_amount}} ₹</td>
+                      </tr>
+                      <tr>
+                        <th>Amout to collect: </th>
+                        <td>{{amount_to_collect}} ₹</td>
+                      </tr>
+                    </tbody>
+                  </table>
+              </div>
+            </div>
+          </div>
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingThree">
+              <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="true" aria-controls="collapseThree">
+                Costume Details
+              </button>
+            </h2>
+            <div id="collapseThree" class="accordion-collapse collapse show" aria-labelledby="headingThree" data-bs-parent="#bookingDetailsAccordian">
+              <div class="accordion-body">
+                <table class="table mb-5">
+                    <thead>
+                      <th>Costume Size </th>
+                      <th>Quantity </th>
+                      <th>Total Deposit Amount </th>
+                    </thead>
+                    <tbody>
+                      {% for costume in costumes %}
+                      <tr>
+                        <td>{{ costume.costume.name }} </td>
+                        <td>{{costume.quantity}}</td>
+                        <td>{{costume.deposit_amount}}</td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+</div>
+
+{% endblock %}

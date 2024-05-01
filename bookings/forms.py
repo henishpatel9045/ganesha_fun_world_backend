@@ -3,10 +3,11 @@ from django.core.validators import MinValueValidator
 from django.utils import timezone
 from crispy_forms.helper import FormHelper, Layout
 from crispy_forms.layout import Submit
-from crispy_forms.bootstrap import AccordionGroup
+from crispy_forms.bootstrap import AccordionGroup, InlineRadios
 from crispy_bootstrap5.bootstrap5 import FloatingField, BS5Accordion
 
-from .utils import create_booking
+from common_config.common import PAYMENT_FOR, PAYMENT_MODES_FORM
+from .utils import add_payment_to_booking, create_booking
 from .models import Booking
 from management_core.models import Costume, TicketPrice
 
@@ -110,8 +111,65 @@ class BookingForm(forms.Form):
             booking = create_booking(**booking_data)
             return booking
         except TicketPrice.DoesNotExist as e:
-            self.add_error(None, f"TicketPrice details are not available for date {data['date']}")            
+            self.add_error(
+                None, f"TicketPrice details are not available for date {data['date']}"
+            )
             raise forms.ValidationError()
+        except Exception as e:
+            self.add_error(None, e.args[0])
+            raise forms.ValidationError()
+
+
+class PaymentRecordForm(forms.Form):
+    booking = forms.ModelChoiceField(
+        queryset=Booking.objects.all(),
+        label="Booking",
+        required=False,
+        widget=forms.Select(attrs={"id": "payment_booking",}),
+    )
+    payment_amount = forms.DecimalField(
+        required=True,
+        label="Payment Amount",
+        widget=forms.NumberInput(attrs={"id": "payment_amount"}),
+    )
+    payment_mode = forms.ChoiceField(
+        choices=PAYMENT_MODES_FORM,
+        required=True,
+        label="Payment Mode",
+        widget=forms.RadioSelect(attrs={"id": "payment_mode"}),
+        initial="gate_upi",
+    )
+    payment_for = forms.ChoiceField(
+        choices=PAYMENT_FOR,
+        required=True,
+        label="Payment For",
+        widget=forms.RadioSelect(attrs={"id": "payment_for"}),
+        initial="booking",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.add_layout(
+            Layout(
+                FloatingField("booking", css_class="w-50"),
+                FloatingField("payment_amount", css_class="w-50"),
+                InlineRadios("payment_mode", css_class="w-fit"),
+                InlineRadios("payment_for", css_class="w-fit"),
+                Submit("submit", "Save Payment", css_class="mt-3 btn-success"),
+            )
+        )
+
+    def save(self) -> Booking:
+        try:
+            print(self.cleaned_data)
+            add_payment_to_booking(
+                booking=self.cleaned_data["booking"],
+                amount=self.cleaned_data["payment_amount"],
+                payment_for=self.cleaned_data["payment_for"],
+                payment_mode=self.cleaned_data["payment_mode"],
+            )
+            return self.cleaned_data["booking"]
         except Exception as e:
             self.add_error(None, e.args[0])
             raise forms.ValidationError()

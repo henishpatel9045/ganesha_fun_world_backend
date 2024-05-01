@@ -9,11 +9,12 @@ PAYMENT_MODES = [
     ("payment_gateway", "payment_gateway"),
 ]
 
+PAYMENT_MODES_FORM = [("gate_cash", "Cash"), ("gate_upi", "UPI")]
+
 PAYMENT_FOR = [
     ("booking", "booking"),
     ("locker", "locker"),
 ]
-
 
 
 # CACHE_KEYS

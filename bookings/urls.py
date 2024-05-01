@@ -1,8 +1,13 @@
 from django.urls import path
 
-from .views import BookingFormView
+from .views import BookingFormView, PaymentFormView
 
 
 urlpatterns = [
     path("booking/", BookingFormView.as_view(), name="booking"),
+    path(
+        "booking/<str:booking_id>/payment",
+        PaymentFormView.as_view(),
+        name="booking_payment",
+    ),
 ]

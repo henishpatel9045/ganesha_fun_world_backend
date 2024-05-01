@@ -120,3 +120,49 @@ def create_booking(
     except Exception as e:
         logging.exception(e)
         raise e
+
+
+def add_payment_to_booking(
+    booking: Booking,
+    amount: float | str,
+    payment_for: str,
+    payment_mode: str,
+    is_confirmed: bool = True,
+    is_returned_to_customer: bool = False,
+):
+    """Method to add payment to the booking
+
+    Args:
+        booking (Booking): Booking object
+        amount (float | str): amount received from the customer
+        payment_for (str): purpose of the payment refer `PAYMENT_FOR` in `common_config` folder
+        payment_mode (str): mode of the payment refer `PAYMENT_MODES` in `common_config` folder
+        is_confirmed (bool): True if the payment is confirmed
+        is_returned_to_customer (bool): True if the payment is returned to the customer
+    """
+    try:
+        logging.info(
+            "Add payment to booking with data: ",
+            {
+                "booking": booking,
+                "amount": amount,
+                "payment_for": payment_for,
+                "payment_mode": payment_mode,
+                "is_confirmed": is_confirmed,
+                "is_returned_to_customer": is_returned_to_customer,
+            },
+        )
+
+        payment = Payment(
+            booking=booking,
+            amount=amount,
+            payment_for=payment_for,
+            payment_mode=payment_mode,
+            is_confirmed=is_confirmed,
+            is_returned_to_customer=is_returned_to_customer,
+        )
+        payment.save()
+        return payment
+    except Exception as e:
+        logging.exception(e)
+        raise e
