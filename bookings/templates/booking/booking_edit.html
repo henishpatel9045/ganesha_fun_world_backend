@@ -1,0 +1,49 @@
+{% extends 'base.html' %} {% block title %}Edit Booking{% endblock %} {% load crispy_forms_tags %} {% block content %}
+
+<div class="mx-5 mb-2">
+  <h1 class="mb-2">Edit Booking</h1>
+  <div class="card">
+  <div class="card-body">
+    {% crispy form %}
+  </div>
+</div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const specialBookingAccordion = document.getElementById(
+      "special-booking-accordion"
+    );
+    specialBookingAccordion.classList.remove("show");
+    const costumeAccordian = document.getElementById(
+      "costume-accordion"
+    );
+    costumeAccordian.classList.remove("show");
+
+    const discountedBookingCheckbox = document.getElementById(
+      "is_discounted_booking"
+    );
+    const specialTicketAmountField = document.getElementById(
+      "special_ticket_total_amount"
+    );
+    const specialCostumeAmountField = document.getElementById(
+      "special_costume_total_amount"
+    );
+
+    // Function to enable or disable special ticket amount field
+    function toggleSpecialTicketAmountField() {
+      specialTicketAmountField.disabled = !discountedBookingCheckbox.checked;
+      specialCostumeAmountField.disabled = !discountedBookingCheckbox.checked;
+    }
+
+    // Initial call to set the initial state
+    toggleSpecialTicketAmountField();
+
+    // Add event listener to toggle field whenever checkbox value changes
+    discountedBookingCheckbox.addEventListener(
+      "change",
+      toggleSpecialTicketAmountField
+    );
+  });
+</script>
+{% endblock %}

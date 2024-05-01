@@ -12,7 +12,7 @@ from management_core.models import TicketPrice, Costume
 logging.getLogger(__name__)
 
 
-def create_booking(
+def create_or_update_booking(
     wa_number: str,
     date: datetime.date,
     adult: int,
@@ -23,6 +23,8 @@ def create_booking(
     special_ticket_total_amount=None,
     special_costume_total_amount=None,
     received_amount: float | str = 0,
+    edit_booking: bool = False,
+    existing_booking: Booking | None = None,
 ):
     """Method to create booking with costumes and canteen items.
     Calculate amount using management_core models -> Create Booking -> Create BookingCostume -> Create BookingCanteen
@@ -75,32 +77,32 @@ def create_booking(
         costume_total = sum([costume[2] for costume in costume_data])
 
         with transaction.atomic():
-            booking = Booking(
-                wa_number=wa_number,
-                date=date,
-                adult=adult,
-                child=child,
-                ticket_amount=(
-                    special_ticket_total_amount
-                    if is_discounted_booking
-                    else ticket_total
-                ),
-                costume_amount=(
-                    special_costume_total_amount
-                    if is_discounted_booking
-                    else costume_total
-                ),
-                total_amount=(
-                    special_ticket_total_amount + special_costume_total_amount
-                    if is_discounted_booking
-                    else ticket_total + costume_total
-                ),
-                received_amount=received_amount,
-                is_discounted_booking=is_discounted_booking,
-                booking_type=booking_type,
+            if edit_booking:
+                booking = existing_booking
+            else:
+                booking = Booking()
+            booking.wa_number = wa_number
+            booking.date = date
+            booking.adult = adult
+            booking.child = child
+            booking.ticket_amount = (
+                special_ticket_total_amount if is_discounted_booking else ticket_total
             )
+            booking.costume_amount = (
+                special_costume_total_amount if is_discounted_booking else costume_total
+            )
+            booking.total_amount = (
+                special_ticket_total_amount + special_costume_total_amount
+                if is_discounted_booking
+                else ticket_total + costume_total
+            )
+            booking.received_amount = received_amount
+            booking.is_discounted_booking = is_discounted_booking
+            booking.booking_type = booking_type
             booking.save()
 
+            booking.booking_costume.all().delete()
+            
             issued_costumes = []
             for costume in costume_data:
                 issued_costumes.append(
@@ -112,9 +114,10 @@ def create_booking(
                     )
                 )
             BookingCostume.objects.bulk_create(issued_costumes)
-            BookingCanteen(
-                booking=booking,
-            ).save()
+            if not edit_booking:
+                BookingCanteen(
+                    booking=booking,
+                ).save()
 
             return booking
     except Exception as e:
@@ -152,7 +155,7 @@ def add_payment_to_booking(
                 "is_returned_to_customer": is_returned_to_customer,
             },
         )
-        
+
         if booking.total_amount < booking.received_amount + amount:
             raise ValueError("Amount exceeds the total amount of the booking")
 

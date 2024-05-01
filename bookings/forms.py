@@ -7,7 +7,7 @@ from crispy_forms.bootstrap import AccordionGroup, InlineRadios
 from crispy_bootstrap5.bootstrap5 import FloatingField, BS5Accordion
 
 from common_config.common import PAYMENT_FOR, PAYMENT_MODES_FORM
-from .utils import add_payment_to_booking, create_booking
+from .utils import add_payment_to_booking, create_or_update_booking
 from .models import Booking
 from management_core.models import Costume, TicketPrice
 
@@ -88,7 +88,9 @@ class BookingForm(forms.Form):
                 initial=0,
             )
 
-    def save(self) -> Booking | bool:
+    def save(
+        self, edit_booking: bool = False, booking_id: str | None = None
+    ) -> Booking | bool:
         try:
             data = self.cleaned_data
             booking_data = {
@@ -108,7 +110,15 @@ class BookingForm(forms.Form):
                     size: data[size] for size in self.costume_sizes if data[size] > 0
                 },
             }
-            booking = create_booking(**booking_data)
+            if edit_booking:
+                existing_booking = Booking.objects.get(id=booking_id)
+                booking = create_or_update_booking(
+                    **booking_data,
+                    edit_booking=edit_booking,
+                    existing_booking=existing_booking,
+                )
+            else:
+                booking = create_or_update_booking(**booking_data)
             return booking
         except TicketPrice.DoesNotExist as e:
             self.add_error(

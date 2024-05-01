@@ -1,4 +1,5 @@
 from typing import Any
+from django.forms.forms import BaseForm
 from django.shortcuts import render
 from django.http import HttpRequest, HttpResponse
 from django.views.generic import FormView, TemplateView
@@ -14,6 +15,56 @@ class BookingFormView(FormView):
     def form_valid(self, form):
         try:
             booking = form.save()
+            self.booking = booking
+            return super().form_valid(form)
+        except Exception as e:
+            return super().form_invalid(form)
+
+    def get_success_url(self) -> str:
+        return f"/bookings/booking/{self.booking.id}/payment"
+
+
+class BookingEditFormView(FormView):
+    template_name = "booking/booking_edit.html"
+    form_class = BookingForm
+
+    def get(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
+        booking_id = kwargs.get("booking_id")
+        if not booking_id:
+            return HttpResponse("Booking ID is required")
+        booking = Booking.objects.filter(id=booking_id).exists()
+        if not booking:
+            return HttpResponse("Booking not found")
+        booking = Booking.objects.prefetch_related(
+            "booking_costume", "booking_costume__costume"
+        ).get(id=booking_id)
+        costumes = booking.booking_costume.all()
+        print(costumes)
+        initial_data = {
+                "wa_number": booking.wa_number,
+                "adult": booking.adult,
+                "child": booking.child,
+                "date": booking.date,
+                "is_discounted_booking": booking.is_discounted_booking,
+                "special_ticket_total_amount": (
+                    booking.total_amount if booking.is_discounted_booking else 0
+                ),
+                "special_costume_total_amount": (
+                    booking.costume_amount if booking.is_discounted_booking else 0
+                ),
+                **{costume.costume.name: costume.quantity for costume in costumes}
+            }
+        
+        form = BookingForm(
+            initial=initial_data
+        )
+        return render(request, "booking/booking_edit.html", context={"form": form})
+
+    def form_valid(self, form):
+        try:
+            booking = form.save(
+                edit_booking=True, booking_id=self.kwargs.get("booking_id")
+            )
             self.booking = booking
             return super().form_valid(form)
         except Exception as e:
@@ -72,9 +123,7 @@ class BookingSummaryCardTemplateView(TemplateView):
         booking = Booking.objects.filter(id=booking_id).exists()
         if not booking:
             return False
-        booking = Booking.objects.prefetch_related("booking_costume").get(
-            id=booking_id
-        )
+        booking = Booking.objects.prefetch_related("booking_costume").get(id=booking_id)
         context = {
             "booking_id": booking.id,
             "wa_number": booking.wa_number,
