@@ -125,7 +125,11 @@ class PaymentRecordForm(forms.Form):
         queryset=Booking.objects.all(),
         label="Booking",
         required=False,
-        widget=forms.Select(attrs={"id": "payment_booking",}),
+        widget=forms.Select(
+            attrs={
+                "id": "payment_booking",
+            }
+        ),
     )
     payment_amount = forms.DecimalField(
         required=True,
@@ -156,7 +160,12 @@ class PaymentRecordForm(forms.Form):
                 FloatingField("payment_amount", css_class="w-50"),
                 InlineRadios("payment_mode", css_class="w-fit"),
                 InlineRadios("payment_for", css_class="w-fit"),
-                Submit("submit", "Save Payment", css_class="mt-3 btn-success"),
+                Submit(
+                    "submit",
+                    "Save Payment",
+                    css_class="mt-3 btn-success",
+                    css_id="payment_submit",
+                ),
             )
         )
 

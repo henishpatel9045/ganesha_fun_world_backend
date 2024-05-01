@@ -60,6 +60,7 @@ def create_booking(
 
         adult_price = price_list.adult * adult
         child_price = price_list.child * child
+        # TODO - Add other charges fields and logic
         costume_data = []
         for costume in costume_price_list:
             costume_data.append(
@@ -111,7 +112,6 @@ def create_booking(
                     )
                 )
             BookingCostume.objects.bulk_create(issued_costumes)
-            print()
             BookingCanteen(
                 booking=booking,
             ).save()
@@ -161,8 +161,11 @@ def add_payment_to_booking(
             is_confirmed=is_confirmed,
             is_returned_to_customer=is_returned_to_customer,
         )
-        payment.save()
-        return payment
+        with transaction.atomic():
+            booking.received_amount += amount
+            payment.save()
+            booking.save()
+            return payment
     except Exception as e:
         logging.exception(e)
         raise e

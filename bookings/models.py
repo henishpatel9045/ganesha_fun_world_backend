@@ -1,5 +1,5 @@
 import uuid
-from django.db import models
+from django.db import models, transaction
 from django.core.validators import MinValueValidator
 from django.utils import timezone
 
@@ -27,6 +27,7 @@ class Booking(DateTimeBaseModel):
     date = models.DateField(null=True, blank=True)
     ticket_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)
     costume_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)
+    # TODO - Add other charges fields
     total_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)
     received_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)
     is_discounted_booking = models.BooleanField(default=False)
@@ -61,6 +62,15 @@ class Payment(DateTimeBaseModel):
 
     def __str__(self) -> str:
         return f"{self.booking.wa_number} - {self.amount} - {self.payment_mode} - {self.payment_for}"
+    
+    def delete(self, *args, **kwargs):
+        """Override delete method to update the booking received amount."""
+        with transaction.atomic():
+            if self.booking:
+                booking = self.booking
+                booking.received_amount -= self.amount
+                booking.save()
+            return super().delete(*args, **kwargs)
 
 
 class BookingCostume(DateTimeBaseModel):
