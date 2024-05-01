@@ -114,6 +114,7 @@ class BookingForm(forms.Form):
                 existing_booking = Booking.objects.get(id=booking_id)
                 booking = create_or_update_booking(
                     **booking_data,
+                    received_amount=existing_booking.received_amount,
                     edit_booking=edit_booking,
                     existing_booking=existing_booking,
                 )

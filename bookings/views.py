@@ -47,7 +47,7 @@ class BookingEditFormView(FormView):
                 "date": booking.date,
                 "is_discounted_booking": booking.is_discounted_booking,
                 "special_ticket_total_amount": (
-                    booking.total_amount if booking.is_discounted_booking else 0
+                    booking.ticket_amount if booking.is_discounted_booking else 0
                 ),
                 "special_costume_total_amount": (
                     booking.costume_amount if booking.is_discounted_booking else 0
