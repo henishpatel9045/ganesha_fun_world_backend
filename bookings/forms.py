@@ -143,13 +143,6 @@ class PaymentRecordForm(forms.Form):
         widget=forms.RadioSelect(attrs={"id": "payment_mode"}),
         initial="gate_upi",
     )
-    payment_for = forms.ChoiceField(
-        choices=PAYMENT_FOR,
-        required=True,
-        label="Payment For",
-        widget=forms.RadioSelect(attrs={"id": "payment_for"}),
-        initial="booking",
-    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -159,7 +152,6 @@ class PaymentRecordForm(forms.Form):
                 FloatingField("booking", css_class="w-50"),
                 FloatingField("payment_amount", css_class="w-50"),
                 InlineRadios("payment_mode", css_class="w-fit"),
-                InlineRadios("payment_for", css_class="w-fit"),
                 Submit(
                     "submit",
                     "Save Payment",
@@ -175,7 +167,7 @@ class PaymentRecordForm(forms.Form):
             add_payment_to_booking(
                 booking=self.cleaned_data["booking"],
                 amount=self.cleaned_data["payment_amount"],
-                payment_for=self.cleaned_data["payment_for"],
+                payment_for="booking",
                 payment_mode=self.cleaned_data["payment_mode"],
             )
             return self.cleaned_data["booking"]

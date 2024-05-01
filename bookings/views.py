@@ -1,7 +1,7 @@
 from typing import Any
 from django.shortcuts import render
 from django.http import HttpRequest, HttpResponse
-from django.views.generic import FormView
+from django.views.generic import FormView, TemplateView
 
 from bookings.models import Booking
 from .forms import BookingForm, PaymentRecordForm
@@ -62,3 +62,36 @@ class PaymentFormView(FormView):
 
     def get_success_url(self) -> str:
         return "/admin"
+
+
+class BookingSummaryCardTemplateView(TemplateView):
+    def get_context_data(self, **kwargs):
+        booking_id = kwargs.get("booking_id")
+        if not booking_id:
+            return False
+        booking = Booking.objects.filter(id=booking_id).exists()
+        if not booking:
+            return False
+        booking = Booking.objects.prefetch_related("booking_costume").get(
+            id=booking_id
+        )
+        context = {
+            "booking_id": booking.id,
+            "wa_number": booking.wa_number,
+            "booked_on": booking.created_at,
+            "date": booking.date,
+            "adult": booking.adult,
+            "child": booking.child,
+            "ticket_amount": booking.ticket_amount,
+            "costume_amount": booking.costume_amount,
+            "total_amount": booking.total_amount,
+            "received_amount": booking.received_amount,
+            "amount_to_collect": booking.total_amount - booking.received_amount,
+        }
+        return context
+
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        context = self.get_context_data(**kwargs)
+        if not context:
+            return HttpResponse("Booking not found")
+        return render(request, "booking/booking_summary_card.html", context=context)

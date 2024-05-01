@@ -3,8 +3,12 @@
 <div class="mx-5 mb-2">
   <h1 class="mb-2">Payment for booking</h1>
     <div>
-      <div class="">
+      <div class="card w-fit">
+        <div class="card-body">
         {% crispy form %}
+        </div>
+        </div>
+      <div class="">
         <div class="accordion mt-5" id="bookingDetailsAccordian">
           <div class="accordion-item">
             <h2 class="accordion-header" id="headingOne">
@@ -18,15 +22,23 @@
                     <tbody>
                       <tr>
                         <th>Ticket Amout: </th>
-                        <td>{{booking.ticket_amount}}</td>
+                        <td>{{booking.ticket_amount}} ₹</td>
                       </tr>
                       <tr>
                         <th>Costume Amount: </th>
-                        <td>{{booking.costume_amount}}</td>
+                        <td>{{booking.costume_amount}} ₹</td>
                       </tr>
                       <tr>
                         <th>Total Amount: </th>
-                        <td>{{booking.total_amount}}</td>
+                        <td>{{booking.total_amount}} ₹</td>
+                      </tr>
+                      <tr>
+                        <th>Received Amount: </th>
+                        <td>{{booking.received_amount}} ₹</td>
+                      </tr>
+                      <tr>
+                        <th>Amount To Collect: </th>
+                        <td>{{amount_to_collect }} ₹</td>
                       </tr>
                     </tbody>
                   </table>

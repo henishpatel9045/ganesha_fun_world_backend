@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        Booking Summary
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>WA Number:</strong> {{ wa_number }}</p>
+                                <p><strong>Booked On:</strong> {{ booked_on }}</p>
+                                <p><strong>Date:</strong> {{ date }}</p>
+                                <p><strong>Adult:</strong> {{ adult }}</p>
+                                <p><strong>Child:</strong> {{ child }}</p>
+                            </div>
+                            <div class="col d-flex h-100">
+                                <div class="vr"></div>
+                              </div>
+                            <div class="col-md-5">
+                                <p><strong>Ticket Amount:</strong> <span>{{ ticket_amount }} ₹</span></p>
+                                <p><strong>Costume Amount:</strong> <span>{{ costume_amount }} ₹</span></p>
+                                <p><strong>Total Amount:</strong> <span>{{ total_amount }} ₹</span></p>
+                                <p><strong>Received Amount:</strong> <span>{{ received_amount }} ₹</span></p>
+                                <p><strong>Amount to Collect:</strong> <span>{{ amount_to_collect }} ₹</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    {% comment %} this buttons should be equally spaced and have some gap in between them also use icons along with text if possible {% endcomment %}
+                    <div class="card-footer">
+                        <div class="row">
+                            <div class="col-4">
+                                <a href="{% url 'booking_payment' booking_id %}" class="btn btn-primary w-100 h-100 d-flex align-items-center justify-content-center ">Edit</a>
+                            </div>
+                            <div class="col-4">
+                                <a href="{% url 'booking_payment' booking_id %}" class="btn btn-warning w-100 h-100 d-flex align-items-center justify-content-center">Add Payment</a>
+                            </div>
+                            <div class="col-4">
+                                <a class="btn btn-success w-100 h-100 d-flex align-items-center justify-content-center">Send Ticket To WhatsApp</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+{% endblock %}
+
+

@@ -152,6 +152,9 @@ def add_payment_to_booking(
                 "is_returned_to_customer": is_returned_to_customer,
             },
         )
+        
+        if booking.total_amount < booking.received_amount + amount:
+            raise ValueError("Amount exceeds the total amount of the booking")
 
         payment = Payment(
             booking=booking,
