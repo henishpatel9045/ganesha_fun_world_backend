@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% comment %} Create a base template i.e backgeround for ticket which will have two parts in first part of ticket it will have QR Code in middle and in second part of ticket it will have all the details of ticket in standard ticket form. This ticket will be verticle. Two parts will be seperated by dashed line i.e. those two parts will have background color as white and the dotted black line will seperate them verticlly. Also this ticket will cover 100% body so the body height and width should be that of standard ticket so that when I print this html page it will be printed as ticket. {% endcomment %}
+
+{% comment %} First part of ticket i.e. QR Code {% endcomment %}
+<style>
+    html{
+        height: 100%;
+        width: 00px !important;
+    }
+</style>
+
+<div class="bg-white h-100 d-flex align-items-center justify-content-center" style="">
+    <div class="px-3 py-4" style=""">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=adads">
+    </div>
+</div>
+    
+    {% comment %} Second part of ticket i.e. Details of ticket {% endcomment %}
+    <div style="background-color: white; height: 50%; width: 100%;">
+        <div style="padding-top: 5%;">
+            <h1 style="text-align: center;">Ticket</h1>
+            <p style="text-align: center;">Booking ID: sdas</p>
+            <p style="text-align: center;">Booking Date: anadha</p>
+            <p style="text-align: center;">Booking Time: anadha</p>
+            <p style="text-align: center;">Booking Status: anadha</p>
+            <p style="text-align: center;">Booking Amount: anadha</p>
+           
+        </div>
+    </div>
+
+
+
+{% endblock %}

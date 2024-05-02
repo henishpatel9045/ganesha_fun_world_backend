@@ -9,3 +9,4 @@ python-decouple==3.8
 setuptools==69.5.1
 django-crispy-forms==2.1
 crispy-bootstrap5==2024.2
+weasyprint==62.0

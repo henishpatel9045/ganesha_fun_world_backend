@@ -39,25 +39,22 @@ class BookingEditFormView(FormView):
             "booking_costume", "booking_costume__costume"
         ).get(id=booking_id)
         costumes = booking.booking_costume.all()
-        print(costumes)
         initial_data = {
-                "wa_number": booking.wa_number,
-                "adult": booking.adult,
-                "child": booking.child,
-                "date": booking.date,
-                "is_discounted_booking": booking.is_discounted_booking,
-                "special_ticket_total_amount": (
-                    booking.ticket_amount if booking.is_discounted_booking else 0
-                ),
-                "special_costume_total_amount": (
-                    booking.costume_amount if booking.is_discounted_booking else 0
-                ),
-                **{costume.costume.name: costume.quantity for costume in costumes}
-            }
-        
-        form = BookingForm(
-            initial=initial_data
-        )
+            "wa_number": booking.wa_number,
+            "adult": booking.adult,
+            "child": booking.child,
+            "date": booking.date,
+            "is_discounted_booking": booking.is_discounted_booking,
+            "special_ticket_total_amount": (
+                booking.ticket_amount if booking.is_discounted_booking else 0
+            ),
+            "special_costume_total_amount": (
+                booking.costume_amount if booking.is_discounted_booking else 0
+            ),
+            **{costume.costume.name: costume.quantity for costume in costumes},
+        }
+
+        form = BookingForm(initial=initial_data)
         return render(request, "booking/booking_edit.html", context={"form": form})
 
     def form_valid(self, form):
@@ -112,7 +109,7 @@ class PaymentFormView(FormView):
             return super().form_invalid(form)
 
     def get_success_url(self) -> str:
-        return "/admin"
+        return f"/bookings/booking/{self.kwargs.get('booking_id')}/summary"
 
 
 class BookingSummaryCardTemplateView(TemplateView):
@@ -144,3 +141,7 @@ class BookingSummaryCardTemplateView(TemplateView):
         if not context:
             return HttpResponse("Booking not found")
         return render(request, "booking/booking_summary_card.html", context=context)
+
+
+class BookingTicketTemplateView(TemplateView):
+    template_name = "booking/booking_ticket.html"
