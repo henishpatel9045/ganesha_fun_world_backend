@@ -40,7 +40,8 @@ class BookingAdmin(admin.ModelAdmin):
     list_display = [
         "wa_number",
         "date",
-        "adult",
+        "adult_male",
+        "adult_female",
         "child",
         "booking_type",
         "total_amount",

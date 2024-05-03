@@ -19,8 +19,10 @@ class Booking(DateTimeBaseModel):
         primary_key=True, default=uuid.uuid4, editable=False, db_index=True
     )
     wa_number = models.CharField(max_length=15, db_index=True, null=False)
-    adult = models.PositiveIntegerField(default=0)
+    adult_male = models.PositiveIntegerField(default=0)
+    adult_female = models.PositiveIntegerField(default=0)
     child = models.PositiveIntegerField(default=0)
+    infant = models.PositiveIntegerField(default=0)
     booking_type = models.CharField(
         max_length=50, choices=BOOKING_TYPES, default=BOOKING_TYPES[0][0]
     )
@@ -34,7 +36,7 @@ class Booking(DateTimeBaseModel):
 
     def total_persons(self):
         """Returns total number of persons in the booking"""
-        return self.adult + self.child
+        return self.adult_male + self.adult_female + self.child
 
     def is_active(self):
         """Returns True if the booking is active currently i.e. the date is today."""
@@ -48,7 +50,9 @@ class Payment(DateTimeBaseModel):
     id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False, db_index=True
     )
-    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, db_index=True, related_name="booking_payment")
+    booking = models.ForeignKey(
+        Booking, on_delete=models.CASCADE, db_index=True, related_name="booking_payment"
+    )
     payment_mode = models.CharField(
         max_length=50, choices=PAYMENT_MODES, default=PAYMENT_MODES[0][0]
     )
@@ -62,7 +66,7 @@ class Payment(DateTimeBaseModel):
 
     def __str__(self) -> str:
         return f"{self.booking.wa_number} - {self.amount} - {self.payment_mode} - {self.payment_for}"
-    
+
     def delete(self, *args, **kwargs):
         """Override delete method to update the booking received amount."""
         with transaction.atomic():
@@ -74,7 +78,9 @@ class Payment(DateTimeBaseModel):
 
 
 class BookingCostume(DateTimeBaseModel):
-    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, db_index=True, related_name="booking_costume")
+    booking = models.ForeignKey(
+        Booking, on_delete=models.CASCADE, db_index=True, related_name="booking_costume"
+    )
     costume = models.ForeignKey(
         "management_core.Costume", on_delete=models.DO_NOTHING, db_index=True
     )
@@ -89,7 +95,9 @@ class BookingCostume(DateTimeBaseModel):
 
 
 class BookingLocker(DateTimeBaseModel):
-    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, db_index=True, related_name="booking_locker")
+    booking = models.ForeignKey(
+        Booking, on_delete=models.CASCADE, db_index=True, related_name="booking_locker"
+    )
     locker = models.ForeignKey(
         "management_core.Locker", on_delete=models.DO_NOTHING, db_index=True
     )
@@ -105,7 +113,9 @@ class BookingCanteen(DateTimeBaseModel):
     id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False, db_index=True
     )
-    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, db_index=True, related_name="booking_canteen")
+    booking = models.ForeignKey(
+        Booking, on_delete=models.CASCADE, db_index=True, related_name="booking_canteen"
+    )
     breakfast_quantity_used = models.PositiveIntegerField(default=0)
     lunch_quantity_used = models.PositiveIntegerField(default=0)
     evening_snacks_quantity_used = models.PositiveIntegerField(default=0)

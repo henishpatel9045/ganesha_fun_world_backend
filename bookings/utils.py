@@ -15,7 +15,8 @@ logging.getLogger(__name__)
 def create_or_update_booking(
     wa_number: str,
     date: datetime.date,
-    adult: int,
+    adult_male: int,
+    adult_female: int,
     child: int,
     booking_costume_data: dict,
     booking_type: str,
@@ -32,7 +33,8 @@ def create_or_update_booking(
     Args:
         wa_number (str): whatsapp number of the customer
         date (datetime.date): date of the booking (i.e. date of the event)
-        adult (int): number of adult persons
+        adult_male (int): number of adult male persons
+        adult_female (int): number of adult female persons
         child (int): number of child persons
         booking_costume_data (dict): dictionary of costume data in the format `{costume_name: quantity}`
         booking_type (str): type of the booking refer `BOOKING_TYPES` in `common_config` folder
@@ -45,7 +47,8 @@ def create_or_update_booking(
             {
                 "wa_number": wa_number,
                 "date": date,
-                "adult": adult,
+                "adult_male": adult_male,
+                "adult_female": adult_female,
                 "child": child,
                 "booking_costume_data": booking_costume_data,
                 "booking_type": booking_type,
@@ -60,7 +63,7 @@ def create_or_update_booking(
         booking_costume_keys = booking_costume_data.keys()
         costume_price_list = Costume.objects.filter(name__in=booking_costume_keys)
 
-        adult_price = price_list.adult * adult
+        adult_price = price_list.adult * (adult_male + adult_female)
         child_price = price_list.child * child
         # TODO - Add other charges fields and logic
         costume_data = []
@@ -83,7 +86,8 @@ def create_or_update_booking(
                 booking = Booking()
             booking.wa_number = wa_number
             booking.date = date
-            booking.adult = adult
+            booking.adult_male = adult_male
+            booking.adult_female = adult_female
             booking.child = child
             booking.ticket_amount = (
                 special_ticket_total_amount if is_discounted_booking else ticket_total

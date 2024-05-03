@@ -1,12 +1,13 @@
+from typing import Any
 from django import forms
 from django.core.validators import MinValueValidator
 from django.utils import timezone
 from crispy_forms.helper import FormHelper, Layout
-from crispy_forms.layout import Submit
-from crispy_forms.bootstrap import AccordionGroup, InlineRadios
+from crispy_forms.layout import Submit, Row, Column
+from crispy_forms.bootstrap import AccordionGroup, InlineRadios, UneditableField
 from crispy_bootstrap5.bootstrap5 import FloatingField, BS5Accordion
 
-from common_config.common import PAYMENT_FOR, PAYMENT_MODES_FORM
+from common_config.common import PAYMENT_MODES_FORM
 from .utils import add_payment_to_booking, create_or_update_booking
 from .models import Booking
 from management_core.models import Costume, TicketPrice
@@ -14,14 +15,24 @@ from management_core.models import Costume, TicketPrice
 
 class BookingForm(forms.Form):
     wa_number = forms.CharField(max_length=10, label="WhatsApp Number", required=True)
-    adult = forms.IntegerField(
-        min_value=1,
+    adult_male = forms.IntegerField(
+        min_value=0,
         required=True,
-        label="Adults",
-        validators=[MinValueValidator(1, "At least 1 adult required")],
-        initial=1,
+        label="Adults (Male)",
+        validators=[MinValueValidator(0, "Value can't be negative.")],
+        initial=0,
     )
-    child = forms.IntegerField(min_value=0, required=True, label="Children", initial=0)
+    adult_female = forms.IntegerField(
+        min_value=0,
+        required=True,
+        label="Adults (Female)",
+        validators=[MinValueValidator(0, "Value can't be negative.")],
+        initial=0,
+    )
+    child = forms.IntegerField(
+        min_value=0, required=True, label="Children (5 - 10 years)", initial=0
+    )
+    infant = forms.IntegerField(min_value=0, label="Infants (0 - 5 years)", initial=0)
     date = forms.DateField(
         widget=forms.DateInput(attrs={"type": "date", "value": timezone.now().date()}),
         required=True,
@@ -49,27 +60,60 @@ class BookingForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.add_costume_fields()
         self.helper = FormHelper()
+        costume_fields = [
+            FloatingField(size, min=0, css_class="w-100") for size in self.costume_sizes
+        ]
         self.helper.add_layout(
             Layout(
-                FloatingField("wa_number", pattern=r"^\d{10}$"),
-                FloatingField("adult", min=1, css_class="w-50"),
-                FloatingField("child", min=0, css_class="w-50"),
-                FloatingField("date", css_class="w-50"),
+                Row(
+                    Column(
+                        FloatingField("wa_number", pattern=r"^\d{10}$"),
+                    ),
+                    Column(FloatingField("date", css_class="w-100")),
+                ),
+                Row(
+                    Column(
+                        FloatingField(
+                            "adult_male",
+                            min=0,
+                            css_class="w-100",
+                        ),
+                    ),
+                    Column(
+                        FloatingField("adult_female", min=0, css_class="w-100"),
+                    ),
+                ),
+                Row(
+                    Column(
+                        FloatingField("child", min=0, css_class="w-100"),
+                    ),
+                    Column(
+                        FloatingField("infant", css_class="w-100"),
+                    ),
+                ),
                 BS5Accordion(
                     AccordionGroup(
                         "Costumes",
-                        *self.costume_sizes,
+                        *[
+                            Row(
+                                *[
+                                    Column(field)
+                                    for field in costume_fields[index : index + 2]
+                                ]
+                            )
+                            for index in range(0, len(costume_fields), 2)
+                        ],
                         css_id="costume-accordion",
                     ),
                     always_open=False,
-                    flush=False,
+                    # flush=False,
                 ),
                 BS5Accordion(
                     AccordionGroup(
                         "Special Booking",
                         "is_discounted_booking",
-                        "special_ticket_total_amount",
-                        "special_costume_total_amount",
+                        FloatingField("special_ticket_total_amount"),
+                        FloatingField("special_costume_total_amount"),
                         css_id="special-booking-accordion",
                     )
                 ),
@@ -81,7 +125,7 @@ class BookingForm(forms.Form):
         sizes = Costume.objects.filter(is_available=True).values_list("name", flat=True)
         self.costume_sizes = sizes
         for size in sizes:
-            self.fields[size] = forms.IntegerField(
+            self.fields[size.replace(" ", "_")] = forms.IntegerField(
                 min_value=0,
                 required=False,
                 label=size,
@@ -93,9 +137,17 @@ class BookingForm(forms.Form):
     ) -> Booking | bool:
         try:
             data = self.cleaned_data
+            print("Inside Save: ", data)
+            if data["adult_female"] == 0 and data["child"] == 0:
+                self.add_error(None, "At least one female or child is required.")
+                raise Exception()
+            if data["adult_female"] == 0 and data["adult_male"] == 0:
+                self.add_error(None, "At least one adult is required.")
+                raise Exception()
             booking_data = {
                 "wa_number": self.cleaned_data["wa_number"],
-                "adult": self.cleaned_data["adult"],
+                "adult_male": self.cleaned_data["adult_male"],
+                "adult_female": self.cleaned_data["adult_female"],
                 "child": self.cleaned_data["child"],
                 "date": self.cleaned_data["date"],
                 "is_discounted_booking": self.cleaned_data["is_discounted_booking"],
@@ -161,7 +213,7 @@ class PaymentRecordForm(forms.Form):
         self.helper.add_layout(
             Layout(
                 FloatingField("booking", css_class="w-50"),
-                FloatingField("payment_amount", css_class="w-50"),
+                FloatingField("payment_amount", css_class="w-50", editable=False),
                 InlineRadios("payment_mode", css_class="w-fit"),
                 Submit(
                     "submit",

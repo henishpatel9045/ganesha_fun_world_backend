@@ -41,7 +41,8 @@ class BookingEditFormView(FormView):
         costumes = booking.booking_costume.all()
         initial_data = {
             "wa_number": booking.wa_number,
-            "adult": booking.adult,
+            "adult_male": booking.adult_male,
+            "adult_female": booking.adult_female,
             "child": booking.child,
             "date": booking.date,
             "is_discounted_booking": booking.is_discounted_booking,
@@ -126,7 +127,8 @@ class BookingSummaryCardTemplateView(TemplateView):
             "wa_number": booking.wa_number,
             "booked_on": booking.created_at,
             "date": booking.date,
-            "adult": booking.adult,
+            "adult_male": booking.adult_male,
+            "adult_female": booking.adult_female,
             "child": booking.child,
             "ticket_amount": booking.ticket_amount,
             "costume_amount": booking.costume_amount,
