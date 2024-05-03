@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "drf_yasg",
     "custom_auth",
+    "frontend",
     "management_core",
     "bookings",
 ]
@@ -130,10 +131,8 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "static"
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'staticfiles'),
-]
-
+STATICFILES_BASE = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [STATICFILES_BASE]
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media-files"
 

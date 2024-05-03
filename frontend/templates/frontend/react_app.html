@@ -1,0 +1,19 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/frontend/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + React + TS</title>
+    {% for js_path in js_files %}
+    <script type="module" crossorigin src="{% static js_path %}"></script>
+    {% endfor %}
+    {% for css_path in css_files %}
+    <link rel="stylesheet" crossorigin href="{% static css_path %}">
+    {% endfor %}
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
