@@ -1,10 +1,9 @@
-{% extends 'base.html' %}
-
-{% block title %}Error{% endblock %}
-
+{% extends 'base.html' %} {% block title %}Error{% endblock %} 
 {% block content %}
-<div class="mx-5 mb-2">
-  <h1 class="mb-2">Error</h1>
-  <p>{{ error_message }}</p>
+<div
+style="min-height: 100dvh"
+  class="mx-5 mb-2 w-100 h-100 d-flex align-items-center justify-content-center"
+>
+  <div class="alert alert-danger text-xxl-center" role="alert">{{error_message}}</div>
 </div>
 {% endblock %}

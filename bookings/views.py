@@ -31,10 +31,18 @@ class BookingEditFormView(FormView):
     def get(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
         booking_id = kwargs.get("booking_id")
         if not booking_id:
-            return HttpResponse("Booking ID is required")
+            return render(
+                request,
+                "common/error_page.html",
+                {"error_message": "Booking ID is required."},
+            )
         booking = Booking.objects.filter(id=booking_id).exists()
         if not booking:
-            return HttpResponse("Booking not found")
+            return render(
+                request,
+                "common/error_page.html",
+                {"error_message": "Booking not found."},
+            )
         booking = Booking.objects.prefetch_related(
             "booking_costume", "booking_costume__costume"
         ).get(id=booking_id)
@@ -79,10 +87,18 @@ class PaymentFormView(FormView):
     def get(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
         booking_id = kwargs.get("booking_id")
         if not booking_id:
-            return HttpResponse("Booking ID is required")
+            return render(
+                request,
+                "common/error_page.html",
+                {"error_message": "Booking ID is required."},
+            )
         booking = Booking.objects.filter(id=booking_id).exists()
         if not booking:
-            return HttpResponse("Booking not found")
+            return render(
+                request,
+                "common/error_page.html",
+                {"error_message": "Booking not found."},
+            )
         booking = Booking.objects.prefetch_related(
             "booking_costume", "booking_costume__costume"
         ).get(id=booking_id)
@@ -141,7 +157,11 @@ class BookingSummaryCardTemplateView(TemplateView):
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         context = self.get_context_data(**kwargs)
         if not context:
-            return HttpResponse("Booking not found")
+            return render(
+                request,
+                "common/error_page.html",
+                {"error_message": "Booking ID is required."},
+            )
         return render(request, "booking/booking_summary_card.html", context=context)
 
 
