@@ -1,5 +1,5 @@
 import { Scanner } from "@yudiel/react-qr-scanner";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Breadcrumb, Button, Card } from "react-bootstrap";
 import { BASE_URL } from "../config";
 
@@ -15,6 +15,22 @@ function QRScanner() {
       setEnabled(false);
     }
   };
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.keyCode === 32) { // 32 is the keycode for spacebar
+        // Perform your action here
+        setEnabled(true);
+      }
+    };
+
+    // Add event listener when component mounts
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Remove event listener when component unmounts
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []); 
 
   return (
     <div className="w-100 d-flex flex-column align-items-center justify-content-center">
