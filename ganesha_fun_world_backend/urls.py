@@ -26,6 +26,7 @@ urlpatterns = [
         name="schema-swagger-ui",
     ),
     path("bookings/", include("bookings.urls")),
+    path("whatsapp/", include("whatsapp.urls")),
 ]
 
 if os.environ.get("ENVIRONMENT", "test") == "test":

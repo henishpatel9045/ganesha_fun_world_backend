@@ -16,8 +16,10 @@ services:
       - test_network
 
   test_redis:
-    container_name: redis-test
+    container_name: test_redis
     image: redis:7.2
+    ports:
+      - 6379:6379
     expose:
       - 6379
     volumes:
