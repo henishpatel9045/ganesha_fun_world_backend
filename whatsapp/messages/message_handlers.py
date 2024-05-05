@@ -12,13 +12,13 @@ LOGO_URL = os.environ.get(
 
 
 whatsapp_config = WhatsAppClient(
-    "EAAGuKjgErkMBO7ErSUZCjE0Pz5EgloaJ88MVoXZCdSVvvrgcOX203wQwnf42oYM4xvZCVsxcLFXWje607IHqSaVc6kysrMXO95DR4VkSx2Pyqf3FJujMXKm6UwMg5vcFmL4poOg1GRsh5RpcluZALphdOLt88CdPIZAFm3hVTdXSMVctrMvkG7IfZCB14X9swCVSQDCWWLUceTLn0z8PQZD",
+    "EAAGuKjgErkMBOw9PlNAvfyim79MLZCje4VB7XPKfbD8fgJrMCZA4MgY4NObJaUAVfCXAtwD7LfHXssAap2akGe0nthjCPmnr7jExp1cTaJoL4qaZAZBp8VZCzDhIORCqm4JloWRD55Hzzq4Vfp7uN00YhQqmBZCzPVB7lajJ2ZAkmKlqWZBmyZCmxVnZBKhblf6UdatniT7XKOsz0F7hwfDikZD",
     "285776191286365",
 )
 client = whatsapp_config.get_client()
 
 
-def send_date_list_message(recipient_number: str) -> requests.Response:
+def send_date_list_message(recipient_number: str, context: dict|None) -> requests.Response:
     """
     Function to send date list message to the user.
 
@@ -44,9 +44,8 @@ def send_date_list_message(recipient_number: str) -> requests.Response:
             ],
         },
     }
-    pprint(response_payload)
     return whatsapp_config.send_message(
-        recipient_number, "interactive", response_payload
+        recipient_number, "interactive", response_payload, context
     )
 
 
@@ -93,7 +92,7 @@ def send_welcome_message(recipient_number: str) -> requests.Response:
 
 
 def handle_booking_session_messages(
-    sender: str, message_type: str, payload: str, active_session: dict
+    sender: str, message_type: str, payload: str, active_session: dict, msg_context: dict | None
 ) -> requests.Response:
     """
     Function to handle booking session messages.
@@ -101,6 +100,8 @@ def handle_booking_session_messages(
     :param `sender`: The sender of the message
     :param `message_type`: The type of the message i.e. `text`, `button`, `interactive`
     :param `payload`: The payload of the message
+    :param `active_session`: The active booking session of the user
+    :param `msg_context`: The context of the message i.e. for replying to msg
     """
 
     if payload == "booking_session_cancel":
@@ -109,7 +110,16 @@ def handle_booking_session_messages(
             sender,
             "text",
             {"body": "Booking session cancelled. Please send Hi to start again."},
+            msg_context
         )
+        
+    # Handle the logic after booking is confirmed i.e. create booking instance and generate razorpay order for the same.
+    if message_type == "interactive" and payload == "booking_session_confirm":
+        cache.delete(f"booking_session_{sender}")
+        return whatsapp_config.send_message(
+            sender,
+            "text",
+            {"body": "Booking confirmed."}, msg_context)
 
     if active_session.get("date") is None:
         if message_type == "interactive":
@@ -118,6 +128,7 @@ def handle_booking_session_messages(
                     sender,
                     "text",
                     {"body": "Please select a valid date for booking."},
+                    msg_context
                 )
             active_session["date"] = payload
             cache.set(f"booking_session_{sender}", active_session, timeout=300)
@@ -125,6 +136,7 @@ def handle_booking_session_messages(
                 sender,
                 "text",
                 {"body": f"Enter total number of *Adults (Male)* age *more than 10*."},
+                msg_context
             )
     elif active_session.get("adult_male") is None:
         if message_type == "text":
@@ -141,6 +153,7 @@ def handle_booking_session_messages(
                         {
                             "body": f"Enter total number of *Adults (Female)* age *more than 10 years*."
                         },
+                        msg_context
                     )
             else:
                 return whatsapp_config.send_message(
@@ -149,6 +162,7 @@ def handle_booking_session_messages(
                     {
                         "body": "Enter a valid number of Male Adults (it's value can only be 0 or more)",
                     },
+                    msg_context
                 )
 
     elif active_session.get("adult_female") is None:
@@ -166,6 +180,7 @@ def handle_booking_session_messages(
                         {
                             "body": f"Enter total number of *Children* age between *5 - 10 years*.",
                         },
+                        msg_context
                     )
             else:
                 return whatsapp_config.send_message(
@@ -174,6 +189,7 @@ def handle_booking_session_messages(
                     {
                         "body": "Please enter a valid number of Female Adults (it's value can only be 0 or more)",
                     },
+                    msg_context
                 )
 
     elif active_session.get("child") is None:
@@ -191,6 +207,7 @@ def handle_booking_session_messages(
                         {
                             "body": f"Enter total number of *Infants* age between *0 - 5 years*.",
                         },
+                        msg_context
                     )
             else:
                 return whatsapp_config.send_message(
@@ -199,6 +216,7 @@ def handle_booking_session_messages(
                     {
                         "body": "Please enter a valid number of Child (it's value can only be 0 or more)"
                     },
+                    msg_context
                 )
 
     elif active_session.get("infant") is None:
@@ -220,6 +238,7 @@ def handle_booking_session_messages(
                             {
                                 "body": "At least one female adult or child is required for booking. Send Hi to start again.",
                             },
+                            msg_context
                         )
 
                     if (
@@ -233,16 +252,32 @@ def handle_booking_session_messages(
                             {
                                 "body": "At least one adult is required for booking. Send Hi to start again.",
                             },
+                            msg_context
                         )
 
                     active_session["infant"] = value
                     cache.set(f"booking_session_{sender}", active_session, timeout=300)
                     return whatsapp_config.send_message(
                         sender,
-                        "text",
+                        "interactive",
                         {
-                            "body": f"Your booking details are as follows:\n*Date*: {active_session.get("date")}\n*Adults (Male)*: {active_session.get("adult_male")}\n*Adults (Female)*: {active_session.get("adult_female")}\n*Children*: {active_session.get("child")}\n*Infants*: {active_session.get("infant")}",
+                            "type": "button",
+                            "body": {
+                            "text": f"Your booking details are as follows:\n*Date*: {active_session.get("date")}\n*Adults (Male)*: {active_session.get("adult_male")}\n*Adults (Female)*: {active_session.get("adult_female")}\n*Children*: {active_session.get("child")}\n*Infants*: {active_session.get("infant")}",
+                            },
+                            "action": {
+                            "buttons": [
+                                {
+                                "type": "reply",
+                                "reply": {
+                                    "id": "booking_session_confirm",
+                                    "title": "Confirm Booking"
+                                }
+                                }
+                            ]
+                            }
                         },
+                        msg_context
                     )
             else:
                 return whatsapp_config.send_message(
@@ -251,13 +286,29 @@ def handle_booking_session_messages(
                     {
                         "body": "Please enter a valid number of Male Adults (it's value can only be 0 or more)"
                     },
+                    msg_context
                 )
 
-    cache.delete(f"booking_session_{sender}")
+    # cache.delete(f"booking_session_{sender}")
     return whatsapp_config.send_message(
         sender,
-        "text",
+        "interactive",
         {
-            "body": "Invalid message your booking session is terminated. Please send Hi to start again.",
+            "type": "button",
+            "body": {
+            "text": "Invalid message. If you want to cancel your booking please click on below button."
+            },
+            "action": {
+            "buttons": [
+                {
+                "type": "reply",
+                "reply": {
+                    "id": "booking_session_cancel",
+                    "title": "Cancel Booking"
+                }
+                }
+            ]
+            }
         },
+        msg_context
     )
