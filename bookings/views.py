@@ -6,7 +6,7 @@ from django.views.generic import FormView, TemplateView
 
 from bookings.models import Booking
 from .forms import BookingForm, PaymentRecordForm
-
+from .ticket.utils import generate_booking_id_qrcode
 
 class BookingFormView(FormView):
     template_name = "booking/booking.html"
@@ -167,3 +167,29 @@ class BookingSummaryCardTemplateView(TemplateView):
 
 class BookingTicketTemplateView(TemplateView):
     template_name = "booking/booking_ticket.html"
+
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        booking_id = kwargs.get("booking_id")
+        if not booking_id:
+            return render(
+                request,
+                "common/error_page.html",
+                {"error_message": "Booking ID is required."},
+            )
+        booking = Booking.objects.filter(id=booking_id).exists()
+        if not booking:
+            return render(
+                request,
+                "common/error_page.html",
+                {"error_message": "Booking not found."},
+            )
+        booking = Booking.objects.prefetch_related(
+            "booking_costume", "booking_costume__costume"
+        ).get(id=booking_id)
+        
+        qr_code_url = generate_booking_id_qrcode(booking_id)    
+        context = {
+            "qr_code_url": qr_code_url
+        }                
+        return render(request, "booking/booking_ticket.html", context=context)
+    

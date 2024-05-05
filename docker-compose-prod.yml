@@ -33,6 +33,8 @@ services:
       - 8000
     volumes:
       - static_volume:/home/ganesha/static
+      - H:/WORK/FREELANCE/ganesha-waterpark/generated_media/:/home/ganesha/generated_media/
+      - ./:/home/ganesha
     env_file:
       - .env
     image: django_app
