@@ -36,7 +36,7 @@ services:
       - H:/WORK/FREELANCE/ganesha-waterpark/generated_media/:/home/ganesha/generated_media/
       - ./:/home/ganesha
     env_file:
-      - .env
+      - .env.prod
     image: django_app
     container_name: django_app
     depends_on:

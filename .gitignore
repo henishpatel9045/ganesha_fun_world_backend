@@ -3,5 +3,4 @@ static
 __pycache__
 
 *.log
-.env
-.env.test
+.env*

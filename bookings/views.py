@@ -6,7 +6,9 @@ from django.views.generic import FormView, TemplateView
 
 from bookings.models import Booking
 from .forms import BookingForm, PaymentRecordForm
+from .utils import create_razorpay_order
 from .ticket.utils import generate_booking_id_qrcode
+
 
 class BookingFormView(FormView):
     template_name = "booking/booking.html"
@@ -186,10 +188,7 @@ class BookingTicketTemplateView(TemplateView):
         booking = Booking.objects.prefetch_related(
             "booking_costume", "booking_costume__costume"
         ).get(id=booking_id)
-        
-        qr_code_url = generate_booking_id_qrcode(booking_id)    
-        context = {
-            "qr_code_url": qr_code_url
-        }                
+
+        qr_code_url = generate_booking_id_qrcode(booking_id)
+        context = {"qr_code_url": qr_code_url}
         return render(request, "booking/booking_ticket.html", context=context)
-    

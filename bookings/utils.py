@@ -1,15 +1,23 @@
+import uuid
+from datetime import datetime, timedelta
 from django.core.cache import cache
-from datetime import datetime
 from django.db import transaction
+from django.utils import timezone
 from django.shortcuts import get_object_or_404
+import razorpay
 import logging
 
 from common_config.common import COSTUME_CACHE_KEY
 from .models import Booking, BookingCostume, Payment, BookingCanteen
 from management_core.models import TicketPrice, Costume
 
-
 logging.getLogger(__name__)
+razorpay_client = razorpay.Client(
+    auth=("rzp_test_G9nG6xHNVssnUs", "lgQOpFTgjnTjyLP6kybwUbc7")
+)
+razorpay_client.set_app_details(
+    {"title": "Ganesha WhatsApp Booking App", "version": "1.0.0"}
+)
 
 
 def create_or_update_booking(
@@ -18,8 +26,8 @@ def create_or_update_booking(
     adult_male: int,
     adult_female: int,
     child: int,
-    booking_costume_data: dict,
     booking_type: str,
+    booking_costume_data: dict = {},
     is_discounted_booking: bool = False,
     special_ticket_total_amount=None,
     special_costume_total_amount=None,
@@ -42,6 +50,9 @@ def create_or_update_booking(
         is_discounted_booking (bool): True if the booking is discounted and
     """
     try:
+        # Add 91 to the number if it is 10 digit number
+        if len(wa_number.strip()) == 10:
+            wa_number = f"91{wa_number}"
         logging.info(
             "Create booking with data: ",
             {
@@ -59,13 +70,19 @@ def create_or_update_booking(
             },
         )
 
+        # Get pricelist data for the date of booking
         price_list = TicketPrice.objects.get(date=date)
+
+        # Get costume data from DB for the costumes in the booking
         booking_costume_keys = booking_costume_data.keys()
         costume_price_list = Costume.objects.filter(name__in=booking_costume_keys)
 
+        # Calculate the amount for the booking
         adult_price = price_list.adult * (adult_male + adult_female)
         child_price = price_list.child * child
         # TODO - Add other charges fields and logic
+
+        # Create costume data to create BookingCostume objects
         costume_data = []
         for costume in costume_price_list:
             costume_data.append(
@@ -80,6 +97,7 @@ def create_or_update_booking(
         costume_total = sum([costume[2] for costume in costume_data])
 
         with transaction.atomic():
+            # Create OR Update booking object
             if edit_booking:
                 booking = existing_booking
             else:
@@ -105,8 +123,10 @@ def create_or_update_booking(
             booking.booking_type = booking_type
             booking.save()
 
+            # Delete existing booking costume data if it is an edit booking
             booking.booking_costume.all().delete()
-            
+
+            # Create BookingCostume objects
             issued_costumes = []
             for costume in costume_data:
                 issued_costumes.append(
@@ -118,6 +138,8 @@ def create_or_update_booking(
                     )
                 )
             BookingCostume.objects.bulk_create(issued_costumes)
+
+            # Create BookingCanteen object only if it is new booking.
             if not edit_booking:
                 BookingCanteen(
                     booking=booking,
@@ -179,3 +201,32 @@ def add_payment_to_booking(
     except Exception as e:
         logging.exception(e)
         raise e
+
+
+def create_razorpay_order(amount, wa_number: str, note_data: dict = {}) -> str:
+    """Method to create razorpay order and return the order_id
+
+    :param amount: amount to be paid
+    :param note_data: dictionary of notes to be added to the order
+
+    :return: payment link
+    """
+    amount = int(float(amount) * 100)
+
+    expire_time = timezone.now() + timedelta(minutes=16)
+    expire_time = int(expire_time.timestamp())
+    order = razorpay_client.payment_link.create(
+        {
+            "amount": amount,
+            "currency": "INR",
+            "accept_partial": False,
+            "description": "For booking via WhatsApp",
+            "notify": {"sms": False, "email": False},
+            "reminder_enable": False,
+            "notes": note_data,
+            "expire_by": expire_time,
+            "callback_url": "https://example-callback-url.com/",
+            "callback_method": "get",
+        }
+    )
+    return order["short_url"]

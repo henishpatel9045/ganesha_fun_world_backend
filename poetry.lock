@@ -866,6 +866,20 @@ pil = ["pillow (>=9.1.0)"]
 test = ["coverage", "pytest"]
 
 [[package]]
+name = "razorpay"
+version = "1.4.2"
+description = "Razorpay Python Client"
+optional = false
+python-versions = "*"
+files = [
+    {file = "razorpay-1.4.2-py3-none-any.whl", hash = "sha256:aaf525baebc5001e5c54ae317a372c3c17c81314cedcbbf71aa0a2d3419a9757"},
+    {file = "razorpay-1.4.2.tar.gz", hash = "sha256:0d812030ba29e776e66d1ceaacc31635810fde18b66ff2591e582eb651bb5131"},
+]
+
+[package.dependencies]
+requests = "*"
+
+[[package]]
 name = "redis"
 version = "5.0.4"
 description = "Python client for Redis database and key-value store"
@@ -1123,4 +1137,4 @@ test = ["pytest"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "c5baaed8553262aa77e816ed15b229ab54d344e094103b7f7e042619f50250c4"
+content-hash = "122e004984d65a4a39f0f07ddf8e22502c041b78cf46d4b6fcb96f488aa65542"

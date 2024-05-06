@@ -4,7 +4,10 @@ from django.utils import timezone
 from django.core.cache import cache
 import requests
 import os
+
 from whatsapp.utils import WhatsAppClient
+from bookings.utils import create_or_update_booking, create_razorpay_order
+
 
 LOGO_URL = os.environ.get(
     "LOGO_URL", "https://www.shreeganeshafunworld.com/images/logo.png"
@@ -12,7 +15,7 @@ LOGO_URL = os.environ.get(
 
 
 whatsapp_config = WhatsAppClient(
-    "EAAGuKjgErkMBOw9PlNAvfyim79MLZCje4VB7XPKfbD8fgJrMCZA4MgY4NObJaUAVfCXAtwD7LfHXssAap2akGe0nthjCPmnr7jExp1cTaJoL4qaZAZBp8VZCzDhIORCqm4JloWRD55Hzzq4Vfp7uN00YhQqmBZCzPVB7lajJ2ZAkmKlqWZBmyZCmxVnZBKhblf6UdatniT7XKOsz0F7hwfDikZD",
+    "EAAGuKjgErkMBOZCltUf7TTRiHywvED8e61yajhK6yZCiF8k05ZBX1IptAmFkAxQTdtExAReRZBVEDPHbRMYGERmLj18tZBNZBqgF6IQLWZBrc0CtGjZAmrQAaZAfHSeKvV9C3FzRqnTQso8F1yLJsQflZCPGhfpKn7JJxDHRxmB9hgrOd2InIPh0JsjfUF9gVXIbnh6gfopK6GC3ws1tkrlPBL",
     "285776191286365",
 )
 client = whatsapp_config.get_client()
@@ -115,11 +118,39 @@ def handle_booking_session_messages(
         
     # Handle the logic after booking is confirmed i.e. create booking instance and generate razorpay order for the same.
     if message_type == "interactive" and payload == "booking_session_confirm":
-        cache.delete(f"booking_session_{sender}")
-        return whatsapp_config.send_message(
-            sender,
-            "text",
-            {"body": "Booking confirmed."}, msg_context)
+        # Create booking
+        try:
+            booking = create_or_update_booking(
+                wa_number=active_session.get("wa_number"),
+                date=timezone.datetime.strptime(active_session.get("date"), "%d-%m-%Y").date(),
+                adult_male=active_session.get("adult_male"),
+                adult_female=active_session.get("adult_female"),
+                child=active_session.get("child"),
+                booking_costume_data={},
+                booking_type="whatsapp_booking"
+            )
+            order = create_razorpay_order(booking.total_amount, booking.wa_number, {
+                "id": str(booking.id),
+                "amount": str(booking.total_amount),
+                "adult_male": str(booking.adult_male),
+                "adult_female": str(booking.adult_female),
+                "child": str(booking.child)
+            })
+            print(order)
+            res = whatsapp_config.send_message(
+                sender,
+                "text",
+                {"preview_url": True,"body": f"Booking confirmed. Make payment by click on this link {order}"}, msg_context)
+            print(res)
+            return res
+        except Exception as e:
+            return whatsapp_config.send_message(
+                sender,
+                "text",
+                {"body": f"Sorry for inconvenience. Error occurred while creating booking: {str(e)}"},
+                msg_context
+            )
+        
 
     if active_session.get("date") is None:
         if message_type == "interactive":
