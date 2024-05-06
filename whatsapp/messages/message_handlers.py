@@ -140,8 +140,8 @@ def handle_booking_session_messages(
             res = whatsapp_config.send_message(
                 sender,
                 "text",
-                {"preview_url": True,"body": f"Booking confirmed. Make payment by click on this link {order}"}, msg_context)
-            print(res)
+                {"preview_url": True,"body": f"Booking confirmed.\nMake payment by click on this link in next 15 minutes \n{order}"}, msg_context)
+            
             return res
         except Exception as e:
             return whatsapp_config.send_message(
