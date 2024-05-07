@@ -32,35 +32,38 @@ class Costume(DateTimeBaseModel):
     price = models.DecimalField(decimal_places=2, max_digits=10, default=0)
     is_available = models.BooleanField(default=True)
 
-    def save(self, *args, **kwargs):
-        items = cache.get(COSTUME_CACHE_KEY)
-        if items:
-            items[str(self.id)] = {
-                "name": self.name,
-                "description": self.description,
-                "price": self.price,
-                "is_available": self.is_available,
-            }
-            cache.set(COSTUME_CACHE_KEY, items)
-        else:
-            items = {
-                str(item.id): {
-                    "name": item.name,
-                    "description": item.description,
-                    "price": item.price,
-                    "is_available": item.is_available,
-                }
-                for item in Costume.objects.all()
-            }
-            cache.set(COSTUME_CACHE_KEY, items)
-        super().save(*args, **kwargs)
+    def __str__(self):
+        return self.name
+    
+    # def save(self, *args, **kwargs):
+    #     items = cache.get(COSTUME_CACHE_KEY)
+    #     if items:
+    #         items[str(self.id)] = {
+    #             "name": self.name,
+    #             "description": self.description,
+    #             "price": self.price,
+    #             "is_available": self.is_available,
+    #         }
+    #         cache.set(COSTUME_CACHE_KEY, items)
+    #     else:
+    #         items = {
+    #             str(item.id): {
+    #                 "name": item.name,
+    #                 "description": item.description,
+    #                 "price": item.price,
+    #                 "is_available": item.is_available,
+    #             }
+    #             for item in Costume.objects.all()
+    #         }
+    #         cache.set(COSTUME_CACHE_KEY, items)
+    #     super().save(*args, **kwargs)
 
-    def delete(self, *args, **kwargs):
-        items = cache.get(COSTUME_CACHE_KEY)
-        if items:
-            items.pop(str(self.id))
-            cache.set(COSTUME_CACHE_KEY, items)
-        super().delete(*args, **kwargs)
+    # def delete(self, *args, **kwargs):
+    #     items = cache.get(COSTUME_CACHE_KEY)
+    #     if items:
+    #         items.pop(str(self.id))
+    #         cache.set(COSTUME_CACHE_KEY, items)
+    #     super().delete(*args, **kwargs)
 
 
 class Locker(DateTimeBaseModel):

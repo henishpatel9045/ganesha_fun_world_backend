@@ -5,9 +5,14 @@ from django.http import HttpRequest, HttpResponse
 from django.views.generic import FormView, TemplateView
 
 from bookings.models import Booking
+from management_core.models import TicketPrice
 from .forms import BookingForm, PaymentRecordForm
 from .utils import create_razorpay_order
 from .ticket.utils import generate_booking_id_qrcode
+
+
+class BookingHomeTemplateView(TemplateView):
+    template_name = "booking/booking_home.html"
 
 
 class BookingFormView(FormView):
@@ -170,6 +175,10 @@ class BookingSummaryCardTemplateView(TemplateView):
 class BookingTicketTemplateView(TemplateView):
     template_name = "booking/booking_ticket.html"
 
+    def get_gst_amount(self, total, percentage):
+        total, percentage = float(total), float(percentage)
+        return round((total / (1 + percentage)) * percentage, 2)
+
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         booking_id = kwargs.get("booking_id")
         if not booking_id:
@@ -188,7 +197,23 @@ class BookingTicketTemplateView(TemplateView):
         booking = Booking.objects.prefetch_related(
             "booking_costume", "booking_costume__costume"
         ).get(id=booking_id)
-
+        price_list = TicketPrice.objects.filter(date=booking.date).first()
+        costume_data = booking.booking_costume.all()
+        print(costume_data)
         qr_code_url = generate_booking_id_qrcode(booking_id)
-        context = {"qr_code_url": qr_code_url}
+        context = {
+            "qr_code_url": qr_code_url,
+            "booking": booking,
+            "adult_male_price": price_list.adult,
+            "adult_female_price": price_list.adult,
+            "adult_male_total": price_list.adult * booking.adult_male,
+            "adult_female_total": price_list.adult * booking.adult_female,
+            "child_total": price_list.child * booking.child,
+            "child_price": price_list.child,
+            "amount_to_collect": booking.total_amount - booking.received_amount,
+            "costume_data": costume_data,
+            "sgst_amount": self.get_gst_amount(booking.total_amount, 0.09),
+            "cgst_amount": self.get_gst_amount(booking.total_amount, 0.09),
+            "gst_amount": self.get_gst_amount(booking.total_amount, 0.09) * 2,
+        }
         return render(request, "booking/booking_ticket.html", context=context)

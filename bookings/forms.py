@@ -14,7 +14,7 @@ from management_core.models import Costume, TicketPrice
 
 
 class BookingForm(forms.Form):
-    wa_number = forms.CharField(max_length=10, label="WhatsApp Number", required=True)
+    wa_number = forms.CharField(max_length=12, label="WhatsApp Number", required=True)
     adult_male = forms.IntegerField(
         min_value=0,
         required=True,
@@ -67,7 +67,7 @@ class BookingForm(forms.Form):
             Layout(
                 Row(
                     Column(
-                        FloatingField("wa_number", pattern=r"^\d{10}$"),
+                        FloatingField("wa_number", pattern=r"^\d{12}$"),
                     ),
                     Column(FloatingField("date", css_class="w-100")),
                 ),

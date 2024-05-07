@@ -1,9 +1,11 @@
 {% extends 'base.html' %} {% block content %}
+{% load humanize %}
 <style>
   @media print {
     /* Ensure no page breaks */
     @page {
-      width: 500px;
+      width: 600px;
+      height: 1500px;
       margin: 0;
     }
   }
@@ -16,36 +18,129 @@
     font-size: 1.2rem;
   }
 
+  th, td {
+    font-size: 1rem;
+  }
+
   .detail-table {
     width: 100%;
   }
 
   body{
-    max-width: 500px;
+    max-width: 600px;
+  }
+
+  .logo-img{
+    height: 100px;
+    position: absolute;
+    top: 10px;
+    left: 20px;
   }
 </style>
 
 <div id="ticket">
   <div
-    class="w-100 bg-danger p-5"
+    class="w-100 position-relative"
   >
-    <img src="data:image/png;base64,{{ qr_code_url }}" class="w-100" />
+    <img src="https://www.shreeganeshafunworld.com/images/logo.png" class="logo-img" />
+    <img src="data:image/png;base64,{{ qr_code_url }}" class="w-100" style="margin-top: 80px;" />
   </div>
   <div class="w-100 separator" />
   <div class="w-100">
-    <div class="">
-      <table class="table table-sm">
+    <div class="px-2">
+      <table class="table table-borderless table-sm">
         <tbody>
           <tr>
             <th>WA Number</th>
-            <td>adads</td>
+            <td colspan="3">+91 7990577979</td>
           </tr>
           <tr>
-            <th>Booking ID</th>
-            <td>adads</td>
+            <th>Date</th>
+            <td colspan="3">5 May 2024</td>
+          </tr>
+          <tr>
+            <td colspan="4"/>
+          </tr>
+          <tr class="table-group-divider text-center">
+            <th>Item</th> 
+            <th>Rate</th>
+            <th>Quantity</th>
+            <th>Total</th>
+          </tr>
+          <tr>
+            <th>Adults (Male)</th>
+            <td class="text-center">{{adult_male_price}}</td>
+            <td class="text-center">{{booking.adult_male}}</td>
+            <td class="text-end">{{adult_male_total}}</td>
+          </tr>
+          <tr>
+            <th>Adults (Female)</th>
+            <td class="text-center">{{ adult_female_price }}</td>
+            <td class="text-center">{{booking.adult_female}}</td>
+            <td class="text-end">{{adult_female_total}}</td>
+          </tr>
+          <tr>
+            <th>Children</th>
+            <td class="text-center">{{child_price}}</td>
+            <td class="text-center">{{ booking.child }}</td>
+            <td class="text-end">{{child_total }}</td>
+          </tr>
+          
+          {% if booking.infants > 0 %}
+            <tr>
+              <th>Infants</th>
+              <td class="text-center">0.00</td>
+              <td class="text-center">{{booking.infants}}</td>
+              <td class="text-end">0.00</td>
+            </tr>
+          {% endif %}
+          
+          
+          {% if costume_data %}
+            <tr>
+              <th colspan="4" class="text-center bg-secondary text-white">Costume</th>
+            </tr>
+          {% endif %}
+          
+          {% for costume in costume_data %}
+            <tr>
+              <th>{{costume.costume}}</th>
+              <td class="text-center">{{costume.costume.price}}</td>
+              <td class="text-center">{{costume.quantity}}</td>
+              <td class="text-end">{{costume.deposit_amount}}</td>
+            </tr>
+          {% endfor %}
+          <tr>
+            <th colspan="3" class="text-end">SGST (9%)</th>
+            <td class="text-end">{{sgst_amount}}</td>
+          </tr>
+          <tr>
+            <th colspan="3" class="text-end">CGST (9%)</th>
+            <td class="text-end">{{cgst_amount}}</td>
+          </tr>
+          <tr>
+            <th colspan="3" class="text-end">Total GST (18%)</th>
+            <td class="text-end">{{gst_amount}}</td>
+          </tr>
+          <tr >
+            <th colspan="2" class="text-end bg-secondary text-white">Total</th>
+            <th colspan="2" class="text-end bg-secondary text-warning">{{booking.total_amount|floatformat:2|intcomma}} INR</th>
+          </tr>
+          <tr>
+            <th colspan="3" class="text-end">Received Amount</th>
+            <td class="text-end">{{booking.received_amount}}</td>
+          </tr>
+          <tr >
+            <th colspan="2" class="text-end bg-secondary text-white">Remaining Amount</th>
+            <th colspan="2" class="text-end bg-secondary text-warning">{{amount_to_collect|floatformat:2|intcomma}} INR</th>
           </tr>
         </tbody>
       </table>
+      <div class="w-100 separator" />
+      <footer class="w-100">
+        <p class="text-center">Thank you for visiting Shree Ganesh Fun World</p>
+        <p class="text-center">Please keep this ticket with you for verification</p>
+      </footer>
     </div>
   </div>
 </div>

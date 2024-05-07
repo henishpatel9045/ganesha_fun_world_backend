@@ -1,0 +1,22 @@
+{% extends 'base.html' %} {% block title %} Home {% endblock %} 
+{% block content %}
+<h2 class="p-3 pb-3">Home</h2>
+<div
+  class="w-100 h-100 row row-cols-2 row-cols-md-3 row-cols-lg-4 g-2 gy-2 gx-2 p-3 position-relative"
+>
+  <a
+    href="{% url 'booking_create' %}"
+    class="btn btn-primary btn-outline-secondary col text-center"
+    style="min-height: 150px"
+  >
+    Create Booking
+  </a>
+  <a
+    href="{% url 'react_app' %}"
+    class="btn btn-primary btn-outline-secondary col text-center"
+    style="min-height: 150px"
+  >
+    Scan QR Code
+  </a>
+</div>
+{% endblock %}
