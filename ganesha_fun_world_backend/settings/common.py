@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "crispy_forms",
     "crispy_bootstrap5",
     "rest_framework",
+    "django_rq",
     "drf_yasg",
     "custom_auth",
     "frontend",
@@ -161,14 +162,25 @@ LOGGING = {
             "filename": "general.log",
             "formatter": "verbose",
         },
+        "rq_console": {
+            "level": "DEBUG",
+            "class": "rq.logutils.ColorizingStreamHandler",
+            "formatter": "rq_console",
+            "exclude": ["%(asctime)s"],
+        },
     },
     "loggers": {
-        "": {"handlers": ["file"], "level": os.environ.get("LOG_LEVEL", "INFO")}
+        "rq.worker": {"handlers": ["rq_console"], "level": "DEBUG"},
+        "": {"handlers": ["file"], "level": os.environ.get("LOG_LEVEL", "INFO")},
     },
     "formatters": {
         "verbose": {
             "format": "[{asctime}]: ({levelname}) {name} $ {message} $ {pathname} #{funcName}:L{lineno}",
             "style": "{",
-        }
+        },
+        "rq_console": {
+            "format": "%(asctime)s %(message)s",
+            "datefmt": "%H:%M:%S",
+        },
     },
 }

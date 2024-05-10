@@ -19,3 +19,24 @@ CACHES = {
         "LOCATION": "redis://test_redis:6379",
     }
 }
+
+# RQ settings
+RQ_QUEUES = {
+    "default": {
+        "HOST": "test_redis",
+        "PORT": 6379,
+        "DB": 0,
+        "DEFAULT_TIMEOUT": 360,
+    },
+    "high": {
+        "HOST": "test_redis",
+        "PORT": 6379,
+        "DB": 0,
+        "DEFAULT_TIMEOUT": 500,
+    },
+    # "low": {
+    #     "HOST": "redis",
+    #     "PORT": 6379,
+    #     "DB": 0,
+    # },
+}

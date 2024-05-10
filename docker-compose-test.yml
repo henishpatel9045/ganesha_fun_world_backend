@@ -47,7 +47,7 @@ services:
       - test_redis
     networks:
       - test_network
-    command: python manage.py runserver 0.0.0.0:8000
+    command: /usr/bin/supervisord
 
 volumes:
   test_postgres_data:

@@ -22,6 +22,7 @@ weasyprint = "^62.0"
 redis = "^5.0.4"
 qrcode = {extras = ["pil"], version = "^7.4.2"}
 razorpay = "^1.4.2"
+django-rq = "^2.10.2"
 
 
 [build-system]

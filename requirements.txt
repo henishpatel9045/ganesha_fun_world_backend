@@ -13,3 +13,4 @@ weasyprint==62.0
 redis==5.0.4
 qrcode[pil]
 razorpay==1.4.2
+django-rq==2.10.2
