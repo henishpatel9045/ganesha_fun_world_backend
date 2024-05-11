@@ -4,10 +4,13 @@ from django.utils import timezone
 from django.core.cache import cache
 import requests
 import os
+import logging
 
 from whatsapp.utils import WhatsAppClient
+from management_core.models import TicketPrice
 from bookings.utils import create_or_update_booking, create_razorpay_order
 
+logging.getLogger(__name__)
 
 LOGO_URL = os.environ.get(
     "LOGO_URL", "https://www.shreeganeshafunworld.com/images/logo.png"
@@ -15,8 +18,8 @@ LOGO_URL = os.environ.get(
 
 
 whatsapp_config = WhatsAppClient(
-    "EAAGuKjgErkMBOZCltUf7TTRiHywvED8e61yajhK6yZCiF8k05ZBX1IptAmFkAxQTdtExAReRZBVEDPHbRMYGERmLj18tZBNZBqgF6IQLWZBrc0CtGjZAmrQAaZAfHSeKvV9C3FzRqnTQso8F1yLJsQflZCPGhfpKn7JJxDHRxmB9hgrOd2InIPh0JsjfUF9gVXIbnh6gfopK6GC3ws1tkrlPBL",
-    "285776191286365",
+    "EAAabZCi7kE38BO9tTbh2Vk8ulnV60wm7YuKTYV52jlqed26MZByjt5IGlZCYRa31BhK4l1b2NRZAdiGQ235mOAhzH5mRZBLdN1KPMtgmuCaXZAlHXDUlOAaXeYphmz00NlhADSIZCB1ZCTMTV1Oz1ygdVx5Ubk2hBEuLPuyjLtsW8ZBBHmRMQ5bHZBd36SG84c3KvrnUzVtnO3d5CdaGPRqjwkfegZD",
+    "105976528928889",
 )
 client = whatsapp_config.get_client()
 
@@ -27,6 +30,10 @@ def send_date_list_message(recipient_number: str, context: dict|None) -> request
 
     :param `recipient_number`: The number to which message is to be sent
     """
+    available_dates = TicketPrice.objects.filter(date__gt=timezone.now().date())[:10].values_list("date", flat=True)
+    logging.info(f"Available Dates: {available_dates}")
+    
+    
     response_payload = {
         "type": "list",
         "body": {"text": "Please select date for booking"},
@@ -37,11 +44,11 @@ def send_date_list_message(recipient_number: str, context: dict|None) -> request
                     "title": "Available Dates",
                     "rows": [
                         {
-                            "id": (timezone.now().date() + timedelta(days=i)).strftime("%d-%m-%Y"),
-                            "title": (timezone.now().date() + timedelta(days=i)).strftime("%d %b %Y"),
+                            "id": date.strftime("%d-%m-%Y"),
+                            "title": date.strftime("%d %b %Y"),
                             # "description": "",
                         }
-                        for i in range(1, 11)
+                        for date in available_dates
                     ],
                 },
             ],
@@ -61,7 +68,7 @@ def send_welcome_message(recipient_number: str) -> requests.Response:
     template_name used is `welcome_message`
     """
     payload = {
-        "name": "welcome_action",
+        "name": "welcome_action_template",
         "language": {"code": "en"},
         "components": [
             {
@@ -87,6 +94,14 @@ def send_welcome_message(recipient_number: str) -> requests.Response:
                 "index": "1",
                 "parameters": [
                     {"type": "payload", "payload": "booking_session_start"}
+                ],
+            },
+            {
+                "type": "button",
+                "sub_type": "quick_reply",
+                "index": "2",
+                "parameters": [
+                    {"type": "payload", "payload": "my_bookings"}
                 ],
             },
         ],

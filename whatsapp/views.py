@@ -5,7 +5,9 @@ from rest_framework import status
 from django.utils import timezone
 from django.core.cache import cache
 from decouple import config, Csv
+import django_rq
 import logging
+import os
 
 import pprint
 from .utils import WhatsAppClient
@@ -17,8 +19,8 @@ from .messages.message_handlers import (
 
 
 whatsapp_config = WhatsAppClient(
-    "EAAGuKjgErkMBOw9PlNAvfyim79MLZCje4VB7XPKfbD8fgJrMCZA4MgY4NObJaUAVfCXAtwD7LfHXssAap2akGe0nthjCPmnr7jExp1cTaJoL4qaZAZBp8VZCzDhIORCqm4JloWRD55Hzzq4Vfp7uN00YhQqmBZCzPVB7lajJ2ZAkmKlqWZBmyZCmxVnZBKhblf6UdatniT7XKOsz0F7hwfDikZD",
-    "285776191286365",
+    "EAAabZCi7kE38BO9tTbh2Vk8ulnV60wm7YuKTYV52jlqed26MZByjt5IGlZCYRa31BhK4l1b2NRZAdiGQ235mOAhzH5mRZBLdN1KPMtgmuCaXZAlHXDUlOAaXeYphmz00NlhADSIZCB1ZCTMTV1Oz1ygdVx5Ubk2hBEuLPuyjLtsW8ZBBHmRMQ5bHZBd36SG84c3KvrnUzVtnO3d5CdaGPRqjwkfegZD",
+    "105976528928889",
 )
 
 TESTING_NUMBERS = config("WA_TEST_NUMBERS", cast=Csv())
@@ -31,8 +33,10 @@ class WhatsAppTestTriggerAPIView(APIView):
         """
         Function to handle the get request.
         """
-        res = send_welcome_message("917990577979")
-        pprint.pprint(res.json())
+        django_rq.enqueue(
+            send_welcome_message,
+            "917990577979",
+        )
         return Response("Hello, World!", status=status.HTTP_200_OK)
 
 
@@ -150,6 +154,8 @@ class WhatsAppWebhook(APIView):
                     },
                     msg_context,
                 )
+                cache.delete(f"booking_session_{sender}") # delete active booking if there is any.
+
                 return Response(200)
         except Exception as e:
             logging.exception(e)
