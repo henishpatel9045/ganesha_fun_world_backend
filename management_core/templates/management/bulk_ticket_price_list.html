@@ -1,0 +1,37 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<form action="{% url 'ticket_list_price_create_bulk' %}" method="POST" style="width: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+    {% csrf_token %}
+    <div>
+        <h1 style="margin-bottom: 1rem;">Bulk Ticket Price List</h1>
+        {% if form.errors %}
+        <ul class="errorlist" style="padding: 1rem 1.5rem; border: 1px solid red; font-size: 1rem;">
+            {% for error in form.non_field_errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        <fieldset class="module aligned">
+            {% for field in form %}
+            <div class="form-row field-{{ field.name }}">
+                <div style="margin-bottom: 1rem;">
+                    <div class="flex-container" style="width: 100%; display: flex; align-items: center; justify-content: space-between;">
+                        <label for="id_{{ field.name }}"><b>{{ field.label }}</b></label>
+                        {{ field }}
+                        {% if field.errors %}
+                        {% for error in field.errors %}
+                        <span class="error">{{ error }}</span>
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+                    <div style="height: 1px; width: 100%; background-color: #888;" />
+                </div>
+            </div>
+            {% endfor %}
+        </fieldset>
+        
+    </div>
+    <input type="submit" name="apply" value="Submit">
+</form>
+{% endblock %}

@@ -18,6 +18,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path('django-rq/', include('django_rq.urls')),
     path("frontend/", include("frontend.urls")),
+    path("management_core/", include("management_core.urls")),
     path(
         "swagger<format>/", schema_view.without_ui(cache_timeout=0), name="schema-json"
     ),

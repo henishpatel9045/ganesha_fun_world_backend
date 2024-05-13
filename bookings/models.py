@@ -12,6 +12,7 @@ class DateTimeBaseModel(models.Model):
 
     class Meta:
         abstract = True
+        ordering = ["-updated_at"]
 
 
 class Booking(DateTimeBaseModel):

@@ -10,6 +10,7 @@ class DateTimeBaseModel(models.Model):
 
     class Meta:
         abstract = True
+        ordering = ["-updated_at"]
 
 
 class TicketPrice(DateTimeBaseModel):
@@ -22,8 +23,11 @@ class TicketPrice(DateTimeBaseModel):
     other_price = models.DecimalField(decimal_places=2, max_digits=10, default=0)
     other_price_description = models.TextField(null=True, blank=True)
 
-    def __str__(self) -> COSTUME_CACHE_KEY:
-        return f"{self.date}"
+    def __str__(self):
+        return self.date.strftime("%A, %d %B %Y")
+
+    class Meta:
+        ordering = ["-date"]
 
 
 class Costume(DateTimeBaseModel):
@@ -34,38 +38,11 @@ class Costume(DateTimeBaseModel):
 
     def __str__(self):
         return self.name
-    
-    # def save(self, *args, **kwargs):
-    #     items = cache.get(COSTUME_CACHE_KEY)
-    #     if items:
-    #         items[str(self.id)] = {
-    #             "name": self.name,
-    #             "description": self.description,
-    #             "price": self.price,
-    #             "is_available": self.is_available,
-    #         }
-    #         cache.set(COSTUME_CACHE_KEY, items)
-    #     else:
-    #         items = {
-    #             str(item.id): {
-    #                 "name": item.name,
-    #                 "description": item.description,
-    #                 "price": item.price,
-    #                 "is_available": item.is_available,
-    #             }
-    #             for item in Costume.objects.all()
-    #         }
-    #         cache.set(COSTUME_CACHE_KEY, items)
-    #     super().save(*args, **kwargs)
-
-    # def delete(self, *args, **kwargs):
-    #     items = cache.get(COSTUME_CACHE_KEY)
-    #     if items:
-    #         items.pop(str(self.id))
-    #         cache.set(COSTUME_CACHE_KEY, items)
-    #     super().delete(*args, **kwargs)
 
 
 class Locker(DateTimeBaseModel):
     locker_number = models.CharField(max_length=100, db_index=True, null=False)
     is_available = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["locker_number"]
