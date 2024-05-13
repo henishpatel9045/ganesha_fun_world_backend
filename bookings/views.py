@@ -4,9 +4,9 @@ from django.shortcuts import render
 from django.http import HttpRequest, HttpResponse
 from django.views.generic import FormView, TemplateView
 
-from bookings.models import Booking
+from bookings.models import Booking, Payment
 from management_core.models import TicketPrice
-from .forms import BookingForm, PaymentRecordForm
+from .forms import BookingForm, PaymentRecordForm, PaymentRecordEditForm
 from .utils import create_razorpay_order
 from .ticket.utils import generate_booking_id_qrcode
 
@@ -71,7 +71,7 @@ class BookingEditFormView(FormView):
         }
 
         form = BookingForm(initial=initial_data)
-        return render(request, "booking/booking_edit.html", context={"form": form})
+        return render(request, "booking/booking_edit.html", context={"form": form, "booking_id": booking_id})
 
     def form_valid(self, form):
         try:
@@ -134,6 +134,56 @@ class PaymentFormView(FormView):
 
     def get_success_url(self) -> str:
         return f"/bookings/booking/{self.kwargs.get('booking_id')}/summary"
+
+
+class PaymentEditFormView(FormView):
+    template_name = "booking/booking_payment.html"
+    form_class = PaymentRecordEditForm
+
+    def get(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
+        payment_id = kwargs.get("payment_id")
+        if not payment_id:
+            return render(
+                request,
+                "common/error_page.html",
+                {"error_message": "Payment ID is required."},
+            )
+        payment = Payment.objects.filter(id=payment_id).exists()
+        if not payment:
+            return render(
+                request,
+                "common/error_page.html",
+                {"error_message": "Payment not found."},
+            )
+        payment = Payment.objects.prefetch_related("booking").get(id=payment_id)
+        form = PaymentRecordEditForm(
+            initial={
+                "booking": payment.booking,
+                "payment_amount": payment.amount,
+                "payment_mode": payment.payment_mode,
+                "payment_for": payment.payment_for,
+                "is_confirmed": payment.is_confirmed,
+                "is_returned_to_customer": payment.is_returned_to_customer,
+            }
+        )
+        self.booking_id = payment.booking.id
+        context = {
+            "form": form,
+            "payment": payment,
+            "booking_id": self.booking_id
+        }
+        return render(request, "booking/booking_payment.html", context=context)
+
+    def form_valid(self, form: PaymentRecordEditForm):
+        try:
+            booking = form.save(payment_id=self.kwargs.get("payment_id"))
+            self.booking_id = booking.id
+            return super().form_valid(form)
+        except Exception as e:
+            return super().form_invalid(form)
+
+    def get_success_url(self) -> str:
+        return f"/bookings/booking/{self.booking_id}/payment-records"
 
 
 class BookingSummaryCardTemplateView(TemplateView):
@@ -217,3 +267,29 @@ class BookingTicketTemplateView(TemplateView):
             "gst_amount": self.get_gst_amount(booking.total_amount, 0.09) * 2,
         }
         return render(request, "booking/booking_ticket.html", context=context)
+
+
+class BookingPaymentRecordsTemplateView(TemplateView):
+    template_name = "booking/booking_payment_records.html"
+
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        booking_id = kwargs.get("booking_id")
+        if not booking_id:
+            return render(
+                request,
+                "common/error_page.html",
+                {"error_message": "Booking ID is required."},
+            )
+        booking = Booking.objects.filter(id=booking_id).exists()
+        if not booking:
+            return render(
+                request,
+                "common/error_page.html",
+                {"error_message": "Booking not found."},
+            )
+        booking = Booking.objects.prefetch_related("booking_payment").get(id=booking_id)
+        context = {
+            "booking_id": booking.id,
+            "booking_payments": booking.booking_payment.all(),
+        }
+        return render(request, self.template_name, context=context)

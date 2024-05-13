@@ -7,8 +7,6 @@
             <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'booking_home' %}">Home</a></li>
             <li class="breadcrumb-item"><a href="{% url 'react_app' %}">QR Code Scanner</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'booking_edit' booking_id %}">Edit Booking</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'booking_payment' booking_id %}">Add Payment</a></li>
             <li class="breadcrumb-item active" aria-current="page">Booking Summary</li>
             </ol>
         </nav>
@@ -31,9 +29,7 @@
                                 <p><strong>Adult:</strong> {{ adult }}</p>
                                 <p><strong>Child:</strong> {{ child }}</p>
                             </div>
-                            <div class="col d-flex h-100">
-                                <div class="vr"></div>
-                              </div>
+                            
                             <div class="col-md-5">
                                 <p><strong>Ticket Amount:</strong> <span>{{ ticket_amount }} ₹</span></p>
                                 <p><strong>Costume Amount:</strong> <span>{{ costume_amount }} ₹</span></p>
@@ -53,6 +49,9 @@
                                 <a href="{% url 'booking_payment' booking_id %}" class="btn btn-warning w-100 h-100 d-flex align-items-center justify-content-center">Add Payment</a>
                             </div>
                             <div class="col-4">
+                                <a href="{% url 'booking_payment_records' booking_id %}" class="btn btn-info w-100 h-100 d-flex align-items-center justify-content-center">Payment Records</a>
+                            </div>
+                            <div class="col mt-2">
                                 <a class="btn btn-success w-100 h-100 d-flex align-items-center justify-content-center">Send Ticket To WhatsApp</a>
                             </div>
                         </div>

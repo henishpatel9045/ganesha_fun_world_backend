@@ -1,20 +1,25 @@
 from typing import Any
 from django import forms
 from django.core.validators import MinValueValidator
+from django.db import transaction
 from django.utils import timezone
 from crispy_forms.helper import FormHelper, Layout
 from crispy_forms.layout import Submit, Row, Column
-from crispy_forms.bootstrap import AccordionGroup, InlineRadios, UneditableField
+from crispy_forms.bootstrap import AccordionGroup, InlineRadios, Field
 from crispy_bootstrap5.bootstrap5 import FloatingField, BS5Accordion
 
 from common_config.common import PAYMENT_MODES_FORM
 from .utils import add_payment_to_booking, create_or_update_booking
-from .models import Booking
+from .models import Booking, Payment
 from management_core.models import Costume, TicketPrice
 
 
 class BookingForm(forms.Form):
-    wa_number = forms.CharField(max_length=12, label="WhatsApp Number", required=True)
+    wa_number = forms.CharField(
+        max_length=12,
+        label="WhatsApp Number",
+        required=True,
+    )
     adult_male = forms.IntegerField(
         min_value=0,
         required=True,
@@ -67,7 +72,9 @@ class BookingForm(forms.Form):
             Layout(
                 Row(
                     Column(
-                        FloatingField("wa_number", pattern=r"^\d{12}$"),
+                        FloatingField(
+                            "wa_number", pattern=r"^\d{10}$|^\d{12}$", max_length=12
+                        ),
                     ),
                     Column(FloatingField("date", css_class="w-100")),
                 ),
@@ -131,6 +138,12 @@ class BookingForm(forms.Form):
                 label=size,
                 initial=0,
             )
+
+    def clean_wa_number(self) -> str:
+        self.cleaned_data["wa_number"] = self.cleaned_data["wa_number"].replace(" ", "")
+        if len(self.cleaned_data["wa_number"]) == 10:
+            self.cleaned_data["wa_number"] = "91" + self.cleaned_data["wa_number"]
+        return self.cleaned_data["wa_number"]
 
     def save(
         self, edit_booking: bool = False, booking_id: str | None = None
@@ -233,6 +246,84 @@ class PaymentRecordForm(forms.Form):
                 payment_for="booking",
                 payment_mode=self.cleaned_data["payment_mode"],
             )
+            return self.cleaned_data["booking"]
+        except Exception as e:
+            self.add_error(None, e.args[0])
+            raise forms.ValidationError()
+
+
+class PaymentRecordEditForm(forms.Form):
+    booking = forms.ModelChoiceField(
+        queryset=Booking.objects.all(),
+        label="Booking",
+        required=False,
+        widget=forms.Select(
+            attrs={
+                "id": "payment_booking",
+            }
+        ),
+    )
+    payment_amount = forms.DecimalField(
+        required=True,
+        label="Payment Amount",
+        widget=forms.NumberInput(attrs={"id": "payment_amount"}),
+    )
+    payment_mode = forms.ChoiceField(
+        choices=PAYMENT_MODES_FORM,
+        required=True,
+        label="Payment Mode",
+        widget=forms.RadioSelect(attrs={"id": "payment_mode"}),
+        initial="gate_upi",
+    )
+    is_confirmed = forms.BooleanField(
+        required=False,
+        label="Payment Confirmed",
+        widget=forms.CheckboxInput(attrs={"id": "is_confirmed"}),
+    )
+    is_returned_to_customer = forms.BooleanField(
+        required=False,
+        label="Returned to Customer",
+        widget=forms.CheckboxInput(attrs={"id": "is_returned_to_customer"}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.add_layout(
+            Layout(
+                FloatingField("booking", css_class="w-50"),
+                FloatingField("payment_amount", css_class="w-50", editable=False),
+                InlineRadios("payment_mode", css_class="w-fit"),
+                Field("is_confirmed", css_class="w-fit"),
+                Field("is_returned_to_customer", css_class="w-fit"),
+                Submit(
+                    "submit",
+                    "Save Payment",
+                    css_class="mt-3 btn-success",
+                    css_id="payment_submit",
+                ),
+            )
+        )
+
+    def save(self, payment_id: str) -> Booking:
+        try:
+            with transaction.atomic():
+                payment = Payment.objects.get(id=payment_id)
+                payment.payment_mode = self.cleaned_data["payment_mode"]
+                payment.is_confirmed = self.cleaned_data["is_confirmed"]
+                payment.is_returned_to_customer = self.cleaned_data[
+                    "is_returned_to_customer"
+                ]
+
+                # If payment is not returned to customer, then update booking received amount
+                if not payment.is_returned_to_customer:
+                    payment.booking.received_amount -= payment.amount
+                    payment.amount = self.cleaned_data["payment_amount"]
+                    if payment.is_confirmed:
+                        payment.booking.received_amount += payment.amount
+
+                payment.save()
+                payment.booking.save()
             return self.cleaned_data["booking"]
         except Exception as e:
             self.add_error(None, e.args[0])

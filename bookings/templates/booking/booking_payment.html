@@ -1,0 +1,27 @@
+{% extends 'base.html' %} {% block title %}Edit Payment {{ booking_id }}{% endblock %} {% load crispy_forms_tags %} {% block content %}
+<div class="card  mx-5 mb-2">
+  <div class="card-header">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'booking_home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'react_app' %}">QR Code Scanner</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'booking_summary' booking_id %}">Booking Summary</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'booking_payment_records' booking_id %}">Payment Records</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Payment Record</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<div class="mx-5 mb-2">
+  <h1 class="mb-2">Payment #{{payment.id}}</h1>
+    <div>
+        <div class="card w-fit">
+            <div class="card-body">
+            {% crispy form %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

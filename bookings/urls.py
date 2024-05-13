@@ -7,6 +7,8 @@ from .views import (
     BookingSummaryCardTemplateView,
     BookingEditFormView,
     BookingTicketTemplateView,
+    BookingPaymentRecordsTemplateView,
+    PaymentEditFormView,
 )
 
 
@@ -17,6 +19,11 @@ urlpatterns = [
         "booking/<str:booking_id>",
         BookingEditFormView.as_view(),
         name="booking_edit",
+    ),
+    path(
+        "payment/<str:payment_id>",
+        PaymentEditFormView.as_view(),
+        name="payment_edit",
     ),
     path(
         "booking/<str:booking_id>/ticket",
@@ -32,5 +39,10 @@ urlpatterns = [
         "booking/<str:booking_id>/payment",
         PaymentFormView.as_view(),
         name="booking_payment",
+    ),
+    path(
+        "booking/<str:booking_id>/payment-records",
+        BookingPaymentRecordsTemplateView.as_view(),
+        name="booking_payment_records",
     ),
 ]

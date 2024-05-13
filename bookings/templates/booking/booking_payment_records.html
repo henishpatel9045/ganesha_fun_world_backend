@@ -1,0 +1,51 @@
+{% extends 'base.html' %} {% block title %}Payment Records{% endblock %} {% load crispy_forms_tags %} {% block content %}
+<div class="card  mx-5 mb-2">
+    <div class="card-header">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'booking_home' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'react_app' %}">QR Code Scanner</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'booking_summary' booking_id %}">Booking Summary</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Payment Records</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="mx-5 mb-2">
+    <h1 class="mb-2">Payment Records for {{ booking_id }}</h1>
+    <table class="table table-hover table-bordered table-responsive">
+        <thead>
+            <tr>
+                <th>Mode</th>
+                <th>For</th>
+                <th>Amount</th>
+                <th>Is Return to customer</th>
+                <th>Created On</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>            
+            {% for payment in booking_payments %}    
+                <tr>
+                    <td>{{payment.payment_mode}}</td>
+                    <td>{{payment.payment_for}}</td>
+                    <td>{{payment.amount}}</td>
+                    <td>
+                        {% if payment.is_returned_to_customer %}
+                            YES
+                        {% else %}
+                            NO
+                        {% endif %}
+                    </td>
+                    <td>{{payment.updated_at}}</td>
+                    <td>
+                        <a href="{% url 'payment_edit' payment.id %}" class="btn btn-primary">Edit</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</div>
+{% endblock %}

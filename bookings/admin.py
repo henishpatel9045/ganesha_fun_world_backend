@@ -56,7 +56,8 @@ class BookingAdmin(admin.ModelAdmin):
     search_fields = [
         "wa_number",
     ]
-
+    date_hierarchy = "date"
+    
     def is_today_booking(self, obj) -> bool:
         return "Yes" if obj.date == timezone.datetime.today().date() else "No"
 
