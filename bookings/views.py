@@ -1,14 +1,18 @@
 from typing import Any
-from django.forms.forms import BaseForm
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import render
 from django.http import HttpRequest, HttpResponse
 from django.views.generic import FormView, TemplateView
+import logging
 
 from bookings.models import Booking, Payment
 from management_core.models import TicketPrice
 from .forms import BookingForm, PaymentRecordForm, PaymentRecordEditForm
 from .utils import create_razorpay_order
 from .ticket.utils import generate_booking_id_qrcode
+
+
+logging.getLogger(__name__)
 
 
 class BookingHomeTemplateView(TemplateView):
@@ -71,8 +75,17 @@ class BookingEditFormView(FormView):
         }
 
         form = BookingForm(initial=initial_data)
-        return render(request, "booking/booking_edit.html", context={"form": form, "booking_id": booking_id})
-
+        return render(
+            request,
+            "booking/booking_edit.html",
+            context={"form": form, "booking_id": booking_id},
+        )
+    
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs) 
+        context["booking_id"] = self.kwargs.get("booking_id")
+        return context
+    
     def form_valid(self, form):
         try:
             booking = form.save(
@@ -84,12 +97,36 @@ class BookingEditFormView(FormView):
             return super().form_invalid(form)
 
     def get_success_url(self) -> str:
-        return f"/bookings/booking/{self.booking.id}/payment"
+        return f"/bookings/booking/{self.kwargs.get("booking_id")}/payment"
 
 
 class PaymentFormView(FormView):
     template_name = "booking/payment.html"
     form_class = PaymentRecordForm
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        booking_id = self.kwargs.get("booking_id")
+        booking = Booking.objects.prefetch_related(
+            "booking_costume", "booking_costume__costume"
+        ).get(id=booking_id)
+        costumes = booking.booking_costume.all
+        if self.get_form().errors:
+            form = self.get_form()
+        else:
+            form = PaymentRecordForm(
+                initial={
+                    "booking": booking,
+                    "payment_amount": booking.total_amount - booking.received_amount,
+                }
+            )
+        context = {
+            "form": form,
+            "booking": booking,
+            "amount_to_collect": booking.total_amount - booking.received_amount,
+            "costumes": costumes,
+        }
+
+        return context
 
     def get(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
         booking_id = kwargs.get("booking_id")
@@ -106,23 +143,7 @@ class PaymentFormView(FormView):
                 "common/error_page.html",
                 {"error_message": "Booking not found."},
             )
-        booking = Booking.objects.prefetch_related(
-            "booking_costume", "booking_costume__costume"
-        ).get(id=booking_id)
-        costumes = booking.booking_costume.all
-        form = PaymentRecordForm(
-            initial={
-                "booking": booking,
-                "payment_amount": booking.total_amount - booking.received_amount,
-            }
-        )
-        context = {
-            "form": form,
-            "booking": booking,
-            "amount_to_collect": booking.total_amount - booking.received_amount,
-            "costumes": costumes,
-        }
-
+        context = self.get_context_data(**kwargs)
         return render(request, "booking/payment.html", context=context)
 
     def form_valid(self, form):
@@ -140,6 +161,25 @@ class PaymentEditFormView(FormView):
     template_name = "booking/booking_payment.html"
     form_class = PaymentRecordEditForm
 
+    def get_context_data(self, form=None, **kwargs: Any) -> dict[str, Any]:
+        payment_id = self.kwargs.get("payment_id")
+        payment = Payment.objects.prefetch_related("booking").get(id=payment_id)
+        if not form:
+            form = PaymentRecordEditForm(
+                initial={
+                    "booking": payment.booking,
+                    "payment_amount": payment.amount,
+                    "payment_mode": payment.payment_mode,
+                    "payment_for": payment.payment_for,
+                    "is_confirmed": payment.is_confirmed,
+                    "is_returned_to_customer": payment.is_returned_to_customer,
+                }
+            )
+        
+        self.booking_id = payment.booking.id
+        context = {"form": form, "payment": payment, "booking_id": self.booking_id}
+        return context
+
     def get(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
         payment_id = kwargs.get("payment_id")
         if not payment_id:
@@ -155,23 +195,7 @@ class PaymentEditFormView(FormView):
                 "common/error_page.html",
                 {"error_message": "Payment not found."},
             )
-        payment = Payment.objects.prefetch_related("booking").get(id=payment_id)
-        form = PaymentRecordEditForm(
-            initial={
-                "booking": payment.booking,
-                "payment_amount": payment.amount,
-                "payment_mode": payment.payment_mode,
-                "payment_for": payment.payment_for,
-                "is_confirmed": payment.is_confirmed,
-                "is_returned_to_customer": payment.is_returned_to_customer,
-            }
-        )
-        self.booking_id = payment.booking.id
-        context = {
-            "form": form,
-            "payment": payment,
-            "booking_id": self.booking_id
-        }
+        context = self.get_context_data(**kwargs)
         return render(request, "booking/booking_payment.html", context=context)
 
     def form_valid(self, form: PaymentRecordEditForm):
@@ -203,6 +227,7 @@ class BookingSummaryCardTemplateView(TemplateView):
             "adult_male": booking.adult_male,
             "adult_female": booking.adult_female,
             "child": booking.child,
+            "infant": booking.infant,
             "ticket_amount": booking.ticket_amount,
             "costume_amount": booking.costume_amount,
             "total_amount": booking.total_amount,
@@ -291,5 +316,30 @@ class BookingPaymentRecordsTemplateView(TemplateView):
         context = {
             "booking_id": booking.id,
             "booking_payments": booking.booking_payment.all(),
+        }
+        return render(request, self.template_name, context=context)
+
+
+class BookingHistoryTemplateView(TemplateView):
+    template_name = "booking/booking_history.html"
+    PAGE_SIZE = 50
+
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        wa_number = request.GET.get("wa_number")
+        page = request.GET.get("page", 1)
+        bookings = Booking.objects.all().order_by("-date")
+        if wa_number:
+            bookings = bookings.filter(wa_number__contains=wa_number)
+
+        try:
+            paginator = Paginator(bookings, self.PAGE_SIZE)
+            bookings = paginator.page(page)
+        except PageNotAnInteger:
+            bookings = paginator.page(1)
+        except EmptyPage:
+            bookings = paginator.page(paginator.num_pages)
+        logging.info(f"Bookings: {bookings}")
+        context = {
+            "bookings": bookings,
         }
         return render(request, self.template_name, context=context)

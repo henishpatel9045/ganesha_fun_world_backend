@@ -1,0 +1,72 @@
+{% extends 'base.html' %} {% block title %}Booking History{% endblock %} {% load crispy_forms_tags %} 
+{% block content%}
+<div class="card  mx-5 mb-2">
+    <div class="card-header">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'booking_home' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'react_app' %}">QR Code Scanner</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Booking History</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="mx-5 mb-2">
+    <div class="w-100 d-flex align-items-center justify-content-between">
+        <h1 class="mb-2">Booking History</h1>
+        <span class="d-flex align-items-center justify-content-center">
+            <input class="form-control" type="text" id="search-input" placeholder="10 digit WhatsApp Number" value='{{request.GET.wa_number}}' pattern="^\d{10}$" />
+            <button class="btn btn-primary" id="wa-search-btn">Search</button>
+        </span>
+    </div>
+
+    <table class="table table-hover table-bordered table-responsive">
+        <thead>
+            <tr>
+                <th>WhatsApp Number</th>
+                <th>Date</th>
+                <th>Booking Type</th>
+                <th>Adult<br/>(Male)</th>
+                <th>Adult<br/>(Female)</th>
+                <th>Children</th>
+                <th>Infants</th>
+                <th>Total Amount</th>
+                <th>Amount Received</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for booking in bookings %}
+            <tr>
+                <td>+{{booking.wa_number}}</td>
+                <td>{{booking.date}}</td>
+                <td>{{booking.booking_type}}</td>
+                <td>{{booking.adult_male}}</td>
+                <td>{{booking.adult_female}}</td>
+                <td>{{booking.child}}</td>
+                <td>{{booking.infant}}</td>
+                <td>{{booking.total_amount}}</td>
+                <td>{{booking.received_amount}}</td>
+                <td>
+                    <a href="{% url 'booking_summary' booking.id %}" class="btn btn-primary">Edit</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</div>
+<script>
+    document.getElementById('wa-search-btn').addEventListener('click', function () {
+        let searchInput = document.getElementById('search-input').value;
+        if (searchInput.length === 10) {
+            window.location.href = `/bookings/history/?wa_number=${searchInput}`;
+        } else if (searchInput.length === 0) {
+            window.location.href = `/bookings/history`;
+        } else {
+            alert('Please enter a valid 10 digit WhatsApp number');
+        }
+    });
+</script>
+{% endblock %}

@@ -150,37 +150,3 @@ AUTH_USER_MODEL = "custom_auth.User"
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 
 CRISPY_TEMPLATE_PACK = "bootstrap5"
-
-
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "handlers": {
-        "console": {"class": "logging.StreamHandler", "formatter": "verbose"},
-        "file": {
-            "class": "logging.FileHandler",
-            "filename": "general.log",
-            "formatter": "verbose",
-        },
-        "rq_console": {
-            "level": "DEBUG",
-            "class": "rq.logutils.ColorizingStreamHandler",
-            "formatter": "rq_console",
-            "exclude": ["%(asctime)s"],
-        },
-    },
-    "loggers": {
-        "rq.worker": {"handlers": ["rq_console"], "level": "DEBUG"},
-        "": {"handlers": ["file"], "level": os.environ.get("LOG_LEVEL", "INFO")},
-    },
-    "formatters": {
-        "verbose": {
-            "format": "[{asctime}]: ({levelname}) {name} $ {message} $ {pathname} #{funcName}:L{lineno}",
-            "style": "{",
-        },
-        "rq_console": {
-            "format": "%(asctime)s %(message)s",
-            "datefmt": "%H:%M:%S",
-        },
-    },
-}

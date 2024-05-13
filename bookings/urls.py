@@ -9,12 +9,16 @@ from .views import (
     BookingTicketTemplateView,
     BookingPaymentRecordsTemplateView,
     PaymentEditFormView,
+    BookingHistoryTemplateView,
 )
 
 
 urlpatterns = [
     path("", BookingHomeTemplateView.as_view(), name="booking_home"),
     path("booking/", BookingFormView.as_view(), name="booking_create"),
+    path(
+        "history/", BookingHistoryTemplateView.as_view(), name="booking_history"
+    ),
     path(
         "booking/<str:booking_id>",
         BookingEditFormView.as_view(),

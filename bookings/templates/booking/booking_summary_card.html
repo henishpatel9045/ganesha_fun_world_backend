@@ -24,13 +24,15 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <p><strong>WA Number:</strong> {{ wa_number }}</p>
-                                <p><strong>Booked On:</strong> {{ booked_on }}</p>
                                 <p><strong>Date:</strong> {{ date }}</p>
-                                <p><strong>Adult:</strong> {{ adult }}</p>
+                                <p><strong>Adult (Male):</strong> {{ adult_male }}</p>
+                                <p><strong>Adult (Female):</strong> {{ adult_female }}</p>
                                 <p><strong>Child:</strong> {{ child }}</p>
+                                <p><strong>Infant:</strong> {{ infant }}</p>
                             </div>
                             
-                            <div class="col-md-5">
+                            <div class="col-md-6">
+                                <p><strong>Booked On:</strong> {{ booked_on }}</p>
                                 <p><strong>Ticket Amount:</strong> <span>{{ ticket_amount }} ₹</span></p>
                                 <p><strong>Costume Amount:</strong> <span>{{ costume_amount }} ₹</span></p>
                                 <p><strong>Total Amount:</strong> <span>{{ total_amount }} ₹</span></p>

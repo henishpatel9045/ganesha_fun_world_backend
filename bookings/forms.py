@@ -311,20 +311,54 @@ class PaymentRecordEditForm(forms.Form):
                 payment = Payment.objects.get(id=payment_id)
                 payment.payment_mode = self.cleaned_data["payment_mode"]
                 payment.is_confirmed = self.cleaned_data["is_confirmed"]
-                payment.is_returned_to_customer = self.cleaned_data[
-                    "is_returned_to_customer"
-                ]
 
                 # If payment is not returned to customer, then update booking received amount
-                if not payment.is_returned_to_customer:
-                    payment.booking.received_amount -= payment.amount
+                if (
+                    not payment.is_returned_to_customer
+                    and self.cleaned_data["is_returned_to_customer"]
+                ):
                     payment.amount = self.cleaned_data["payment_amount"]
+                    payment.booking.received_amount -= payment.amount
+
+                elif (
+                    payment.is_returned_to_customer
+                    and not self.cleaned_data["is_returned_to_customer"]
+                ):
+                    payment.amount = self.cleaned_data["payment_amount"]
+                    if (
+                        payment.booking.received_amount + payment.amount
+                        > payment.booking.total_amount
+                    ):
+                        self.add_error(None, "Payment amount exceeds total amount.")
+                        raise forms.ValidationError("")
                     if payment.is_confirmed:
                         payment.booking.received_amount += payment.amount
 
+
+                elif (
+                    not payment.is_returned_to_customer
+                    and not self.cleaned_data["is_returned_to_customer"]
+                ):
+                    payment.booking.received_amount -= payment.amount
+                    payment.amount = self.cleaned_data["payment_amount"]
+                    if (
+                        payment.booking.received_amount + payment.amount
+                        > payment.booking.total_amount
+                    ):
+                        self.add_error(None, "Payment amount exceeds total amount.")
+                        raise forms.ValidationError("")
+                    if payment.is_confirmed:
+                        payment.booking.received_amount += payment.amount
+
+                else:
+                    payment.amount = self.cleaned_data["payment_amount"]
+
+                payment.is_returned_to_customer = self.cleaned_data[
+                    "is_returned_to_customer"
+                ]
                 payment.save()
                 payment.booking.save()
             return self.cleaned_data["booking"]
         except Exception as e:
             self.add_error(None, e.args[0])
-            raise forms.ValidationError()
+            raise forms.ValidationError("")
