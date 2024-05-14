@@ -359,7 +359,7 @@ class SaveBookingTicketAPIView(APIView):
                     {"error": "Booking ID is required."}, status=status.HTTP_400_BAD_REQUEST
                 )
             booking = Booking.objects.get(id=booking_id)
-            send_booking_ticket(booking, booking_id)            
+            send_booking_ticket(booking)            
             return Response(status=status.HTTP_200_OK)
         except Booking.DoesNotExist as e:
             return Response(

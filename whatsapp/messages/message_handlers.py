@@ -373,7 +373,7 @@ def handle_booking_session_messages(
     )
 
 
-def send_booking_ticket(booking: Booking, booking_id: str) -> str:
+def send_booking_ticket(booking: Booking) -> str:
     """
     Function to send booking ticket to the user.
 
@@ -381,13 +381,14 @@ def send_booking_ticket(booking: Booking, booking_id: str) -> str:
     :param `booking_id`: The booking id
     """
     try:
+        booking_id = str(booking.id)
         pdf_path = generate_ticket_pdf(booking_id)
         payload = {
             "link": pdf_path,
             "filename": f"{booking_id}.pdf",
             "caption": f"Your booking ticket is attached above for date: {booking.date.strftime("%a, %d %b %Y")}.",    
         }
-        res = whatsapp_config.send_message(booking.wa_number, "document", payload, msg_context)
+        res = whatsapp_config.send_message(booking.wa_number, "document", payload)
         return f"Response: {res.json()}"
     except Exception as e:
         logging.exception(e)
