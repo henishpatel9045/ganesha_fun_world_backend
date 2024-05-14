@@ -33,7 +33,6 @@ services:
       dockerfile: Dockerfile.test
     expose:
       - 8000
-    
     volumes:
       - test_static_volume:/django/static
       - H:/WORK/FREELANCE/ganesha-waterpark/generated_media_test/:/home/generated_media/

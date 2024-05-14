@@ -13,7 +13,9 @@ import pprint
 from .utils import WhatsAppClient
 from .messages.message_handlers import (
     handle_booking_session_messages,
+    handle_sending_booking_ticket,
     send_date_list_message,
+    send_my_bookings_message,
     send_welcome_message,
     whatsapp_config,
 )
@@ -124,6 +126,18 @@ class WhatsAppWebhook(APIView):
                         timeout=300,
                     )
                     send_date_list_message(sender, msg_context)
+                    return Response(200)
+
+                if message_payload.startswith("booking_ticket_"):
+                    handle_sending_booking_ticket(
+                        sender,
+                        message_payload.replace("booking_ticket_", ""),
+                        msg_context,
+                    )
+                    return Response(200)
+
+                if message_payload == "my_bookings":
+                    send_my_bookings_message(sender, msg_context)
                     return Response(200)
 
                 if message_payload.lower().startswith("hi"):

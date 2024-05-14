@@ -393,3 +393,59 @@ def send_booking_ticket(booking: Booking) -> str:
     except Exception as e:
         logging.exception(e)
         return f"Error: {str(e.args[0])}"
+
+
+def send_my_bookings_message(sender: str, msg_context: dict|None=None):
+    """
+    Function to send my bookings message to the user.
+
+    :param `sender`: The number to which message is to be sent
+    :param `msg_context`: The context of the message i.e. for replying to msg
+    """
+    bookings = Booking.objects.filter(wa_number=sender, date__gte=timezone.now().date(), received_amount__gt=0).order_by("date")
+    if bookings.exists():
+        for booking in bookings:
+            msg_str = f"Date: *{booking.date.strftime("%a, %d %b %Y")}*\nAdult (Male)): *{booking.adult_male}*\nAdult (Female): *{booking.adult_female}*\nChild: *{booking.child}*\nInfant: *{booking.infant}*\nTotal Amount: *{booking.total_amount} INR*\nAmount Paid: *{booking.received_amount} INR*\nAmount to be paid: *{booking.total_amount - booking.received_amount} INR*"
+            payload = {
+                "type": "button",
+                "header": {
+                    "type": "text",
+                    "text": "Booking Details"
+                },
+                "body": {
+                    "text": msg_str,
+                },
+                "action": {
+                "buttons": [
+                    {
+                    "type": "reply",
+                    "reply": {
+                        "id": f"booking_ticket_{str(booking.id)}",
+                        "title": "Get Ticket"
+                    }
+                    }
+                ]
+                }
+            }
+            
+            res = whatsapp_config.send_message(sender, "interactive", payload, msg_context)
+            logging.info(f"Response: {res.json()}")
+    else:
+        whatsapp_config.send_message(sender, "text", {"body": "No bookings found."}, msg_context)
+    return        
+
+
+def handle_sending_booking_ticket(sender: str, booking_id: str, msg_context: dict|None):
+    """
+    Function to handle sending booking ticket to the user.
+
+    :param `sender`: The number to which message is to be sent
+    :param `booking_id`: The booking id
+    :param `msg_context`: The context of the message i.e. for replying to msg
+    """
+    booking = Booking.objects.filter(id=booking_id).first()
+    if booking:
+        send_booking_ticket(booking)
+    else:
+        whatsapp_config.send_message(sender, "text", {"body": "No booking found with given id."}, msg_context)
+    return
