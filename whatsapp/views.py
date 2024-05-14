@@ -15,13 +15,9 @@ from .messages.message_handlers import (
     handle_booking_session_messages,
     send_date_list_message,
     send_welcome_message,
+    whatsapp_config,
 )
 
-
-whatsapp_config = WhatsAppClient(
-    "EAAabZCi7kE38BO9tTbh2Vk8ulnV60wm7YuKTYV52jlqed26MZByjt5IGlZCYRa31BhK4l1b2NRZAdiGQ235mOAhzH5mRZBLdN1KPMtgmuCaXZAlHXDUlOAaXeYphmz00NlhADSIZCB1ZCTMTV1Oz1ygdVx5Ubk2hBEuLPuyjLtsW8ZBBHmRMQ5bHZBd36SG84c3KvrnUzVtnO3d5CdaGPRqjwkfegZD",
-    "105976528928889",
-)
 
 TESTING_NUMBERS = config("WA_TEST_NUMBERS", cast=Csv())
 
@@ -154,7 +150,9 @@ class WhatsAppWebhook(APIView):
                     },
                     msg_context,
                 )
-                cache.delete(f"booking_session_{sender}") # delete active booking if there is any.
+                cache.delete(
+                    f"booking_session_{sender}"
+                )  # delete active booking if there is any.
 
                 return Response(200)
         except Exception as e:

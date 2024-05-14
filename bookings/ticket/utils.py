@@ -4,6 +4,13 @@ import qrcode
 import os
 import io, base64
 
+from common_config.common import (
+    GENERATED_MEDIA_BASE_URL,
+    HOST_URL,
+    LOCALHOST_URL,
+    TEMPORARY_FILE_LOCATION,
+)
+
 BASE_GENERATED_DIR = os.environ.get("GENERATED_DIR_CONTAINER_PATH")
 
 
@@ -53,5 +60,20 @@ def generate_booking_id_qrcode(booking_id: str) -> str:
     return generate_qr_code(booking_id)
 
 
-def html_to_pdf(html_url: str, output_path) -> None:
-    HTML(url=html_url).render().write_pdf(output_path)
+def html_to_pdf(url: str, output_path: str) -> None:
+    HTML(url=url).render().write_pdf(output_path)
+
+
+def generate_ticket_pdf(booking_id: str) -> str:
+    """Generate ticket pdf for the booking
+
+    :param booking_id: booking id for which ticket is to be generated
+
+    :return: path of the generated pdf
+    """
+    path = f"{TEMPORARY_FILE_LOCATION}/booking_tickets"
+    os.makedirs(path, exist_ok=True)
+    path = f"{path}/booking_{booking_id}.pdf"
+    html_url = f"{LOCALHOST_URL}/bookings/booking/{booking_id}/ticket"
+    html_to_pdf(html_url, path)
+    return f"{HOST_URL}/{GENERATED_MEDIA_BASE_URL}/booking_tickets/booking_{booking_id}.pdf"

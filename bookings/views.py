@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework import status
+import django_rq
 import logging
 
 from bookings.models import Booking, Payment
@@ -15,8 +16,8 @@ from common_config.common import LOCALHOST_URL, TEMPORARY_FILE_LOCATION
 from management_core.models import TicketPrice
 from .forms import BookingForm, PaymentRecordForm, PaymentRecordEditForm
 from .utils import create_razorpay_order
-from .ticket.utils import generate_booking_id_qrcode, html_to_pdf
-
+from .ticket.utils import generate_booking_id_qrcode, generate_ticket_pdf
+from whatsapp.messages.message_handlers import send_booking_ticket
 
 logging.getLogger(__name__)
 
@@ -352,12 +353,18 @@ class BookingHistoryTemplateView(TemplateView):
 
 class SaveBookingTicketAPIView(APIView):
     def get(self, request: Request, booking_id: str) -> Response:
-        if not booking_id:
+        try:
+            if not booking_id:
+                return Response(
+                    {"error": "Booking ID is required."}, status=status.HTTP_400_BAD_REQUEST
+                )
+            booking = Booking.objects.get(id=booking_id)
+            send_booking_ticket(booking, booking_id)            
+            return Response(status=status.HTTP_200_OK)
+        except Booking.DoesNotExist as e:
             return Response(
-                {"error": "Booking ID is required."}, status=status.HTTP_400_BAD_REQUEST
+                {"error": "Booking not found."}, status=status.HTTP_404_NOT_FOUND
             )
-        path = f"{TEMPORARY_FILE_LOCATION}/booking_tickets"
-        os.makedirs(path, exist_ok=True)
-        path = f"{path}/booking_{booking_id}.pdf"
-        pdf = html_to_pdf(f"{LOCALHOST_URL}/bookings/booking/{booking_id}/ticket", path)
-        return Response({"pdf": pdf}, status=status.HTTP_200_OK)
+        except Exception as e:
+            logging.exception(e)
+            return Response(status=status.HTTP_200_OK)

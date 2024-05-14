@@ -7,9 +7,12 @@ import os
 import logging
 import django_rq
 
+from bookings.models import Booking
+from common_config.common import HOST_URL
 from whatsapp.utils import WhatsAppClient
 from management_core.models import TicketPrice
 from bookings.utils import create_or_update_booking, create_razorpay_order
+from bookings.ticket.utils import generate_ticket_pdf
 
 logging.getLogger(__name__)
 
@@ -19,7 +22,7 @@ LOGO_URL = os.environ.get(
 
 
 whatsapp_config = WhatsAppClient(
-    "EAAabZCi7kE38BO9tTbh2Vk8ulnV60wm7YuKTYV52jlqed26MZByjt5IGlZCYRa31BhK4l1b2NRZAdiGQ235mOAhzH5mRZBLdN1KPMtgmuCaXZAlHXDUlOAaXeYphmz00NlhADSIZCB1ZCTMTV1Oz1ygdVx5Ubk2hBEuLPuyjLtsW8ZBBHmRMQ5bHZBd36SG84c3KvrnUzVtnO3d5CdaGPRqjwkfegZD",
+    "EAAabZCi7kE38BO70Gh6is1UL6IU08BNTXkP3Lb5udnZB1U69mqmWdaVdb1jobbvVSzMV1P4AmcGgqCaup7sBdxOsvUkzbZAPBXZAdZCbVXDfxO7pxdReNrRHK48hza2myzGgr4cWzibgnTsXqPUQyqo3DcEjNt78OffohBRqC3WYmZBZAbkF835OL9pxmZBNAQ9peGyMB1hByZA8ZAHtfjvw4ZD",
     "105976528928889",
 )
 client = whatsapp_config.get_client()
@@ -31,7 +34,7 @@ def send_date_list_message(recipient_number: str, context: dict|None) -> request
 
     :param `recipient_number`: The number to which message is to be sent
     """
-    available_dates = TicketPrice.objects.filter(date__gt=timezone.now().date())[:10].values_list("date", flat=True)
+    available_dates = list(TicketPrice.objects.filter(date__gt=timezone.now().date())[:10].values_list("date", flat=True))[::-1]
     logging.info(f"Available Dates: {available_dates}")
     
     
@@ -78,7 +81,7 @@ def send_welcome_message(recipient_number: str) -> requests.Response:
                     {
                         "type": "image",
                         "image": {
-                            "link": "https://www.shreeganeshafunworld.com/images/logo.png"
+                            "link": f"{HOST_URL}/static/images/logo.png"
                         },
                     }
                 ],
@@ -107,7 +110,7 @@ def send_welcome_message(recipient_number: str) -> requests.Response:
             },
         ],
     }
-    return whatsapp_config.send_message(recipient_number, "template", payload)
+    return whatsapp_config.send_message(recipient_number, "template", payload).json()
 
 
 def handle_booking_session_confirm(active_session: dict, sender: str, msg_context: dict|None):
@@ -368,3 +371,24 @@ def handle_booking_session_messages(
         },
         msg_context
     )
+
+
+def send_booking_ticket(booking: Booking, booking_id: str) -> str:
+    """
+    Function to send booking ticket to the user.
+
+    :param `booking`: The booking instance
+    :param `booking_id`: The booking id
+    """
+    try:
+        pdf_path = generate_ticket_pdf(booking_id)
+        payload = {
+            "link": pdf_path,
+            "filename": f"{booking_id}.pdf",
+            "caption": f"Your booking ticket is attached above for date: {booking.date.strftime("%a, %d %b %Y")}.",    
+        }
+        res = whatsapp_config.send_message(booking.wa_number, "document", payload, msg_context)
+        return f"Response: {res.json()}"
+    except Exception as e:
+        logging.exception(e)
+        return f"Error: {str(e.args[0])}"

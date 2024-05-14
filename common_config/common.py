@@ -2,6 +2,8 @@ from django.conf import settings
 import os
 
 
+HOST_URL = "https://leading-blindly-seahorse.ngrok-free.app"
+
 BOOKING_TYPES = [
     ("gate_booking", "gate_booking"),
     ("whatsapp_booking", "whatsapp_booking"),
@@ -25,6 +27,8 @@ PAYMENT_FOR = [
 COSTUME_CACHE_KEY = "costume_table_data"
 
 LOCALHOST_URL = "http://localhost:8000"
+
+GENERATED_MEDIA_BASE_URL = "/generated_media"
 
 if os.environ.get("ENVIRONMENT") == "prod":
     TEMPORARY_FILE_LOCATION = "/home/ganesha/generated_media"

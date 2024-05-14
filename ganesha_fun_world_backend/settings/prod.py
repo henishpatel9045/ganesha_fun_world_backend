@@ -48,6 +48,16 @@ LOGGING = {
     },
     "loggers": {
         "rq.worker": {"handlers": ["rq_console"], "level": "DEBUG"},
+        'weasyprint': { 
+            'handlers': [],
+            'level': 'WARNING', 
+            'propagate': False,  # Prevent logs from being propagated to the root logger
+        },
+        'fontTools.subset': { 
+            'handlers': [],
+            'level': 'WARNING',
+            'propagate': False,  # Prevent logs from being propagated to the root logger
+        },
         "": {"handlers": ["file"], "level": os.environ.get("LOG_LEVEL", "INFO")},
     },
     "formatters": {
