@@ -1,3 +1,7 @@
+from django.conf import settings
+import os
+
+
 BOOKING_TYPES = [
     ("gate_booking", "gate_booking"),
     ("whatsapp_booking", "whatsapp_booking"),
@@ -19,3 +23,10 @@ PAYMENT_FOR = [
 
 # CACHE_KEYS
 COSTUME_CACHE_KEY = "costume_table_data"
+
+LOCALHOST_URL = "http://localhost:8000"
+
+if os.environ.get("ENVIRONMENT") == "prod":
+    TEMPORARY_FILE_LOCATION = "/home/ganesha/generated_media"
+else:
+    TEMPORARY_FILE_LOCATION = "/home/generated_media"

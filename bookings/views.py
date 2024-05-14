@@ -1,15 +1,21 @@
+import os
 from typing import Any
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import render
 from django.http import HttpRequest, HttpResponse
 from django.views.generic import FormView, TemplateView
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.request import Request
+from rest_framework import status
 import logging
 
 from bookings.models import Booking, Payment
+from common_config.common import LOCALHOST_URL, TEMPORARY_FILE_LOCATION
 from management_core.models import TicketPrice
 from .forms import BookingForm, PaymentRecordForm, PaymentRecordEditForm
 from .utils import create_razorpay_order
-from .ticket.utils import generate_booking_id_qrcode
+from .ticket.utils import generate_booking_id_qrcode, html_to_pdf
 
 
 logging.getLogger(__name__)
@@ -274,7 +280,6 @@ class BookingTicketTemplateView(TemplateView):
         ).get(id=booking_id)
         price_list = TicketPrice.objects.filter(date=booking.date).first()
         costume_data = booking.booking_costume.all()
-        print(costume_data)
         qr_code_url = generate_booking_id_qrcode(booking_id)
         context = {
             "qr_code_url": qr_code_url,
@@ -343,3 +348,16 @@ class BookingHistoryTemplateView(TemplateView):
             "bookings": bookings,
         }
         return render(request, self.template_name, context=context)
+
+
+class SaveBookingTicketAPIView(APIView):
+    def get(self, request: Request, booking_id: str) -> Response:
+        if not booking_id:
+            return Response(
+                {"error": "Booking ID is required."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        path = f"{TEMPORARY_FILE_LOCATION}/booking_tickets"
+        os.makedirs(path, exist_ok=True)
+        path = f"{path}/booking_{booking_id}.pdf"
+        pdf = html_to_pdf(f"{LOCALHOST_URL}/bookings/booking/{booking_id}/ticket", path)
+        return Response({"pdf": pdf}, status=status.HTTP_200_OK)

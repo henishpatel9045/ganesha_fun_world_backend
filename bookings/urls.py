@@ -10,6 +10,7 @@ from .views import (
     BookingPaymentRecordsTemplateView,
     PaymentEditFormView,
     BookingHistoryTemplateView,
+    SaveBookingTicketAPIView
 )
 
 
@@ -32,6 +33,11 @@ urlpatterns = [
     path(
         "booking/<str:booking_id>/ticket",
         BookingTicketTemplateView.as_view(),
+        name="booking_ticket",
+    ),
+    path(
+        "booking/<str:booking_id>/generate-ticket",
+        SaveBookingTicketAPIView.as_view(),
         name="booking_ticket",
     ),
     path(

@@ -1,11 +1,12 @@
 {% extends 'base.html' %} {% block content %}
 {% load humanize %}
+{% load static %}
 <style>
   @media print {
     /* Ensure no page breaks */
     @page {
       width: 600px;
-      height: 1500px;
+      height: 1600px;
       margin: 0;
     }
   }
@@ -17,17 +18,23 @@
   * {
     font-size: 1.2rem;
   }
-
+  
+  .terms > li {
+    font-size: 0.8rem !important;
+    font-weight: 700;
+  }
+  
   th, td {
     font-size: 1rem;
   }
-
+  
   .detail-table {
     width: 100%;
   }
-
+  
   body{
     max-width: 600px;
+    font-weight: 300;
   }
 
   .logo-img{
@@ -42,7 +49,7 @@
   <div
     class="w-100 position-relative"
   >
-    <img src="https://www.shreeganeshafunworld.com/images/logo.png" class="logo-img" />
+    <img src="{% static 'images/logo.png' %}" class="logo-img" style="object-fit: contain; max-height: 80px; z-index: 2;" />
     <img src="data:image/png;base64,{{ qr_code_url }}" class="w-100" style="margin-top: 80px;" />
   </div>
   <div class="w-100 separator" />
@@ -52,11 +59,11 @@
         <tbody>
           <tr>
             <th>WA Number</th>
-            <td colspan="3">+91 7990577979</td>
+            <td colspan="3">+{{booking.wa_number}}</td>
           </tr>
           <tr>
             <th>Date</th>
-            <td colspan="3">5 May 2024</td>
+            <td colspan="3">{{booking.date}}</td>
           </tr>
           <tr>
             <td colspan="4"/>
@@ -86,11 +93,11 @@
             <td class="text-end">{{child_total }}</td>
           </tr>
           
-          {% if booking.infants > 0 %}
+          {% if booking.infant > 0 %}
             <tr>
               <th>Infants</th>
               <td class="text-center">0.00</td>
-              <td class="text-center">{{booking.infants}}</td>
+              <td class="text-center">{{booking.infant}}</td>
               <td class="text-end">0.00</td>
             </tr>
           {% endif %}
@@ -136,13 +143,31 @@
           </tr>
         </tbody>
       </table>
-      <div class="w-100 separator" />
-      <footer class="w-100">
-        <p class="text-center">Thank you for visiting Shree Ganesh Fun World</p>
-        <p class="text-center">Please keep this ticket with you for verification</p>
-      </footer>
     </div>
   </div>
+  <div class="w-100 separator" />
+  
+  <ul class="text-danger terms" style="font-size: 0.8rem !important;">
+    <li>
+      Tickets once booked cannot be cancelled or refunded.
+    </li>
+    <li>
+      All rides are included in the ticket.
+    </li>
+    
+    {% if booking.infant > 0 %}
+    <li class="list-group-item-danger">For infants please carry a valid ID proof for Date of birth verification.</li>
+    {% endif %}
+    
+    <li>
+      Please carry this ticket with you for verification.
+    </li>      
+  </ul>
+  
+  <div class="w-100 separator" />
+  <footer class="w-100">
+    <p class="text-center"><b>Thank you for visiting <br/>Shree Ganesh Fun World</b></p>
+  </footer>
 </div>
 
 {% endblock %}

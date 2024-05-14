@@ -53,5 +53,5 @@ def generate_booking_id_qrcode(booking_id: str) -> str:
     return generate_qr_code(booking_id)
 
 
-def html_to_pdf(html_content, output_path):
-    HTML(url=html_content).render().write_pdf(output_path)
+def html_to_pdf(html_url: str, output_path) -> None:
+    HTML(url=html_url).render().write_pdf(output_path)

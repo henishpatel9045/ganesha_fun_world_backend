@@ -5,6 +5,7 @@ from django.core.cache import cache
 import requests
 import os
 import logging
+import django_rq
 
 from whatsapp.utils import WhatsAppClient
 from management_core.models import TicketPrice
@@ -109,9 +110,42 @@ def send_welcome_message(recipient_number: str) -> requests.Response:
     return whatsapp_config.send_message(recipient_number, "template", payload)
 
 
+def handle_booking_session_confirm(active_session: dict, sender: str, msg_context: dict|None):
+    try:
+        booking = create_or_update_booking(
+            wa_number=active_session.get("wa_number"),
+            date=timezone.datetime.strptime(active_session.get("date"), "%d-%m-%Y").date(),
+            adult_male=active_session.get("adult_male"),
+            adult_female=active_session.get("adult_female"),
+            child=active_session.get("child"),
+            booking_costume_data={},
+            booking_type="whatsapp_booking"
+        )
+        order = create_razorpay_order(booking.total_amount, booking.wa_number, {
+            "id": str(booking.id),
+            "amount": str(booking.total_amount),
+            "adult_male": str(booking.adult_male),
+            "adult_female": str(booking.adult_female),
+            "child": str(booking.child)
+        })
+        print(order)
+        res = whatsapp_config.send_message(
+            sender,
+            "text",
+            {"preview_url": True,"body": f"Booking confirmed.\nMake payment by click on this link in next 15 minutes \n{order}"}, msg_context)
+        
+        return res
+    except Exception as e:
+        return whatsapp_config.send_message(
+            sender,
+            "text",
+            {"body": f"Sorry for inconvenience. Error occurred while creating booking: {str(e)}"},
+            msg_context
+        )
+
 def handle_booking_session_messages(
     sender: str, message_type: str, payload: str, active_session: dict, msg_context: dict | None
-) -> requests.Response:
+) -> requests.Response | None:
     """
     Function to handle booking session messages.
 
@@ -134,37 +168,13 @@ def handle_booking_session_messages(
     # Handle the logic after booking is confirmed i.e. create booking instance and generate razorpay order for the same.
     if message_type == "interactive" and payload == "booking_session_confirm":
         # Create booking
-        try:
-            booking = create_or_update_booking(
-                wa_number=active_session.get("wa_number"),
-                date=timezone.datetime.strptime(active_session.get("date"), "%d-%m-%Y").date(),
-                adult_male=active_session.get("adult_male"),
-                adult_female=active_session.get("adult_female"),
-                child=active_session.get("child"),
-                booking_costume_data={},
-                booking_type="whatsapp_booking"
-            )
-            order = create_razorpay_order(booking.total_amount, booking.wa_number, {
-                "id": str(booking.id),
-                "amount": str(booking.total_amount),
-                "adult_male": str(booking.adult_male),
-                "adult_female": str(booking.adult_female),
-                "child": str(booking.child)
-            })
-            print(order)
-            res = whatsapp_config.send_message(
-                sender,
-                "text",
-                {"preview_url": True,"body": f"Booking confirmed.\nMake payment by click on this link in next 15 minutes \n{order}"}, msg_context)
-            
-            return res
-        except Exception as e:
-            return whatsapp_config.send_message(
-                sender,
-                "text",
-                {"body": f"Sorry for inconvenience. Error occurred while creating booking: {str(e)}"},
-                msg_context
-            )
+        django_rq.enqueue(
+            handle_booking_session_confirm,
+            active_session,
+            sender,
+            msg_context
+        )
+        return
         
 
     if active_session.get("date") is None:

@@ -162,6 +162,7 @@ class BookingForm(forms.Form):
                 "adult_male": self.cleaned_data["adult_male"],
                 "adult_female": self.cleaned_data["adult_female"],
                 "child": self.cleaned_data["child"],
+                "infant": self.cleaned_data["infant"],
                 "date": self.cleaned_data["date"],
                 "is_discounted_booking": self.cleaned_data["is_discounted_booking"],
                 "special_ticket_total_amount": self.cleaned_data[

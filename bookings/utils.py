@@ -27,6 +27,7 @@ def create_or_update_booking(
     adult_female: int,
     child: int,
     booking_type: str,
+    infant: int = 0,
     booking_costume_data: dict = {},
     is_discounted_booking: bool = False,
     special_ticket_total_amount=None,
@@ -61,6 +62,7 @@ def create_or_update_booking(
                 "adult_male": adult_male,
                 "adult_female": adult_female,
                 "child": child,
+                "infant": infant,
                 "booking_costume_data": booking_costume_data,
                 "booking_type": booking_type,
                 "received_amount": received_amount,
@@ -107,6 +109,7 @@ def create_or_update_booking(
             booking.adult_male = adult_male
             booking.adult_female = adult_female
             booking.child = child
+            booking.infant = infant
             booking.ticket_amount = (
                 special_ticket_total_amount if is_discounted_booking else ticket_total
             )
