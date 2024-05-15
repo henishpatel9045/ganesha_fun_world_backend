@@ -1,7 +1,4 @@
 from django.db import models
-from django.core.cache import cache
-
-from common_config.common import COSTUME_CACHE_KEY
 
 
 class DateTimeBaseModel(models.Model):

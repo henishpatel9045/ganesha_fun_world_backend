@@ -1,13 +1,9 @@
-import uuid
 from datetime import datetime, timedelta
-from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
-from django.shortcuts import get_object_or_404
 import razorpay
 import logging
 
-from common_config.common import COSTUME_CACHE_KEY
 from .models import Booking, BookingCostume, Payment, BookingCanteen
 from management_core.models import TicketPrice, Costume
 
