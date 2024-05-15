@@ -1,8 +1,9 @@
-import os
 from typing import Any
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
 from django.views.generic import FormView, TemplateView
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -12,21 +13,36 @@ import django_rq
 import logging
 
 from bookings.models import Booking, Payment
-from common_config.common import LOCALHOST_URL, TEMPORARY_FILE_LOCATION
+from custom_auth.models import User
+from common_config.common import ADMIN_USER, COSTUME_MANAGER_USER, GATE_MANAGER_USER, CANTEEN_MANAGER_USER
 from management_core.models import TicketPrice
 from .forms import BookingForm, PaymentRecordForm, PaymentRecordEditForm
 from .utils import create_razorpay_order
-from .ticket.utils import generate_booking_id_qrcode, generate_ticket_pdf
+from .ticket.utils import generate_booking_id_qrcode
 from whatsapp.messages.message_handlers import send_booking_ticket
 
 logging.getLogger(__name__)
 
 
-class BookingHomeTemplateView(TemplateView):
+@login_required
+def admin_home_redirect(request: HttpRequest) -> HttpResponse:
+    user : User = request.user
+    if user.user_type in [ADMIN_USER, GATE_MANAGER_USER]:
+        return redirect("/bookings/")
+    elif user.user_type == COSTUME_MANAGER_USER:
+        return redirect("/costumes/")
+    elif user.user_type == CANTEEN_MANAGER_USER:
+        return redirect("/canteen/")
+    return redirect("/frontend")
+
+
+## GATE MANAGEMENT VIEWS
+
+class BookingHomeTemplateView(LoginRequiredMixin, TemplateView):
     template_name = "booking/booking_home.html"
 
 
-class BookingFormView(FormView):
+class BookingFormView(LoginRequiredMixin, FormView):
     template_name = "booking/booking.html"
     form_class = BookingForm
 
@@ -42,7 +58,7 @@ class BookingFormView(FormView):
         return f"/bookings/booking/{self.booking.id}/payment"
 
 
-class BookingEditFormView(FormView):
+class BookingEditFormView(LoginRequiredMixin, FormView):
     template_name = "booking/booking_edit.html"
     form_class = BookingForm
 
@@ -107,7 +123,7 @@ class BookingEditFormView(FormView):
         return f"/bookings/booking/{self.kwargs.get("booking_id")}/payment"
 
 
-class PaymentFormView(FormView):
+class PaymentFormView(LoginRequiredMixin, FormView):
     template_name = "booking/payment.html"
     form_class = PaymentRecordForm
 
@@ -164,7 +180,7 @@ class PaymentFormView(FormView):
         return f"/bookings/booking/{self.kwargs.get('booking_id')}/summary"
 
 
-class PaymentEditFormView(FormView):
+class PaymentEditFormView(LoginRequiredMixin, FormView):
     template_name = "booking/booking_payment.html"
     form_class = PaymentRecordEditForm
 
@@ -217,7 +233,7 @@ class PaymentEditFormView(FormView):
         return f"/bookings/booking/{self.booking_id}/payment-records"
 
 
-class BookingSummaryCardTemplateView(TemplateView):
+class BookingSummaryCardTemplateView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         booking_id = kwargs.get("booking_id")
         if not booking_id:
@@ -254,7 +270,7 @@ class BookingSummaryCardTemplateView(TemplateView):
         return render(request, "booking/booking_summary_card.html", context=context)
 
 
-class BookingTicketTemplateView(TemplateView):
+class BookingTicketTemplateView(LoginRequiredMixin, TemplateView):
     template_name = "booking/booking_ticket.html"
 
     def get_gst_amount(self, total, percentage):
@@ -300,7 +316,7 @@ class BookingTicketTemplateView(TemplateView):
         return render(request, "booking/booking_ticket.html", context=context)
 
 
-class BookingPaymentRecordsTemplateView(TemplateView):
+class BookingPaymentRecordsTemplateView(LoginRequiredMixin, TemplateView):
     template_name = "booking/booking_payment_records.html"
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
@@ -326,7 +342,7 @@ class BookingPaymentRecordsTemplateView(TemplateView):
         return render(request, self.template_name, context=context)
 
 
-class BookingHistoryTemplateView(TemplateView):
+class BookingHistoryTemplateView(LoginRequiredMixin, TemplateView):
     template_name = "booking/booking_history.html"
     PAGE_SIZE = 50
 

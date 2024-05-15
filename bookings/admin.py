@@ -7,12 +7,21 @@ from django.utils import timezone
 from .models import Booking, Payment, BookingCostume, BookingCanteen, BookingLocker
 
 # Register your models here.
+admin.site.site_title = "Shree Ganesha Fun World Management System"
+admin.site.site_header = "Shree Ganesha Fun World Management System"
+admin.site.site_url = "/home"
 
 
 class PaymentInline(admin.TabularInline):
     model = Payment
     extra = 0
-    fields = ["payment_mode", "payment_for", "amount", "is_confirmed", "is_returned_to_customer"]
+    fields = [
+        "payment_mode",
+        "payment_for",
+        "amount",
+        "is_confirmed",
+        "is_returned_to_customer",
+    ]
     show_change_link = True
 
 
@@ -57,7 +66,7 @@ class BookingAdmin(admin.ModelAdmin):
         "wa_number",
     ]
     date_hierarchy = "date"
-    
+
     def is_today_booking(self, obj) -> bool:
         return "Yes" if obj.date == timezone.datetime.today().date() else "No"
 

@@ -5,6 +5,8 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 import os
 
+from bookings.views import admin_home_redirect
+
 schema_view = get_schema_view(
     openapi.Info(
         title="Ganesha Management System API",
@@ -16,7 +18,8 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path('django-rq/', include('django_rq.urls')),
+    path("home/", admin_home_redirect),
+    path("django-rq/", include("django_rq.urls")),
     path("frontend/", include("frontend.urls")),
     path("management_core/", include("management_core.urls")),
     path(
