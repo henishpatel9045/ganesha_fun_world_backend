@@ -36,8 +36,10 @@ LOGGING = {
     "handlers": {
         "console": {"class": "logging.StreamHandler", "formatter": "verbose"},
         "file": {
-            "class": "logging.FileHandler",
-            "filename": "test-general.log",
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "when": "midnight",
+            "backupCount": 15,
+            "filename": BASE_DIR / "logs" / "test-general.log",
             "formatter": "verbose",
         },
         "rq_console": {

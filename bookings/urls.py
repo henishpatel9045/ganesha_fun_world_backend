@@ -10,16 +10,16 @@ from .views import (
     BookingPaymentRecordsTemplateView,
     PaymentEditFormView,
     BookingHistoryTemplateView,
-    SaveBookingTicketAPIView
+    SaveBookingTicketAPIView,
+    CostumeSummaryTemplateView,
+    IssueCostumesAPIView,
 )
 
 
 urlpatterns = [
     path("", BookingHomeTemplateView.as_view(), name="booking_home"),
     path("booking/", BookingFormView.as_view(), name="booking_create"),
-    path(
-        "history/", BookingHistoryTemplateView.as_view(), name="booking_history"
-    ),
+    path("history/", BookingHistoryTemplateView.as_view(), name="booking_history"),
     path(
         "booking/<str:booking_id>",
         BookingEditFormView.as_view(),
@@ -54,5 +54,15 @@ urlpatterns = [
         "booking/<str:booking_id>/payment-records",
         BookingPaymentRecordsTemplateView.as_view(),
         name="booking_payment_records",
+    ),
+    path(
+        "booking/<str:booking_id>/costume/summary",
+        CostumeSummaryTemplateView.as_view(),
+        name="costume_summary",
+    ),
+    path(
+        "booking/<str:booking_id>/costume/issue-all",
+        IssueCostumesAPIView.as_view(),
+        name="costume_issue_all",
     ),
 ]

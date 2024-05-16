@@ -35,8 +35,10 @@ LOGGING = {
     "handlers": {
         "console": {"class": "logging.StreamHandler", "formatter": "verbose"},
         "file": {
-            "class": "logging.FileHandler",
-            "filename": "prog-general.log",
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "when": "midnight",
+            "backupCount": 15,
+            "filename": BASE_DIR / "logs" / "prod-general.log",
             "formatter": "verbose",
         },
         "rq_console": {
@@ -48,17 +50,21 @@ LOGGING = {
     },
     "loggers": {
         "rq.worker": {"handlers": ["rq_console"], "level": "DEBUG"},
-        'weasyprint': { 
-            'handlers': [],
-            'level': 'WARNING', 
-            'propagate': False,  # Prevent logs from being propagated to the root logger
+        "weasyprint": {
+            "handlers": [],
+            "level": "WARNING",
+            "propagate": False,  # Prevent logs from being propagated to the root logger
         },
-        'fontTools.subset': { 
-            'handlers': [],
-            'level': 'WARNING',
-            'propagate': False,  # Prevent logs from being propagated to the root logger
+        "fontTools.subset": {
+            "handlers": [],
+            "level": "WARNING",
+            "propagate": False,  # Prevent logs from being propagated to the root logger
+        }, 
+        "django": {"handlers": ["file"], "level": "DEBUG"},
+        "": {
+            "handlers": ["file", "console"],
+            "level": "DEBUG",
         },
-        "": {"handlers": ["file"], "level": os.environ.get("LOG_LEVEL", "INFO")},
     },
     "formatters": {
         "verbose": {

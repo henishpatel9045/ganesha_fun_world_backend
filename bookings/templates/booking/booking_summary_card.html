@@ -66,7 +66,10 @@
             let sendTicketBtn = document.getElementById('send-booking-ticket')
             document.getElementById('send-booking-ticket').addEventListener('click', async function() {
                 sendTicketBtn.disabled = true
-                await fetch("{% url 'booking_ticket' booking_id %}")
+                let res = await fetch("{% url 'booking_ticket' booking_id %}")
+                if (!res.ok) {
+                    alert(await res.json())
+                }
                 sendTicketBtn.disabled = false
             })
         </script>

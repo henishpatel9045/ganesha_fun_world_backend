@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Costume Summary
+{% endblock %}
+
+{% block content %}
+<div class="card  mx-5 mb-2">
+    <div class="card-header">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'booking_home' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'react_app' %}">QR Code Scanner</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Costume Summary</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            {% if booking_costumes %}
+            <div class="card">
+                <div class="card-header">
+                    Costume Summary
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <p><strong>Costume Deposit Amount:</strong> <span>{{ costume_amount }} ₹</span></p>
+                            <p><strong>Costume Returned Amount:</strong> <span>{{ costume_amount }} ₹</span></p>
+                            <p><strong>Total Amount:</strong> <span>{{ total_amount }} ₹</span></p>
+                            <p><strong>Received Amount:</strong> <span>{{ received_amount }} ₹</span></p>
+                        </div>
+                        <div class="col-6">
+                            <p>
+                                <strong>Confirmed:
+                                    {% if is_confirmed %}
+                                    <span class="text-success">Yes</span>
+                                    {% else %}
+                                    <span class="text-danger">No</span>
+                                    {% endif %}
+                                </strong>
+                            </p>
+                        </div>
+                        <div class="col-6">
+                            <p>
+                                <strong>Today Booking:
+                                    {% if is_today_booking %}
+                                    <span class="text-success">Yes</span>
+                                    {% else %}
+                                    <span class="text-danger">No</span>
+                                    {% endif %}
+                                </strong>
+                            </p>
+                        </div>
+                        <div style="height: 1px; width: 100%; border: 1px dashed black;"></div>
+                        <table class="table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Costume</th>
+                                    <th>Quantity</th>
+                                    <th>Issued</th>
+                                    <th>Remaining</th>
+                                    <th>Returned</th>
+                                </tr>
+                            </thead>
+
+                            {% for costume in booking_costumes %}
+                            <tr>
+                                <th class="text-center">{{ costume.costume.name }}</th>
+                                <td class="text-center">{{ costume.quantity }}</td>
+                                <td class="text-center">{{ costume.issued_quantity }}</td>
+                                <td class="text-center">{{ costume.remaining }}</td>
+                                <td class="text-center">{{ costume.returned_quantity }}</td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                        <div style="height: 1px; width: 100%; border: 1px dashed black;"></div>
+                        <div class="col-12">
+                            <p><strong>WA Number:</strong> +{{ wa_number }}</p>
+                        </div>
+                        <div class="col-6">
+                            <p><strong>Date:</strong> {{ date }}</p>
+                            <p><strong>Adult (Male):</strong> {{ adult_male }}</p>
+                        </div>
+                        <div class="col-6">
+                            <p><strong>Adult (Female):</strong> {{ adult_female }}</p>
+                            <p><strong>Child:</strong> {{ child }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="row">
+                        <div class="col-6">
+                            <button id="issue-costume-btn"
+                                class="btn btn-success w-100 h-100 d-flex align-items-center justify-content-center"
+                                 {% if not is_issuable %} disabled {% endif %}>Issue
+                                Costumes</button>
+                        </div>
+                        <div class="col-6">
+                            <a href="{% url 'booking_payment_records' booking_id %}"
+                                class="btn btn-info w-100 h-100 d-flex align-items-center justify-content-center">Payment
+                                Records</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-warning" role="alert">
+                No costumes are booked for this booking.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        let issueCostumeBtn = document.getElementById('issue-costume-btn')
+        issueCostumeBtn.addEventListener('click', async function () {
+            issueCostumeBtn.disabled = true
+            let res = await fetch("{% url 'costume_issue_all' booking_id %}")
+            if (!res.ok) {
+                alert(await res.json())
+            }
+            window.location.reload()
+            issueCostumeBtn.disabled = false
+        })
+    </script>
+
+    {% endblock %}

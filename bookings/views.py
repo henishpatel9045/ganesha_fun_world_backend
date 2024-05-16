@@ -4,15 +4,17 @@ from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from django.db import transaction
 from django.views.generic import FormView, TemplateView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.request import Request
+from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-import django_rq
 import logging
 
-from bookings.models import Booking, Payment
+from bookings.models import Booking, BookingCostume, Payment
 from custom_auth.models import User
 from common_config.common import ADMIN_USER, COSTUME_MANAGER_USER, GATE_MANAGER_USER, CANTEEN_MANAGER_USER
 from management_core.models import TicketPrice
@@ -20,6 +22,7 @@ from .forms import BookingForm, PaymentRecordForm, PaymentRecordEditForm
 from .utils import create_razorpay_order
 from .ticket.utils import generate_booking_id_qrcode
 from whatsapp.messages.message_handlers import send_booking_ticket
+from .decorators import user_type_required
 
 logging.getLogger(__name__)
 
@@ -40,6 +43,10 @@ def admin_home_redirect(request: HttpRequest) -> HttpResponse:
 
 class BookingHomeTemplateView(LoginRequiredMixin, TemplateView):
     template_name = "booking/booking_home.html"
+    
+    @user_type_required([ADMIN_USER, GATE_MANAGER_USER])
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        return super().get(request, *args, **kwargs)
 
 
 class BookingFormView(LoginRequiredMixin, FormView):
@@ -384,3 +391,102 @@ class SaveBookingTicketAPIView(APIView):
         except Exception as e:
             logging.exception(e)
             return Response(status=status.HTTP_200_OK)
+
+
+## COSTUME MANAGEMENT VIEWS
+
+class CostumeSummaryTemplateView(TemplateView):
+    template_name = "costume/costume_summary.html"
+    
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        booking_id = kwargs.get("booking_id")
+        if not booking_id:
+            return render(
+                request,
+                "common/error_page.html",
+                {"error_message": "Booking ID is required."},
+            )
+        booking = Booking.objects.filter(id=booking_id).exists()
+        if not booking:
+            return render(
+                request,
+                "common/error_page.html",
+                {"error_message": "Booking not found."},
+            )
+        booking = Booking.objects.prefetch_related(
+            "booking_costume", "booking_costume__costume"
+        ).get(id=booking_id)
+        costume_data = booking.booking_costume.all()
+        is_confirmed = True
+        if booking.received_amount < booking.total_amount :
+            is_confirmed = False
+            
+        is_today_booking = False
+        if booking.date == timezone.now().date():
+            is_today_booking = True            
+            
+        is_costume_issue_remaining = False
+        for costume in costume_data:
+            costume.remaining = costume.quantity - costume.issued_quantity
+            if costume.remaining > 0:
+                is_costume_issue_remaining = True
+            
+        is_issuable = False
+        if is_confirmed and is_today_booking and is_costume_issue_remaining:
+            is_issuable = True
+            
+            
+        context = {
+            "booking_id": booking.id,
+            "costume_amount": booking.costume_amount,
+            "total_amount": booking.total_amount,
+            "received_amount": booking.received_amount,
+            "wa_number": booking.wa_number,
+            "date": booking.date,
+            "adult_male": booking.adult_male,
+            "adult_female": booking.adult_female,
+            "child": booking.child,
+            "is_confirmed": is_confirmed,
+            "is_today_booking": is_today_booking,
+            "is_issuable": is_issuable,
+            "booking_costumes": costume_data,
+        }        
+        return render(request, "costume/costume_summary.html", context=context)
+
+
+class IssueCostumesAPIView(APIView):
+    def get(self, request, booking_id):
+        if not request.user:
+            return Response(
+                {"error": "User not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+        try:
+            if not booking_id:
+                return render(
+                    request,
+                    "common/error_page.html",
+                    {"error_message": "Booking ID is required."},
+                )
+            booking = Booking.objects.filter(id=booking_id).exists()
+            if not booking:
+                return render(
+                    request,
+                    "common/error_page.html",
+                    {"error_message": "Booking not found."},
+                )
+            booking = Booking.objects.prefetch_related(
+                "booking_costume", "booking_costume__costume"
+            ).get(id=booking_id)
+            costume_data: list[BookingCostume] = booking.booking_costume.all()
+            
+            with transaction.atomic():
+                for costume in costume_data:
+                    costume.issued_quantity = costume.quantity
+                    costume.save()
+            
+            return Response(200)
+        except Exception as e:
+            logging.exception(e)
+            return Response({
+                "error": f"Error in issuing costumes. error: {e.args[0]}"
+            })        
