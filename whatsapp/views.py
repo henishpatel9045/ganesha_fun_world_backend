@@ -9,8 +9,6 @@ import django_rq
 import logging
 import os
 
-import pprint
-from .utils import WhatsAppClient
 from .messages.message_handlers import (
     handle_booking_session_messages,
     handle_sending_booking_ticket,

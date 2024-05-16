@@ -64,11 +64,20 @@ class BookingFormView(LoginRequiredMixin, FormView):
     def get_success_url(self) -> str:
         return f"/bookings/booking/{self.booking.id}/payment"
 
+    @user_type_required([ADMIN_USER, GATE_MANAGER_USER])
+    def get(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
+        return super().get(request, *args, **kwargs)
+    
+    @user_type_required([ADMIN_USER, GATE_MANAGER_USER])
+    def post(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
+        return super().post(request, *args, **kwargs)
+    
 
 class BookingEditFormView(LoginRequiredMixin, FormView):
     template_name = "booking/booking_edit.html"
     form_class = BookingForm
 
+    @user_type_required([ADMIN_USER, GATE_MANAGER_USER])
     def get(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
         booking_id = kwargs.get("booking_id")
         if not booking_id:
@@ -110,6 +119,10 @@ class BookingEditFormView(LoginRequiredMixin, FormView):
             "booking/booking_edit.html",
             context={"form": form, "booking_id": booking_id},
         )
+    
+    @user_type_required([ADMIN_USER, GATE_MANAGER_USER])
+    def post(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
+        return super().post(request, *args, **kwargs)
     
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs) 
@@ -158,6 +171,7 @@ class PaymentFormView(LoginRequiredMixin, FormView):
 
         return context
 
+    @user_type_required([ADMIN_USER, GATE_MANAGER_USER])
     def get(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
         booking_id = kwargs.get("booking_id")
         if not booking_id:
@@ -176,6 +190,10 @@ class PaymentFormView(LoginRequiredMixin, FormView):
         context = self.get_context_data(**kwargs)
         return render(request, "booking/payment.html", context=context)
 
+    @user_type_required([ADMIN_USER, GATE_MANAGER_USER])
+    def post(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
+        return super().post(request, *args, **kwargs)
+    
     def form_valid(self, form):
         try:
             form.save()
@@ -210,6 +228,7 @@ class PaymentEditFormView(LoginRequiredMixin, FormView):
         context = {"form": form, "payment": payment, "booking_id": self.booking_id}
         return context
 
+    @user_type_required([ADMIN_USER, GATE_MANAGER_USER])
     def get(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
         payment_id = kwargs.get("payment_id")
         if not payment_id:
@@ -227,6 +246,10 @@ class PaymentEditFormView(LoginRequiredMixin, FormView):
             )
         context = self.get_context_data(**kwargs)
         return render(request, "booking/booking_payment.html", context=context)
+
+    @user_type_required([ADMIN_USER, GATE_MANAGER_USER])
+    def post(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
+        return super().post(request, *args, **kwargs)
 
     def form_valid(self, form: PaymentRecordEditForm):
         try:
@@ -266,6 +289,7 @@ class BookingSummaryCardTemplateView(LoginRequiredMixin, TemplateView):
         }
         return context
 
+    @user_type_required([ADMIN_USER, GATE_MANAGER_USER])
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         context = self.get_context_data(**kwargs)
         if not context:
@@ -326,6 +350,7 @@ class BookingTicketTemplateView(LoginRequiredMixin, TemplateView):
 class BookingPaymentRecordsTemplateView(LoginRequiredMixin, TemplateView):
     template_name = "booking/booking_payment_records.html"
 
+    @user_type_required([ADMIN_USER, GATE_MANAGER_USER])
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         booking_id = kwargs.get("booking_id")
         if not booking_id:
@@ -353,6 +378,7 @@ class BookingHistoryTemplateView(LoginRequiredMixin, TemplateView):
     template_name = "booking/booking_history.html"
     PAGE_SIZE = 50
 
+    @user_type_required([ADMIN_USER, GATE_MANAGER_USER])
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         wa_number = request.GET.get("wa_number")
         page = request.GET.get("page", 1)
@@ -375,6 +401,7 @@ class BookingHistoryTemplateView(LoginRequiredMixin, TemplateView):
 
 
 class SaveBookingTicketAPIView(APIView):
+    @user_type_required([ADMIN_USER, GATE_MANAGER_USER])
     def get(self, request: Request, booking_id: str) -> Response:
         try:
             if not booking_id:

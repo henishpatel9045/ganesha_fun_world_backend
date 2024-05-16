@@ -5,11 +5,14 @@ from rest_framework.views import APIView
 import logging
 
 from .forms import TicketListPriceForm
+from bookings.decorators import user_type_required
+from common_config.common import ADMIN_USER
 
 logging.getLogger(__name__)
 
 
 class TicketListPriceFormView(LoginRequiredMixin, APIView):
+    @user_type_required([ADMIN_USER])
     def post(self, request):
         form = TicketListPriceForm(request.POST)
         logging.info("Creating ticket price list: ", request.POST)
