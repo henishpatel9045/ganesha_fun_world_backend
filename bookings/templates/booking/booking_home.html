@@ -1,22 +1,32 @@
-{% extends 'base.html' %} {% block title %} Home {% endblock %} 
+{% extends 'base.html' %} {% block title %} Home {% endblock %}
 {% block content %}
-<h2 class="p-3 pb-3">Home</h2>
-<div
-  class="w-100 h-100 row row-cols-2 row-cols-md-3 row-cols-lg-4 g-2 gy-2 gx-2 p-3 position-relative"
->
-  <a
-    href="{% url 'booking_create' %}"
-    class="btn btn-primary btn-outline-secondary col text-center"
-    style="min-height: 150px"
-  >
-    Create Booking
-  </a>
-  <a
-    href="{% url 'react_app' %}"
-    class="btn btn-primary btn-outline-secondary col text-center"
-    style="min-height: 150px"
-  >
+<style>
+  .card-link-item {
+    min-height: 150px;
+    background-color: white;
+    box-shadow: 0px 0px 10px 0px #00000033;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: black;
+  }
+
+  .card-link-item:hover {
+    background-color: #f8f9fa;
+    color: gray;
+  }
+</style>
+<div class="w-100 px-2 pt-3" style="border-bottom: 5px solid #f8f9fa;">
+  <h3 class="p-3 pb-3">Gate Management System</h3>
+</div>
+
+<div class="h-100 row p-4 gap-1">
+  <a href="{% url 'react_app' %}" class="col-6 col-md-4 btn btn-outline-secondary text-center card-link-item">
     Scan QR Code
+  </a>
+  <a href="{% url 'booking_history' %}" class="col-6 col-md-4 btn btn-outline-secondary text-center card-link-item">
+    Booking History
   </a>
 </div>
 {% endblock %}

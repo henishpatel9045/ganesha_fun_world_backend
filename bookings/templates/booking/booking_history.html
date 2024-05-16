@@ -55,6 +55,50 @@
             {% endfor %}
         </tbody>
     </table>
+    {% comment %} Add pagination with previous and next button here using bootstrap {% endcomment %}
+    <div class="d-flex justify-content-center">
+        <nav aria-label="Page navigation example">
+            <ul class="pagination">
+                {% if bookings.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{bookings.previous_page_number}}">Previous</a>
+                </li>
+                {% endif %}
+                
+                {% comment %} limit the number of pages to show in pagination to 10 below {% endcomment %}
+                {% if bookings.paginator.num_pages > 5 %}
+    {% for i in bookings.paginator.page_range %}
+        {% if i == 1 %}
+            <li class="page-item {% if i == bookings.number %}active{% endif %}">
+                <a class="page-link" href="?page={{i}}">{{i}}</a>
+            </li>
+        {% elif i == bookings.paginator.num_pages %}
+            <li class="page-item {% if i == bookings.number %}active{% endif %}">
+                <a class="page-link" href="?page={{i}}">{{i}}</a>
+            </li>
+        {% elif i > bookings.number|add:"-2" and i < bookings.number|add:"2" %}
+            <li class="page-item {% if i == bookings.number %}active{% endif %}">
+                <a class="page-link" href="?page={{i}}">{{i}}</a>
+            </li>
+        {% elif i == bookings.number|add:"-2" or i == bookings.number|add:"2" %}
+            <li class="page-item disabled">
+                <span class="page-link">...</span>
+            </li>
+        {% endif %}
+    {% endfor %}
+{% else %}
+    {% for i in bookings.paginator.page_range %}
+        <li class="page-item {% if i == bookings.number %}active{% endif %}">
+            <a class="page-link" href="?page={{i}}">{{i}}</a>
+        </li>
+    {% endfor %}
+{% endif %}
+
+
+            </ul>
+        </nav>
+    </div>
+    
 </div>
 </div>
 <script>
