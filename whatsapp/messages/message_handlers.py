@@ -435,15 +435,17 @@ def send_my_bookings_message(sender: str, msg_context: dict|None=None):
     return        
 
 
-def handle_sending_booking_ticket(sender: str, booking_id: str, msg_context: dict|None):
+def handle_sending_booking_ticket(sender: str, booking_id: str, msg_context: dict|None, booking: Booking|None=None):
     """
     Function to handle sending booking ticket to the user.
 
     :param `sender`: The number to which message is to be sent
     :param `booking_id`: The booking id
     :param `msg_context`: The context of the message i.e. for replying to msg
+    :param `booking`: The booking instance
     """
-    booking = Booking.objects.filter(id=booking_id).first()
+    if not booking:
+        booking = Booking.objects.filter(id=booking_id).first()
     if booking:
         send_booking_ticket(booking)
     else:

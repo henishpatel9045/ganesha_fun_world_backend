@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    RazorpayPaymentWebhookAPIView,
     BookingHomeTemplateView,
     BookingFormView,
     PaymentFormView,
@@ -13,12 +14,17 @@ from .views import (
     SaveBookingTicketAPIView,
     CostumeSummaryTemplateView,
     IssueCostumesAPIView,
-    BookingCostumeReturnFormView
+    BookingCostumeReturnFormView,
 )
 
 
 urlpatterns = [
     path("", BookingHomeTemplateView.as_view(), name="booking_home"),
+    path(
+        "razorpay/webhook/",
+        RazorpayPaymentWebhookAPIView.as_view(),
+        name="razorpay_payment_webhook",
+    ),
     path("booking/", BookingFormView.as_view(), name="booking_create"),
     path("history/", BookingHistoryTemplateView.as_view(), name="booking_history"),
     path(

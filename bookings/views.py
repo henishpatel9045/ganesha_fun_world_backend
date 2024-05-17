@@ -12,7 +12,6 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from extra_views import FormSetView
 import logging
 
 from bookings.models import Booking, BookingCostume, Payment
@@ -21,6 +20,7 @@ from common_config.common import ADMIN_USER, COSTUME_MANAGER_USER, GATE_MANAGER_
 from management_core.models import TicketPrice
 from .forms import BookingCostumeFormSet, BookingForm, PaymentRecordForm, PaymentRecordEditForm
 from .utils import create_razorpay_order
+from .webhook_utils import handle_razorpay_webhook_booking_payment
 from .ticket.utils import generate_booking_id_qrcode
 from whatsapp.messages.message_handlers import send_booking_ticket
 from .decorators import user_type_required
@@ -38,6 +38,19 @@ def admin_home_redirect(request: HttpRequest) -> HttpResponse:
     elif user.user_type == CANTEEN_MANAGER_USER:
         return redirect("/canteen/")
     return redirect("/frontend")
+
+
+class RazorpayPaymentWebhookAPIView(APIView):
+    def post(self, request: Request) -> Response:
+        try:
+            data = request.data
+            handling_status = handle_razorpay_webhook_booking_payment(data)
+            if not handling_status:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response(200)
+        except Exception as e:
+            logging.exception(e)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 ## GATE MANAGEMENT VIEWS

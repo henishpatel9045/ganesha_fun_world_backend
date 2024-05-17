@@ -33,6 +33,8 @@ PAYMENT_MODES = [
     ("payment_gateway", "payment_gateway"),
 ]
 
+ADVANCE_PER_PERSON_AMOUNT_FOR_BOOKING = 100
+
 PAYMENT_MODES_FORM = [("gate_cash", "Cash"), ("gate_upi", "UPI")]
 
 PAYMENT_FOR = [

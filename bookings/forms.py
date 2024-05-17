@@ -152,12 +152,14 @@ class BookingForm(forms.Form):
     ) -> Booking | bool:
         try:
             data = self.cleaned_data
-            print("Inside Save: ", data)
             if data["adult_female"] == 0 and data["child"] == 0:
                 self.add_error(None, "At least one female or child is required.")
                 raise Exception()
             if data["adult_female"] == 0 and data["adult_male"] == 0:
                 self.add_error(None, "At least one adult is required.")
+                raise Exception()
+            if not edit_booking and self.cleaned_data["date"] != timezone.now().date():
+                self.add_error(None, "Booking is allowed only for today.")
                 raise Exception()
             booking_data = {
                 "wa_number": self.cleaned_data["wa_number"],
