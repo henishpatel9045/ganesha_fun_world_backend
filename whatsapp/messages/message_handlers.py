@@ -451,3 +451,29 @@ def handle_sending_booking_ticket(sender: str, booking_id: str, msg_context: dic
     else:
         whatsapp_config.send_message(sender, "text", {"body": "No booking found with given id."}, msg_context)
     return
+
+
+def send_review_message(recipient_number: str, review_url: str) -> None:
+    """
+    Function to send review message to the user.
+
+    :param `recipient_number`: The number to which message is to be sent
+    :param `review_url`: The review url
+    """
+    payload = {
+        "preview_url": True,
+        "body": f"Please rate your experience with us.\n{review_url}",
+    }
+    whatsapp_config.send_message(recipient_number, "text", payload)
+
+def send_daily_review_message():
+    """
+    Function to send daily review message to the user.
+    """
+    bookings = Booking.objects.filter(date=timezone.now().date(), received_amount__gt=0)
+    review_url = os.environ.get("GOOGLE_REVIEW_LINK")
+    queue = django_rq.get_queue("low")
+    if bookings.exists():
+        for booking in bookings:
+            queue.enqueue(send_review_message, booking.wa_number, review_url)
+

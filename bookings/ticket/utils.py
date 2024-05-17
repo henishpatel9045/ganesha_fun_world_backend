@@ -11,8 +11,6 @@ from common_config.common import (
     TEMPORARY_FILE_LOCATION,
 )
 
-BASE_GENERATED_DIR = os.environ.get("GENERATED_DIR_CONTAINER_PATH")
-
 
 def ensure_directory_exists(directory):
     """

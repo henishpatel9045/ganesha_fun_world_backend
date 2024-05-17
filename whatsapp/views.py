@@ -12,6 +12,7 @@ import os
 from .messages.message_handlers import (
     handle_booking_session_messages,
     handle_sending_booking_ticket,
+    send_daily_review_message,
     send_date_list_message,
     send_my_bookings_message,
     send_welcome_message,
@@ -34,6 +35,19 @@ class WhatsAppTestTriggerAPIView(APIView):
             "917990577979",
         )
         return Response("Hello, World!", status=status.HTTP_200_OK)
+
+
+class DailyReviewReminderAPIView(APIView):
+    def get(self, request):
+        """
+        Function to handle the get request.
+        """
+        try:
+            send_daily_review_message()
+            return Response(200)
+        except Exception as e:
+            logging.exception(e)
+            return Response(500)
 
 
 class WhatsAppWebhook(APIView):
