@@ -9,8 +9,7 @@ function QRScanner() {
     if (enabled && text) {
       window.open(
         BASE_URL + "/bookings/booking/" + text + "/summary",
-        "_blank",
-        "width=1000,height=600"
+        "_blank"
       );
       setEnabled(false);
     }

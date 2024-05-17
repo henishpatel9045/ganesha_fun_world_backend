@@ -12,13 +12,14 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
+from extra_views import FormSetView
 import logging
 
 from bookings.models import Booking, BookingCostume, Payment
 from custom_auth.models import User
 from common_config.common import ADMIN_USER, COSTUME_MANAGER_USER, GATE_MANAGER_USER, CANTEEN_MANAGER_USER
 from management_core.models import TicketPrice
-from .forms import BookingForm, PaymentRecordForm, PaymentRecordEditForm
+from .forms import BookingCostumeFormSet, BookingForm, PaymentRecordForm, PaymentRecordEditForm
 from .utils import create_razorpay_order
 from .ticket.utils import generate_booking_id_qrcode
 from whatsapp.messages.message_handlers import send_booking_ticket
@@ -517,3 +518,64 @@ class IssueCostumesAPIView(APIView):
             return Response({
                 "error": f"Error in issuing costumes. error: {e.args[0]}"
             })        
+
+
+class BookingCostumeReturnFormView(FormView):
+    template_name = "costume/costume_return.html"
+    form_class = BookingCostumeFormSet
+    
+    def get_context_data(self, form=None, **kwargs: Any) -> dict[str, Any]:
+        booking_id = self.kwargs.get("booking_id")
+        booking = Booking.objects.prefetch_related(
+            "booking_costume", "booking_costume__costume"
+        ).get(id=booking_id)
+        costume_data: list[BookingCostume] = booking.booking_costume.all()
+        
+        if not form:
+            form = BookingCostumeFormSet(
+                initial=[{"id": costume, 
+                            "name": costume.costume.name, 
+                            "quantity": costume.quantity, 
+                            "issued_quantity": costume.issued_quantity, 
+                            "returned_quantity": costume.returned_quantity, 
+                            "remark": costume.remark
+                        } for costume in costume_data])
+        context = {
+            "booking": booking,
+            "formset": form,
+        }
+        return context
+        
+        
+    def get(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
+        booking_id = kwargs.get("booking_id")
+        if not booking_id:
+            return render(
+                request,
+                "common/error_page.html",
+                {"error_message": "Booking ID is required."},
+            )
+        booking = Booking.objects.filter(id=booking_id).exists()
+        if not booking:
+            return render(
+                request,
+                "common/error_page.html",
+                {"error_message": "Booking not found."},
+            )
+        
+        context = self.get_context_data(**kwargs)
+        return render(request, "costume/costume_return.html", context=context)
+    
+    def form_valid(self, form):
+        try:
+            form.is_valid()
+            with transaction.atomic():
+                for individual_form in form:
+                    individual_form.save()
+            return super().form_valid(form)
+        except Exception as e:
+            return super().form_invalid(form)
+
+    def get_success_url(self) -> str:
+        return f"/bookings/booking/{self.kwargs.get('booking_id')}/costume/summary"
+    

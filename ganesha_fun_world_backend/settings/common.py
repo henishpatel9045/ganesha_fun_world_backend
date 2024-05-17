@@ -150,3 +150,5 @@ AUTH_USER_MODEL = "custom_auth.User"
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 
 CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+CSRF_TRUSTED_ORIGINS = ["https://leading-blindly-seahorse.ngrok-free.app/", "https://leading-blindly-seahorse.ngrok-free.app"]

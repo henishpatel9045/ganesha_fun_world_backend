@@ -85,6 +85,7 @@ class BookingCostume(DateTimeBaseModel):
     costume = models.ForeignKey(
         "management_core.Costume", on_delete=models.DO_NOTHING, db_index=True
     )
+    remark = models.TextField(null=True, blank=True)
     quantity = models.PositiveIntegerField(default=0, validators=[MinValueValidator(1)])
     issued_quantity = models.PositiveIntegerField(default=0)
     deposit_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)

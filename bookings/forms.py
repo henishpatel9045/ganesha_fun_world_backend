@@ -1,5 +1,6 @@
 from typing import Any
 from django import forms
+from django.forms import formset_factory
 from django.core.validators import MinValueValidator
 from django.db import transaction
 from django.utils import timezone
@@ -10,10 +11,11 @@ from crispy_bootstrap5.bootstrap5 import FloatingField, BS5Accordion
 
 from common_config.common import PAYMENT_MODES_FORM
 from .utils import add_payment_to_booking, create_or_update_booking
-from .models import Booking, Payment
+from .models import Booking, BookingCostume, Payment
 from management_core.models import Costume, TicketPrice
 
 
+## GATE MANAGEMENT FORMS
 class BookingForm(forms.Form):
     wa_number = forms.CharField(
         max_length=12,
@@ -335,7 +337,6 @@ class PaymentRecordEditForm(forms.Form):
                     if payment.is_confirmed:
                         payment.booking.received_amount += payment.amount
 
-
                 elif (
                     not payment.is_returned_to_customer
                     and not self.cleaned_data["is_returned_to_customer"]
@@ -363,3 +364,84 @@ class PaymentRecordEditForm(forms.Form):
         except Exception as e:
             self.add_error(None, e.args[0])
             raise forms.ValidationError("")
+
+
+## COSTUME MANAGEMENT FORMS
+class CostumeReturnEditForm(forms.Form):
+    id = forms.ModelChoiceField(
+        queryset=BookingCostume.objects.all(),
+        label="Booking Costume",
+        required=False,
+        widget=forms.Select(
+            attrs={
+                "id": "booking_costume_id",
+                "readonly": "readonly",
+            }
+        ),
+    )
+    name = forms.CharField(
+        label="Costume Name",
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                "id": "costume_name",
+                "readonly": "readonly",
+                "class": "title-field text-center w-100",
+            }
+        ),
+    )
+    quantity = forms.IntegerField(
+        initial=0,
+        label="Quantity",
+        required=False,
+        widget=forms.NumberInput(
+            attrs={
+                "id": "quantity",
+                "readonly": "readonly",
+                "class": "readonly-field text-center w-100",
+            }
+        ),
+    )
+    issued_quantity = forms.IntegerField(
+        initial=0,
+        label="Issued Quantity",
+        required=False,
+        widget=forms.NumberInput(
+            attrs={
+                "id": "issued_quantity",
+                "readonly": "readonly",
+                "class": "readonly-field text-center w-100",
+            }
+        ),
+    )
+    returned_quantity = forms.IntegerField(
+        initial=0,
+        label="Returned Quantity",
+        required=True,
+        widget=forms.NumberInput(
+            attrs={
+                "id": "returned_quantity",
+                "class": "text-center w-100 form-control form-control-sm",
+            }
+        ),
+    )
+    remark = forms.CharField(
+        widget=forms.Textarea(),
+        label="Remark",
+        required=False,
+    )
+    
+    def save(self):
+        try:
+            booking_costume: BookingCostume = self.cleaned_data["id"]
+            booking_costume.returned_quantity = self.cleaned_data["returned_quantity"]
+            if booking_costume.returned_quantity > booking_costume.issued_quantity:
+                raise forms.ValidationError("Returned quantity can't be more than issued quantity.")
+            booking_costume.save()
+            return booking_costume
+        except Exception as e:
+            self.add_error(None, e.args[0])
+            raise forms.ValidationError("")
+
+
+BookingCostumeFormSet = formset_factory(CostumeReturnEditForm, extra=0)

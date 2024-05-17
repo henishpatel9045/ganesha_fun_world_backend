@@ -5,7 +5,15 @@ Costume Summary
 {% endblock %}
 
 {% block content %}
-<div class="card  mx-5 mb-2">
+<style>
+    thead > * {
+        background-color: #474747;
+        color: white;
+        text-align: center;
+    }
+</style>
+
+<div class="card mx-2  mx-md-5 mb-0 mb-md-2">
     <div class="card-header">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
@@ -17,7 +25,7 @@ Costume Summary
     </div>
 </div>
 
-<div class="container mt-5">
+<div class="container mt-md-5 mt-2">
     <div class="row justify-content-center">
         <div class="col-lg-6">
             {% if booking_costumes %}
@@ -33,7 +41,7 @@ Costume Summary
                             <p><strong>Total Amount:</strong> <span>{{ total_amount }} ₹</span></p>
                             <p><strong>Received Amount:</strong> <span>{{ received_amount }} ₹</span></p>
                         </div>
-                        <div class="col-6">
+                        <div class="col-12 d-flex align-items-center justify-content-between">
                             <p>
                                 <strong>Confirmed:
                                     {% if is_confirmed %}
@@ -43,8 +51,7 @@ Costume Summary
                                     {% endif %}
                                 </strong>
                             </p>
-                        </div>
-                        <div class="col-6">
+                        
                             <p>
                                 <strong>Today Booking:
                                     {% if is_today_booking %}
@@ -100,9 +107,8 @@ Costume Summary
                                 Costumes</button>
                         </div>
                         <div class="col-6">
-                            <a href="{% url 'booking_payment_records' booking_id %}"
-                                class="btn btn-info w-100 h-100 d-flex align-items-center justify-content-center">Payment
-                                Records</a>
+                            <a href="{% url 'costume_return' booking_id %}"
+                                class="btn btn-info w-100 h-100 d-flex align-items-center justify-content-center">Return Costume</a>
                         </div>
                     </div>
                 </div>

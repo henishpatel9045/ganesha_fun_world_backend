@@ -1,5 +1,13 @@
 {% extends 'base.html' %} {% block title %}Booking History{% endblock %} {% load crispy_forms_tags %} 
 {% block content%}
+<style>
+    .table-header-item {
+        background-color: #474747 !important;
+        color: white !important;
+        text-align: center;
+    }
+</style>
+
 <div class="card  mx-5 mb-2">
     <div class="card-header">
         <nav aria-label="breadcrumb">
@@ -14,41 +22,41 @@
 
 <div class="mx-5 mb-2">
     <div class="w-100 d-flex align-items-center justify-content-between">
-        <h1 class="mb-2">Booking History</h1>
-        <span class="d-flex align-items-center justify-content-center">
-            <input class="form-control" type="text" id="search-input" placeholder="10 digit WhatsApp Number" value='{{request.GET.wa_number}}' pattern="^\d{10}$" />
+        <h3 class="mb-2">Booking History</h3>
+        <form method="get" action="{% url 'booking_history' %}" class="d-flex align-items-center justify-content-center">
+            <input class="form-control" type="text" id="search-input" placeholder="10 digit WhatsApp Number" value='{{request.GET.wa_number}}' pattern="^\d{10}$" name="wa_number" />
             <button class="btn btn-primary" id="wa-search-btn">Search</button>
-        </span>
+        </form>
     </div>
 
     <table class="table table-hover table-bordered table-responsive">
         <thead>
             <tr>
-                <th>WhatsApp Number</th>
-                <th>Date</th>
-                <th>Booking Type</th>
-                <th>Adult<br/>(Male)</th>
-                <th>Adult<br/>(Female)</th>
-                <th>Children</th>
-                <th>Infants</th>
-                <th>Total Amount</th>
-                <th>Amount Received</th>
-                <th>Actions</th>
+                <th class="table-header-item">WhatsApp Number</th>
+                <th class="table-header-item">Date</th>
+                <th class="table-header-item">Booking Type</th>
+                <th class="table-header-item">Adult<br/>(Male)</th>
+                <th class="table-header-item">Adult<br/>(Female)</th>
+                <th class="table-header-item">Children</th>
+                <th class="table-header-item">Infants</th>
+                <th class="table-header-item">Total Amount</th>
+                <th class="table-header-item">Amount Received</th>
+                <th class="table-header-item">Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for booking in bookings %}
             <tr>
-                <td>+{{booking.wa_number}}</td>
-                <td>{{booking.date}}</td>
-                <td>{{booking.booking_type}}</td>
-                <td>{{booking.adult_male}}</td>
-                <td>{{booking.adult_female}}</td>
-                <td>{{booking.child}}</td>
-                <td>{{booking.infant}}</td>
-                <td>{{booking.total_amount}}</td>
-                <td>{{booking.received_amount}}</td>
-                <td>
+                <td class="text-center">+{{booking.wa_number}}</td>
+                <td class="text-center">{{booking.date}}</td>
+                <td class="text-center">{{booking.booking_type}}</td>
+                <td class="text-center">{{booking.adult_male}}</td>
+                <td class="text-center">{{booking.adult_female}}</td>
+                <td class="text-center">{{booking.child}}</td>
+                <td class="text-center">{{booking.infant}}</td>
+                <td class="text-center">{{booking.total_amount}}</td>
+                <td class="text-center">{{booking.received_amount}}</td>
+                <td class="text-center">
                     <a href="{% url 'booking_summary' booking.id %}" class="btn btn-primary">Edit</a>
                 </td>
             </tr>

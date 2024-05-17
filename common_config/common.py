@@ -38,6 +38,7 @@ PAYMENT_MODES_FORM = [("gate_cash", "Cash"), ("gate_upi", "UPI")]
 PAYMENT_FOR = [
     ("booking", "booking"),
     ("locker", "locker"),
+    ("costume_return", "costume_return"),
 ]
 
 
