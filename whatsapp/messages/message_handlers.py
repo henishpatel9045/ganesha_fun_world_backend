@@ -124,13 +124,7 @@ def handle_booking_session_confirm(active_session: dict, sender: str, msg_contex
             booking_costume_data={},
             booking_type="whatsapp_booking"
         )
-        order = create_razorpay_order(booking.total_amount, booking.wa_number, {
-            "id": str(booking.id),
-            "amount": str(booking.total_amount),
-            "adult_male": str(booking.adult_male),
-            "adult_female": str(booking.adult_female),
-            "child": str(booking.child)
-        })
+        order = create_razorpay_order(booking.total_amount, booking.wa_number, booking)
         print(order)
         res = whatsapp_config.send_message(
             sender,

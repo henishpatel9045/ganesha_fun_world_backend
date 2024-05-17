@@ -202,7 +202,7 @@ def add_payment_to_booking(
         raise e
 
 
-def create_razorpay_order(amount, wa_number: str, note_data: dict = {}) -> str:
+def create_razorpay_order(amount, wa_number: str, booking: Booking) -> str:
     """Method to create razorpay order and return the order_id
 
     :param amount: amount to be paid
@@ -211,7 +211,14 @@ def create_razorpay_order(amount, wa_number: str, note_data: dict = {}) -> str:
     :return: payment link
     """
     amount = int(float(amount) * 100)
-
+    note_data = {
+        "booking_id": str(booking.id),
+        "amount": str(booking.total_amount),
+        "received_amount": str(booking.received_amount),
+        "adult_male": str(booking.adult_male),
+        "adult_female": str(booking.adult_female),
+        "child": str(booking.child),
+    }
     expire_time = timezone.now() + timedelta(minutes=16)
     expire_time = int(expire_time.timestamp())
     order = razorpay_client.payment_link.create(
@@ -219,7 +226,12 @@ def create_razorpay_order(amount, wa_number: str, note_data: dict = {}) -> str:
             "amount": amount,
             "currency": "INR",
             "accept_partial": False,
-            "description": "For booking via WhatsApp",
+            "description": f"For Shree Ganesha Fun World Booking App with \
+                                    Phone: +{booking.wa_number}, \
+                                    Date: {booking.date.strftime('%d-%m-%Y')}, \
+                                    Adult (Male): {booking.adult_male}, \
+                                    Adult (Female): {booking.adult_female}, \
+                                    Child: {booking.child}",
             "notify": {"sms": False, "email": False},
             "reminder_enable": False,
             "notes": note_data,
