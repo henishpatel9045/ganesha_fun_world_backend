@@ -2,6 +2,8 @@ from django.urls import path
 
 from .views import (
     qr_code_homepage_redirect,
+    AdminDataDashboard,
+    AdminDashboardTemplateView,
     RazorpayPaymentWebhookAPIView,
     BookingHomeTemplateView,
     BookingFormView,
@@ -22,6 +24,8 @@ from .views import (
 
 urlpatterns = [
     path("", BookingHomeTemplateView.as_view(), name="booking_home"),
+    path("dashboard", AdminDashboardTemplateView.as_view(), name="admin_dashboard"),
+    path("api/dashboard", AdminDataDashboard.as_view(), name="admin_dashboard_api"),
     path("costume", CostumeHomeTemplateView.as_view(), name="costume_home"),
     path("qr-redirect/<str:booking_id>", qr_code_homepage_redirect, name="qr_redirect"),
     path(

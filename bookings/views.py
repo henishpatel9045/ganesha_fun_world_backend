@@ -30,7 +30,9 @@ logging.getLogger(__name__)
 @login_required
 def admin_home_redirect(request: HttpRequest) -> HttpResponse:
     user : User = request.user
-    if user.user_type in [ADMIN_USER, GATE_MANAGER_USER]:
+    if user.user_type == ADMIN_USER:
+        return redirect("/bookings/dashboard")
+    elif user.user_type == GATE_MANAGER_USER:
         return redirect("/bookings/")
     elif user.user_type == COSTUME_MANAGER_USER:
         return redirect("/bookings/costume")
@@ -60,7 +62,121 @@ class RazorpayPaymentWebhookAPIView(APIView):
         except Exception as e:
             logging.exception(e)
             return Response(status=status.HTTP_400_BAD_REQUEST)
+        
 
+class AdminDataDashboard(APIView):
+    def get(self, request: Request) -> Response:
+        from_date = request.GET.get("from_date", timezone.now().date().strftime("%d-%m-%Y"))
+        to_date = request.GET.get("to_date", timezone.now().date().strftime("%d-%m-%Y"))
+        
+        from_date = timezone.datetime.strptime(from_date, "%d-%m-%Y").date()
+        to_date = timezone.datetime.strptime(to_date, "%d-%m-%Y").date()
+        bookings = Booking.objects.filter(date__range=[from_date, to_date],
+                                                              received_amount__gt=0).values_list("date", 
+                                                                                                               "adult_male",
+                                                                                                               "adult_female",
+                                                                                                               "child",
+                                                                                                               "booking_type",
+                                                                                                               "total_amount",
+                                                                                                               "received_amount",)
+        # FIXME currently I am counting the advance payment in that date income instead of booking date income                          
+        payments = Payment.objects.prefetch_related("booking").filter(
+            booking__date__range=[from_date, to_date], 
+            is_confirmed=True,
+            is_returned_to_customer=False
+        ).values_list("booking__date", 
+                      "amount", 
+                      "payment_mode", 
+                      "payment_for",)
+        logging.info("Payments: %s", payments)
+        total_bookings = len(bookings)
+        total_persons = 0
+        person_type = {
+            "adult_male": 0,
+            "adult_female": 0,
+            "child": 0,
+        }
+        date_wise_persons = {}
+        for booking in bookings:
+            date = booking[0].strftime("%d-%m-%Y")
+            booking_total_person = booking[1] + booking[2] + booking[3]
+            total_persons += booking_total_person
+            person_type["adult_male"] += booking[1]
+            person_type["adult_female"] += booking[2]
+            person_type["child"] += booking[3]
+            if date in date_wise_persons:
+                date_wise_persons[date] += booking_total_person
+            else:
+                date_wise_persons[date] = booking_total_person
+        date_wise_persons = [{"date": timezone.datetime.strptime(date, "%d-%m-%Y"),
+                              "total_persons": total_persons}
+                            for date, total_persons in date_wise_persons.items()]
+        date_wise_persons.sort(key=lambda x: x["date"])
+        total_persons_line_chart = [{"x": data["date"].strftime("%d-%m-%Y"), "y": data["total_persons"]} for data in date_wise_persons]
+        person_type_pie_chart = [
+            {
+                "x": "Adult (Male)",
+                "y": person_type["adult_male"]
+            },
+            {
+                "x": "Adult (Female)",
+                "y": person_type["adult_female"]
+            },
+            {
+                "x": "Child",
+                "y": person_type["child"]
+            },
+        ]
+        
+        total_income = 0
+        total_gateway_income = 0
+        total_gate_cash = 0
+        total_gate_upi = 0
+        payment_methods = {
+            "gate_cash": 0,
+            "gate_upi": 0,
+            "payment_gateway": 0,
+        }
+        date_wise_income = {}
+        for payment in payments:
+            date = payment[0].strftime("%d-%m-%Y")
+            total_income += payment[1]
+            payment_methods[payment[2]] += payment[1]
+            if payment[2] == "gate_cash":
+                total_gate_cash += payment[1]
+            elif payment[2] == "gate_upi":
+                total_gate_upi += payment[1]
+            elif payment[2] == "payment_gateway":
+                total_gateway_income += payment[1]
+            if date in date_wise_income:
+                date_wise_income[date] += payment[1]
+            else:
+                date_wise_income[date] = payment[1]
+        date_wise_income = [{"date": timezone.datetime.strptime(date, "%d-%m-%Y"),
+                            "total_income": total_income}
+                            for date, total_income in date_wise_income.items()]
+        date_wise_income.sort(key=lambda x: x["date"])
+        
+        total_income_line_chart = [{"x": data["date"].strftime("%d-%m-%Y"), "y": data["total_income"]} for data in date_wise_income]
+        payment_method_pie_chart = [{"x": key, "y": value} for key, value in payment_methods.items()]
+        
+        return Response({
+            "total_bookings": total_bookings,
+            "total_income": total_income,
+            "total_persons": total_persons,
+            "payment_method_pie_chart": payment_method_pie_chart,
+            "person_type_pie_chart": person_type_pie_chart,
+            "total_persons_line_chart": total_persons_line_chart,
+            "total_income_line_chart": total_income_line_chart,
+        }, status=status.HTTP_200_OK)
+        
+
+class AdminDashboardTemplateView(LoginRequiredMixin, TemplateView):
+    template_name = "admin_dashboard.html"
+    
+    @user_type_required([ADMIN_USER])
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        return super().get(request, *args, **kwargs)
 
 ## GATE MANAGEMENT VIEWS
 

@@ -110,12 +110,10 @@ def create_or_update_booking(
                 special_ticket_total_amount if is_discounted_booking else ticket_total
             )
             booking.costume_amount = (
-                special_costume_total_amount if is_discounted_booking else costume_total
+                special_costume_total_amount if is_discounted_booking and special_costume_total_amount > 0 else costume_total
             )
             booking.total_amount = (
-                special_ticket_total_amount + special_costume_total_amount
-                if is_discounted_booking
-                else ticket_total + costume_total
+                booking.ticket_amount + booking.costume_amount
             )
             booking.received_amount = received_amount
             booking.is_discounted_booking = is_discounted_booking
