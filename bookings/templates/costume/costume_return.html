@@ -53,9 +53,9 @@
                     <thead>
                         <tr>
                             <th class="text-center">Name</th>
-                            <th class="text-center">Quantity</th>
                             <th class="text-center">Issued</th>
                             <th class="text-center">Returned</th>
+                            <th class="text-center">Returned Amount</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -63,9 +63,9 @@
                         <tr>
                             <th hidden>{{form.id}}</th>
                             <th class="text-center">{{form.name}}</th>
-                            <td>{{form.quantity}}</td>
                             <td>{{form.issued_quantity}}</td>
                             <th>{{form.returned_quantity}}</th>
+                            <td>{{form.returned_amount}}</td>
                         </tr>            
                     {% endfor %}                    
                     </tbody>
@@ -83,12 +83,12 @@
     // Write script so that when user click on the input and the value of input is 0 then it becomes empty and when user click out of the input and the value of input is empty then it becomes 0.
     for (let i = 0; i < inputs.length; i++) {
         inputs[i].addEventListener('focus', function () {
-            if (inputs[i].value === '0') {
+            if (inputs[i].value == 0) {
                 inputs[i].value = '';
             }
         });
         inputs[i].addEventListener('blur', function () {
-            if (inputs[i].value === '') {
+            if (inputs[i].value == 0) {
                 inputs[i].value = '0';
             }
         });

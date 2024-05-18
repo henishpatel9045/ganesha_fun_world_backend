@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    qr_code_homepage_redirect,
     RazorpayPaymentWebhookAPIView,
     BookingHomeTemplateView,
     BookingFormView,
@@ -12,6 +13,7 @@ from .views import (
     PaymentEditFormView,
     BookingHistoryTemplateView,
     SaveBookingTicketAPIView,
+    CostumeHomeTemplateView,
     CostumeSummaryTemplateView,
     IssueCostumesAPIView,
     BookingCostumeReturnFormView,
@@ -20,6 +22,8 @@ from .views import (
 
 urlpatterns = [
     path("", BookingHomeTemplateView.as_view(), name="booking_home"),
+    path("costume", CostumeHomeTemplateView.as_view(), name="costume_home"),
+    path("qr-redirect/<str:booking_id>", qr_code_homepage_redirect, name="qr_redirect"),
     path(
         "razorpay/webhook/",
         RazorpayPaymentWebhookAPIView.as_view(),

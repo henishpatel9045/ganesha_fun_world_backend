@@ -33,10 +33,20 @@ def admin_home_redirect(request: HttpRequest) -> HttpResponse:
     if user.user_type in [ADMIN_USER, GATE_MANAGER_USER]:
         return redirect("/bookings/")
     elif user.user_type == COSTUME_MANAGER_USER:
-        return redirect("/costumes/")
+        return redirect("/bookings/costume")
     elif user.user_type == CANTEEN_MANAGER_USER:
         return redirect("/canteen/")
     return redirect("/frontend")
+
+
+@login_required
+def qr_code_homepage_redirect(request: HttpRequest, booking_id: str) -> HttpResponse:
+    user: User = request.user
+    if user.user_type in [ADMIN_USER, GATE_MANAGER_USER]:
+        return redirect(f"/bookings/booking/{booking_id}/summary")
+    if user.user_type == COSTUME_MANAGER_USER:
+        return redirect(f"/bookings/booking/{booking_id}/costume/summary")
+    return redirect("/bookings")
 
 
 class RazorpayPaymentWebhookAPIView(APIView):
@@ -314,7 +324,7 @@ class BookingSummaryCardTemplateView(LoginRequiredMixin, TemplateView):
         return render(request, "booking/booking_summary_card.html", context=context)
 
 
-class BookingTicketTemplateView(LoginRequiredMixin, TemplateView):
+class BookingTicketTemplateView(TemplateView):
     template_name = "booking/booking_ticket.html"
 
     def get_gst_amount(self, total, percentage):
@@ -434,6 +444,12 @@ class SaveBookingTicketAPIView(APIView):
 
 
 ## COSTUME MANAGEMENT VIEWS
+class CostumeHomeTemplateView(LoginRequiredMixin, TemplateView):
+    template_name = "costume/costume_home.html"
+    
+    @user_type_required([ADMIN_USER, COSTUME_MANAGER_USER])
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        return super().get(request, *args, **kwargs)
 
 class CostumeSummaryTemplateView(TemplateView):
     template_name = "costume/costume_summary.html"
@@ -466,8 +482,10 @@ class CostumeSummaryTemplateView(TemplateView):
             is_today_booking = True            
             
         is_costume_issue_remaining = False
+        total_costume_returned_amount = 0
         for costume in costume_data:
             costume.remaining = costume.quantity - costume.issued_quantity
+            total_costume_returned_amount += costume.returned_amount
             if costume.remaining > 0:
                 is_costume_issue_remaining = True
             
@@ -481,6 +499,8 @@ class CostumeSummaryTemplateView(TemplateView):
             "costume_amount": booking.costume_amount,
             "total_amount": booking.total_amount,
             "received_amount": booking.received_amount,
+            "returned_amount": booking.returned_amount,
+            "costume_returned_amount": total_costume_returned_amount,
             "wa_number": booking.wa_number,
             "date": booking.date,
             "adult_male": booking.adult_male,
@@ -550,7 +570,7 @@ class BookingCostumeReturnFormView(FormView):
                             "quantity": costume.quantity, 
                             "issued_quantity": costume.issued_quantity, 
                             "returned_quantity": costume.returned_quantity, 
-                            "remark": costume.remark
+                            "returned_amount": costume.returned_amount
                         } for costume in costume_data])
         context = {
             "booking": booking,
@@ -582,8 +602,33 @@ class BookingCostumeReturnFormView(FormView):
         try:
             form.is_valid()
             with transaction.atomic():
+                previous_total_returned_amount = 0
+                total_returned_amount = 0
+                booking = None
                 for individual_form in form:
-                    individual_form.save()
+                    res = individual_form.save()                
+                    booking_costume: BookingCostume = res[0]
+                    previous_returned_amount = res[1]
+                    
+                    previous_total_returned_amount += previous_returned_amount
+                    total_returned_amount += booking_costume.returned_amount
+                    if not booking:
+                        booking = booking_costume.booking
+                payment = Payment.objects.prefetch_related("booking").filter(booking=booking, payment_for="costume_return", is_returned_to_customer=True, is_confirmed=True)
+                if payment.exists():
+                    payment = payment.first()
+                else:
+                    payment = Payment()
+                payment.booking = booking
+                payment.payment_mode = "gate_cash"
+                payment.payment_for = "costume_return"
+                payment.amount = total_returned_amount
+                payment.is_confirmed = True
+                payment.is_returned_to_customer = True
+                payment.save()
+                payment.booking.returned_amount -= previous_total_returned_amount
+                payment.booking.returned_amount += total_returned_amount
+                payment.booking.save()
             return super().form_valid(form)
         except Exception as e:
             return super().form_invalid(form)

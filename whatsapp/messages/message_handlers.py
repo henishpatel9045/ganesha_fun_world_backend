@@ -8,7 +8,7 @@ import logging
 import django_rq
 
 from bookings.models import Booking
-from common_config.common import HOST_URL
+from common_config.common import ADVANCE_PER_PERSON_AMOUNT_FOR_BOOKING, HOST_URL
 from whatsapp.utils import WhatsAppClient
 from management_core.models import TicketPrice
 from bookings.utils import create_or_update_booking, create_razorpay_order
@@ -22,7 +22,7 @@ LOGO_URL = os.environ.get(
 
 
 whatsapp_config = WhatsAppClient(
-    "EAAabZCi7kE38BO70Gh6is1UL6IU08BNTXkP3Lb5udnZB1U69mqmWdaVdb1jobbvVSzMV1P4AmcGgqCaup7sBdxOsvUkzbZAPBXZAdZCbVXDfxO7pxdReNrRHK48hza2myzGgr4cWzibgnTsXqPUQyqo3DcEjNt78OffohBRqC3WYmZBZAbkF835OL9pxmZBNAQ9peGyMB1hByZA8ZAHtfjvw4ZD",
+    "EAAabZCi7kE38BO1zTht0cNuoqe0p6LDYXWHr8XnyFZA948PLV7eUuZCTmYEm81a81w0OgWlk9ikHZBuEHcKcyapRTXN1eUwq0PZBJcIucDMh4RJbYS1i2hVC8ltyyCwfNoypZAyrbGy7hfLwWHPL14iACjyRA2YZCbzLkDv9Aum8qzsawg4KRDMWJOWyMETgrRirzmhzYEptD4Oy4QwJYcZD",
     "105976528928889",
 )
 client = whatsapp_config.get_client()
@@ -124,13 +124,14 @@ def handle_booking_session_confirm(active_session: dict, sender: str, msg_contex
             booking_costume_data={},
             booking_type="whatsapp_booking"
         )
-        order = create_razorpay_order(booking.total_amount, booking.wa_number, booking)
-        print(order)
+        total_persons = booking.adult_male + booking.adult_female + booking.child
+        total_amount = ADVANCE_PER_PERSON_AMOUNT_FOR_BOOKING * total_persons
+        order = create_razorpay_order(total_amount, booking.wa_number, booking)
         res = whatsapp_config.send_message(
             sender,
             "text",
-            {"preview_url": True,"body": f"Booking confirmed.\nMake payment by click on this link in next 15 minutes \n{order}"}, msg_context)
-        
+            {"preview_url": True,"body": f"Booking confirmed.\nMake payment by click on this link in next 15 minutes \n{order}"}, msg_context)       
+        cache.delete(f"booking_session_{sender}")
         return res
     except Exception as e:
         return whatsapp_config.send_message(
@@ -188,7 +189,7 @@ def handle_booking_session_messages(
             return whatsapp_config.send_message(
                 sender,
                 "text",
-                {"body": f"Enter total number of *Adults (Male)* age *more than 10*."},
+                {"body": f"Enter total number of *Adults (Male)* age *more than 10 years*."},
                 msg_context
             )
     elif active_session.get("adult_male") is None:

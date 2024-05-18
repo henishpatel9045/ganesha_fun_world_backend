@@ -25,6 +25,10 @@ Costume Summary
     </div>
 </div>
 
+<button class="btn btn-danger" onclick="window.close()" style="position: absolute; top: 1rem; right: 1rem; z-index: 50;">
+    Close
+</button>
+
 <div class="container mt-md-5 mt-2">
     <div class="row justify-content-center">
         <div class="col-lg-6">
@@ -40,6 +44,8 @@ Costume Summary
                             <p><strong>Costume Returned Amount:</strong> <span>{{ costume_amount }} ₹</span></p>
                             <p><strong>Total Amount:</strong> <span>{{ total_amount }} ₹</span></p>
                             <p><strong>Received Amount:</strong> <span>{{ received_amount }} ₹</span></p>
+                            <p><strong>Costume Returned Amount:</strong> <span>{{ costume_returned_amount }} ₹</span></p>
+                            <p><strong>Returned Amount:</strong> <span>{{ returned_amount }} ₹</span></p>
                         </div>
                         <div class="col-12 d-flex align-items-center justify-content-between">
                             <p>

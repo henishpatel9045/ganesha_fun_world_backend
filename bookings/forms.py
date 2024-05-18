@@ -314,6 +314,9 @@ class PaymentRecordEditForm(forms.Form):
         try:
             with transaction.atomic():
                 payment = Payment.objects.get(id=payment_id)
+                if payment.payment_for != "booking":
+                    return self.cleaned_data["booking"]
+                
                 payment.payment_mode = self.cleaned_data["payment_mode"]
                 payment.is_confirmed = self.cleaned_data["is_confirmed"]
 
@@ -371,7 +374,7 @@ class PaymentRecordEditForm(forms.Form):
 ## COSTUME MANAGEMENT FORMS
 class CostumeReturnEditForm(forms.Form):
     id = forms.ModelChoiceField(
-        queryset=BookingCostume.objects.all(),
+        queryset=BookingCostume.objects.prefetch_related("booking").all(),
         label="Booking Costume",
         required=False,
         widget=forms.Select(
@@ -392,22 +395,11 @@ class CostumeReturnEditForm(forms.Form):
             }
         ),
     )
-    quantity = forms.IntegerField(
-        initial=0,
-        label="Quantity",
-        required=False,
-        widget=forms.NumberInput(
-            attrs={
-                "id": "quantity",
-                "readonly": "readonly",
-                "class": "readonly-field text-center w-100",
-            }
-        ),
-    )
     issued_quantity = forms.IntegerField(
         initial=0,
         label="Issued Quantity",
         required=False,
+        min_value=0,
         widget=forms.NumberInput(
             attrs={
                 "id": "issued_quantity",
@@ -420,27 +412,49 @@ class CostumeReturnEditForm(forms.Form):
         initial=0,
         label="Returned Quantity",
         required=True,
+        min_value=0,
         widget=forms.NumberInput(
             attrs={
                 "id": "returned_quantity",
                 "class": "text-center w-100 form-control form-control-sm",
+                "min": 0
             }
         ),
     )
-    remark = forms.CharField(
-        widget=forms.Textarea(),
-        label="Remark",
-        required=False,
+    returned_amount = forms.DecimalField(
+        initial=0.00,
+        label="Returned Amount",
+        required=True,
+        min_value=0,
+        widget=forms.NumberInput(
+            attrs={
+                "id": "returned_amount",
+                "class": "text-center w-100 form-control form-control-sm",
+                "min": 0
+            }
+        ),
     )
-    
+
     def save(self):
         try:
             booking_costume: BookingCostume = self.cleaned_data["id"]
+            
+            previous_returned_amount = booking_costume.returned_amount
+            
             booking_costume.returned_quantity = self.cleaned_data["returned_quantity"]
+            booking_costume.returned_at = timezone.now()
             if booking_costume.returned_quantity > booking_costume.issued_quantity:
-                raise forms.ValidationError("Returned quantity can't be more than issued quantity.")
+                raise forms.ValidationError(
+                    "Returned quantity can't be more than issued quantity."
+                )
+            booking_costume.returned_amount = self.cleaned_data["returned_amount"]
+            if booking_costume.returned_amount > booking_costume.deposit_amount:
+                raise forms.ValidationError(
+                    "Returned amount can't be more than deposit amount."
+                )
+
             booking_costume.save()
-            return booking_costume
+            return booking_costume, previous_returned_amount
         except Exception as e:
             self.add_error(None, e.args[0])
             raise forms.ValidationError("")

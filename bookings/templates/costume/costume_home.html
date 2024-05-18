@@ -1,8 +1,8 @@
 {% extends 'base.html' %} 
-{% block title %} Gate Management Home {% endblock %}
+{% block title %} Costume Management Home {% endblock %}
 {% block content %}
 {% load cache %}
-{% cache 30000 booking_home_template %}
+{% cache 30000 costume_home_template %}
 <style>
   .card-link-item {
     min-height: 150px;
@@ -26,27 +26,16 @@
   }
 </style>
 <div class="w-100 px-2 pt-3" style="border-bottom: 5px solid #f8f9fa; background-color: white;">
-  <h3 class="p-3 pb-3">Gate Management System</h3>
+  <h3 class="p-3 pb-3">Costume Management System</h3>
 </div>
 
 <div class="card-footer p-4">
   <div class="row">
       <div class="col-12 col-md-4">
-        <a href="{% url 'booking_create' %}" class="btn btn-outline-secondary text-center card-link-item">
-          Add Booking
-        </a>
-      </div>
-      <div class="col-12 col-md-4">
         <a href="{% url 'react_app' %}" class="btn btn-outline-secondary text-center card-link-item">
           Scan QR Code
         </a>
-      </div>
-      <div class="col-12 col-md-4">
-        <a href="{% url 'booking_history' %}" class="btn btn-outline-secondary text-center card-link-item">
-          Booking History
-        </a>
-      </div>
-     
+      </div>     
   </div>
 </div>  
   

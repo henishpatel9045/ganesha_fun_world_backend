@@ -8,7 +8,7 @@ function QRScanner() {
   const handleSuccess = (text: string) => {
     if (enabled && text) {
       window.open(
-        BASE_URL + "/bookings/booking/" + text + "/summary",
+        BASE_URL + "/" + text,
         "_blank"
       );
       setEnabled(false);
