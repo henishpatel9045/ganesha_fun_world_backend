@@ -13,7 +13,7 @@ import django_rq
 from common_config.common import PAYMENT_MODES_FORM
 from whatsapp.messages.message_handlers import handle_sending_booking_ticket
 from .utils import add_payment_to_booking, create_or_update_booking
-from .models import Booking, BookingCostume, Payment
+from .models import Booking, BookingCanteen, BookingCostume, Payment
 from management_core.models import Costume, TicketPrice
 
 
@@ -325,7 +325,7 @@ class PaymentRecordEditForm(forms.Form):
                 payment = Payment.objects.get(id=payment_id)
                 if payment.payment_for != "booking":
                     return self.cleaned_data["booking"]
-                
+
                 payment.payment_mode = self.cleaned_data["payment_mode"]
                 payment.is_confirmed = self.cleaned_data["is_confirmed"]
 
@@ -433,7 +433,7 @@ class CostumeReturnEditForm(forms.Form):
             attrs={
                 "id": "returned_quantity",
                 "class": "text-center w-100 form-control form-control-sm",
-                "min": 0
+                "min": 0,
             }
         ),
     )
@@ -446,7 +446,7 @@ class CostumeReturnEditForm(forms.Form):
             attrs={
                 "id": "returned_amount",
                 "class": "text-center w-100 form-control form-control-sm",
-                "min": 0
+                "min": 0,
             }
         ),
     )
@@ -454,9 +454,9 @@ class CostumeReturnEditForm(forms.Form):
     def save(self):
         try:
             booking_costume: BookingCostume = self.cleaned_data["id"]
-            
+
             previous_returned_amount = booking_costume.returned_amount
-            
+
             booking_costume.returned_quantity = self.cleaned_data["returned_quantity"]
             booking_costume.returned_at = timezone.now()
             if booking_costume.returned_quantity > booking_costume.issued_quantity:
@@ -477,3 +477,53 @@ class CostumeReturnEditForm(forms.Form):
 
 
 BookingCostumeFormSet = formset_factory(CostumeReturnEditForm, extra=0)
+
+
+## CANTEEN MANAGEMENT FORMS
+class CanteenCardForm(forms.Form):
+    breakfast_currently_used = forms.IntegerField(
+        initial=0,
+        required=True,
+        widget=forms.NumberInput(
+            attrs={
+                "id": "breakfast_currently_used",
+                "class": "readonly-field py-2 text-center w-100",
+            }
+        ),
+    )
+    lunch_currently_used = forms.IntegerField(
+        initial=0,
+        required=True,
+        widget=forms.NumberInput(
+            attrs={
+                "id": "lunch_currently_used",
+                "class": "readonly-field py-2 text-center w-100",
+            }
+        ),
+    )
+    evening_snacks_currently_used = forms.IntegerField(
+        initial=0,
+        required=True,
+        widget=forms.NumberInput(
+            attrs={
+                "id": "evening_snacks_currently_used",
+                "class": "readonly-field py-2 text-center w-100",
+            }
+        ),
+    )
+
+    def save(self, canteen_card: BookingCanteen):
+        try:
+            canteen_card.breakfast_quantity_used += int(
+                self.cleaned_data["breakfast_currently_used"]
+            )
+            canteen_card.lunch_quantity_used += int(
+                self.cleaned_data["lunch_currently_used"]
+            )
+            canteen_card.evening_snacks_quantity_used += int(
+                self.cleaned_data["evening_snacks_currently_used"]
+            )
+            canteen_card.save()
+        except Exception as e:
+            self.add_error(None, e.args[0])
+            raise forms.ValidationError("")

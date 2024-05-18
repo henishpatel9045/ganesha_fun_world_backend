@@ -10,15 +10,14 @@ from django.views.generic import FormView, TemplateView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.request import Request
-from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 import logging
 
-from bookings.models import Booking, BookingCostume, Payment
+from bookings.models import Booking, BookingCanteen, BookingCostume, Payment
 from custom_auth.models import User
 from common_config.common import ADMIN_USER, BOUNCER_USER, COSTUME_MANAGER_USER, GATE_MANAGER_USER, CANTEEN_MANAGER_USER
 from management_core.models import TicketPrice
-from .forms import BookingCostumeFormSet, BookingForm, PaymentRecordForm, PaymentRecordEditForm
+from .forms import BookingCostumeFormSet, BookingForm, CanteenCardForm, PaymentRecordForm, PaymentRecordEditForm
 from .webhook_utils import handle_razorpay_webhook_booking_payment
 from .ticket.utils import generate_booking_id_qrcode
 from whatsapp.messages.message_handlers import send_booking_ticket
@@ -50,6 +49,8 @@ def qr_code_homepage_redirect(request: HttpRequest, booking_id: str) -> HttpResp
         return redirect(f"/bookings/booking/{booking_id}/costume/summary")
     if user.user_type == BOUNCER_USER:
         return redirect(f"/bookings/booking/{booking_id}/bouncer/summary")
+    if user.user_type == CANTEEN_MANAGER_USER:
+        return redirect(f"/bookings/booking/{booking_id}/canteen/card")
     return redirect("/bookings")
 
 
@@ -804,3 +805,71 @@ class BouncerSummaryCardTemplateView(LoginRequiredMixin, TemplateView):
         
         context = self.get_context_data(**kwargs)
         return render(request, self.template_name, context=context)
+
+
+## CANTEEN MANAGEMENT VIEWS
+class CanteenCardFormView(FormView):
+    template_name = "canteen/canteen_card.html"
+    form_class = CanteenCardForm
+
+    def get_context_data(self, form=None, **kwargs: Any) -> dict[str, Any]:
+        booking_id = self.kwargs.get("booking_id")
+        canteen_card = BookingCanteen.objects.prefetch_related("booking").get(booking_id=booking_id)
+        booking = canteen_card.booking
+        
+        if not form:
+            form = self.form_class()
+        
+        total_persons = booking.adult_male + booking.adult_female + booking.child
+        context = {
+            "form": form,
+            "wa_number": booking.wa_number,
+            "booking_id": booking.id,
+            "date": booking.date,
+            "total_persons": total_persons,
+            "breakfast_quantity_used": canteen_card.breakfast_quantity_used,
+            "available_breakfast": max(0, total_persons - canteen_card.breakfast_quantity_used),
+            "lunch_quantity_used": canteen_card.lunch_quantity_used,
+            "available_lunch": max(0, total_persons - canteen_card.lunch_quantity_used),
+            "evening_snacks_quantity_used": canteen_card.evening_snacks_quantity_used,
+            "available_evening_snacks": max(0, total_persons - canteen_card.evening_snacks_quantity_used),
+        }
+        
+        return context    
+
+    @user_type_required([ADMIN_USER, CANTEEN_MANAGER_USER])
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        try:
+            booking_id = kwargs.get("booking_id")
+            if not booking_id:
+                return render(
+                    request,
+                    "common/error_page.html",
+                    {"error_message": "Booking ID is required."},
+                )
+            canteen_card = BookingCanteen.objects.filter(booking_id=booking_id).exists()
+            if not canteen_card:
+                return render(
+                    request,
+                    "common/error_page.html",
+                    {"error_message": "Canteen card not found for this booking."},
+                )
+            context = self.get_context_data(**kwargs)
+            return render(request, self.template_name, context=context)
+        except Exception as e:
+            logging.exception(e)
+            return render(
+                request,
+                "common/error_page.html",
+                {"error_message": f"Error: {e.args[0]}"},
+            )
+    
+    def form_valid(self, form: Any) -> HttpResponse:
+        try:
+            booking_id = self.kwargs.get("booking_id")
+            canteen_card = BookingCanteen.objects.get(booking_id=booking_id)
+            form.save(canteen_card)
+            return render(self.request, "success_screen.html", {"message": "Canteen card updated successfully."})
+        except Exception as e:
+            logging.exception(e)
+            return super().form_invalid(form)

@@ -1,0 +1,104 @@
+{% extends 'base.html' %} {% block title %}Canteen Management{% endblock %} {% load crispy_forms_tags %} {% block content %}
+<style>
+    .readonly-field {
+        background-color: #f8f9fa;
+        border: none;
+    }
+    .title-field {
+        border: none;
+        font-weight: 700;
+    }
+
+    thead > * {
+        font-size: 1.2rem;
+        background-color: #474747;
+        color: white;
+    }
+</style>
+
+<div class="card mx-2 mx-md-5 mb-0 mb-md-2">
+  <div class="card-header">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'react_app' %}">QR Code Scanner</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Canteen Card</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<div class="mt-md-5 mt-2 mb-2 mx-1 mx-md-5">
+  <h3 class="mb-2">Canteen Card For: <br>+{{wa_number}} - {{date}}</h3>
+    {% comment %} Render errors from the formset below {% endcomment %}
+    {% for error in form.errors %}
+        <div class="alert alert-danger" role="alert">
+            {{ error }}
+        </div>
+    {% endfor %}
+
+    <div>
+        <div class="card px-0">
+            <div class="card-body px-0">
+            <form action="{% url 'canteen_card' booking_id %}" method="post" class="px-0">
+                {% csrf_token %}
+                <table class="table-bordered w-100">
+                    <thead>
+                        <tr>
+                            <th class="text-center">Meal</th>
+                            <th class="text-center">Total</th>
+                            <th class="text-center">Used</th>
+                            <th class="text-center">Available</th>
+                            <th class="text-center">Currently used</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th class="text-center">Breakfast</th>
+                            <td class="text-center">{{total_persons}}</td>
+                            <td class="text-center">{{breakfast_quantity_used}}</td>
+                            <td class="text-center">{{available_breakfast}}</td>
+                            <td class="text-center">{{form.breakfast_currently_used}}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-center">Lunch</th>
+                            <td class="text-center">{{total_persons}}</td>
+                            <td class="text-center">{{lunch_quantity_used}}</td>
+                            <td class="text-center">{{available_lunch}}</td>
+                            <td class="text-center">{{form.lunch_currently_used}}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-center">Evening Snacks</th>
+                            <td class="text-center">{{total_persons}}</td>
+                            <td class="text-center">{{evening_snacks_quantity_used}}</td>
+                            <td class="text-center">{{available_evening_snacks}}</td>
+                            <td class="text-center">{{form.evening_snacks_currently_used}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <input type="submit" value="Save" class="btn btn-primary mt-3 w-100">
+            </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    let inputs = document.getElementsByTagName('input');
+    // Write script so that when user click on the input and the value of input is 0 then it becomes empty and when user click out of the input and the value of input is empty then it becomes 0.
+    for (let i = 0; i < inputs.length; i++) {
+        inputs[i].addEventListener('focus', function () {
+            if (inputs[i].value == 0) {
+                inputs[i].value = '';
+            }
+        });
+        inputs[i].addEventListener('blur', function () {
+            if (inputs[i].value == 0) {
+                inputs[i].value = '0';
+            }
+        });
+    }
+
+</script>
+
+{% endblock %}
