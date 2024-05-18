@@ -33,11 +33,11 @@ function QRScanner() {
 
   return (
     <div className="w-100 d-flex flex-column align-items-center justify-content-center">
-      <div className="w-100 px-5">
+      <div className="w-100 px-2 px-md-5">
         <Card className="w-100">
           <Card.Header>
             <Breadcrumb>
-              <Breadcrumb.Item href="#">Home</Breadcrumb.Item>
+              <Breadcrumb.Item href="/home">Home</Breadcrumb.Item>
               <Breadcrumb.Item active>QR Code Scanner</Breadcrumb.Item>
             </Breadcrumb>
           </Card.Header>

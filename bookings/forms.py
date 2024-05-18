@@ -8,8 +8,10 @@ from crispy_forms.helper import FormHelper, Layout
 from crispy_forms.layout import Submit, Row, Column
 from crispy_forms.bootstrap import AccordionGroup, InlineRadios, Field
 from crispy_bootstrap5.bootstrap5 import FloatingField, BS5Accordion
+import django_rq
 
 from common_config.common import PAYMENT_MODES_FORM
+from whatsapp.messages.message_handlers import handle_sending_booking_ticket
 from .utils import add_payment_to_booking, create_or_update_booking
 from .models import Booking, BookingCostume, Payment
 from management_core.models import Costume, TicketPrice
@@ -244,12 +246,19 @@ class PaymentRecordForm(forms.Form):
 
     def save(self) -> Booking:
         try:
-            print(self.cleaned_data)
+            booking: Booking = self.cleaned_data["booking"]
             add_payment_to_booking(
                 booking=self.cleaned_data["booking"],
                 amount=self.cleaned_data["payment_amount"],
                 payment_for="booking",
                 payment_mode=self.cleaned_data["payment_mode"],
+            )
+            django_rq.enqueue(
+                handle_sending_booking_ticket,
+                booking.wa_number,
+                "",
+                None,
+                booking,
             )
             return self.cleaned_data["booking"]
         except Exception as e:
@@ -365,7 +374,14 @@ class PaymentRecordEditForm(forms.Form):
                 ]
                 payment.save()
                 payment.booking.save()
-            return self.cleaned_data["booking"]
+                django_rq.enqueue(
+                    handle_sending_booking_ticket,
+                    payment.booking.wa_number,
+                    "",
+                    None,
+                    payment.booking,
+                )
+            return payment.booking
         except Exception as e:
             self.add_error(None, e.args[0])
             raise forms.ValidationError("")
