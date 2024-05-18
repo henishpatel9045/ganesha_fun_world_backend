@@ -19,6 +19,7 @@ from .views import (
     CostumeSummaryTemplateView,
     IssueCostumesAPIView,
     BookingCostumeReturnFormView,
+    BouncerSummaryCardTemplateView,
 )
 
 
@@ -84,5 +85,10 @@ urlpatterns = [
         "booking/<str:booking_id>/costume/return",
         BookingCostumeReturnFormView.as_view(),
         name="costume_return",
+    ),
+    path(
+        "booking/<str:booking_id>/bouncer/summary",
+        BouncerSummaryCardTemplateView.as_view(),
+        name="bouncer_ticket_summary",
     ),
 ]

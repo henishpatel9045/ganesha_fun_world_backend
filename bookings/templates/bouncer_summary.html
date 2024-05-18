@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Bouncer Summary
+{% endblock %}
+
+{% block content %}
+<style>
+    thead > * {
+        background-color: #474747;
+        color: white;
+        text-align: center;
+    }
+</style>
+
+<div class="card mx-2  mx-md-5 mb-0 mb-md-2">
+    <div class="card-header">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'react_app' %}">QR Code Scanner</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Bouncer Summary</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<button class="btn btn-danger" onclick="window.close()" style="position: absolute; top: 1rem; right: 1rem; z-index: 50;">
+    Close
+</button>
+
+<div class="container mt-md-5 mt-2">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            
+            <div class="card">
+                <div class="card-header">
+                    Ticket Summary
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <p><strong>Total Amount:</strong> <span>{{ total_amount }} ₹</span></p>
+                            <p><strong>Received Amount:</strong> <span>{{ received_amount }} ₹</span></p>
+                        </div>
+                        <div class="col-12 d-flex align-items-center justify-content-between">
+                            <p>
+                                <strong>Confirmed:
+                                    {% if is_confirmed %}
+                                    <span class="text-success">Yes</span>
+                                    {% else %}
+                                    <span class="text-danger">No</span>
+                                    {% endif %}
+                                </strong>
+                            </p>
+                        
+                            <p>
+                                <strong>Today Booking:
+                                    {% if is_today_booking %}
+                                    <span class="text-success">Yes</span>
+                                    {% else %}
+                                    <span class="text-danger">No</span>
+                                    {% endif %}
+                                </strong>
+                            </p>
+                        </div>
+                        <div style="height: 1px; width: 100%; border: 1px dashed black;"></div>
+                        <div class="col-12">
+                            <p><strong>WA Number:</strong> +{{ wa_number }}</p>
+                            <p><strong>Date:</strong> {{ date }}</p>
+                            <p><strong>Adult (Male):</strong> {{ adult_male }}</p>
+                            <p><strong>Adult (Female):</strong> {{ adult_female }}</p>
+                            <p><strong>Child:</strong> {{ child }}</p>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% endblock %}

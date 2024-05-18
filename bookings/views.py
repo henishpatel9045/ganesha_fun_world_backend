@@ -16,7 +16,7 @@ import logging
 
 from bookings.models import Booking, BookingCostume, Payment
 from custom_auth.models import User
-from common_config.common import ADMIN_USER, COSTUME_MANAGER_USER, GATE_MANAGER_USER, CANTEEN_MANAGER_USER
+from common_config.common import ADMIN_USER, BOUNCER_USER, COSTUME_MANAGER_USER, GATE_MANAGER_USER, CANTEEN_MANAGER_USER
 from management_core.models import TicketPrice
 from .forms import BookingCostumeFormSet, BookingForm, PaymentRecordForm, PaymentRecordEditForm
 from .webhook_utils import handle_razorpay_webhook_booking_payment
@@ -48,6 +48,8 @@ def qr_code_homepage_redirect(request: HttpRequest, booking_id: str) -> HttpResp
         return redirect(f"/bookings/booking/{booking_id}/summary")
     if user.user_type == COSTUME_MANAGER_USER:
         return redirect(f"/bookings/booking/{booking_id}/costume/summary")
+    if user.user_type == BOUNCER_USER:
+        return redirect(f"/bookings/booking/{booking_id}/bouncer/summary")
     return redirect("/bookings")
 
 
@@ -752,3 +754,53 @@ class BookingCostumeReturnFormView(FormView):
     def get_success_url(self) -> str:
         return f"/bookings/booking/{self.kwargs.get('booking_id')}/costume/summary"
     
+
+## BOUNCER MANAGEMENT VIEWS
+class BouncerSummaryCardTemplateView(LoginRequiredMixin, TemplateView):
+    template_name = "bouncer_summary.html"
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        booking_id = kwargs.get("booking_id")
+        booking = Booking.objects.get(id=booking_id)
+        is_confirmed = True
+        if booking.received_amount < booking.total_amount :
+            is_confirmed = False
+            
+        is_today_booking = False
+        if booking.date == timezone.now().date():
+            is_today_booking = True    
+            
+        context = {
+            "booking_id": booking.id,
+            "total_amount": booking.total_amount,
+            "received_amount": booking.received_amount,
+            "wa_number": booking.wa_number,
+            "date": booking.date,
+            "adult_male": booking.adult_male,
+            "adult_female": booking.adult_female,
+            "child": booking.child,
+            "is_confirmed": is_confirmed,
+            "is_today_booking": is_today_booking,
+        }      
+        
+        return context
+    
+    @user_type_required([ADMIN_USER, BOUNCER_USER])
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        booking_id = kwargs.get("booking_id")
+        if not booking_id:
+            return render(
+                request,
+                "common/error_page.html",
+                {"error_message": "Booking ID is required."},
+            )
+        booking = Booking.objects.filter(id=booking_id).exists()
+        if not booking:
+            return render(
+                request,
+                "common/error_page.html",
+                {"error_message": "Booking not found."},
+            )
+        
+        context = self.get_context_data(**kwargs)
+        return render(request, self.template_name, context=context)
