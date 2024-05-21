@@ -33,7 +33,7 @@ class Booking(DateTimeBaseModel):
     # TODO - Add other charges fields
     total_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)
     received_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)
-    returned_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)
+    returned_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0.0)
     is_discounted_booking = models.BooleanField(default=False)
 
     def total_persons(self):

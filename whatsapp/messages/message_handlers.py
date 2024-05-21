@@ -22,7 +22,7 @@ LOGO_URL = os.environ.get(
 
 
 whatsapp_config = WhatsAppClient(
-    "EAAabZCi7kE38BO1zTht0cNuoqe0p6LDYXWHr8XnyFZA948PLV7eUuZCTmYEm81a81w0OgWlk9ikHZBuEHcKcyapRTXN1eUwq0PZBJcIucDMh4RJbYS1i2hVC8ltyyCwfNoypZAyrbGy7hfLwWHPL14iACjyRA2YZCbzLkDv9Aum8qzsawg4KRDMWJOWyMETgrRirzmhzYEptD4Oy4QwJYcZD",
+    "EAAabZCi7kE38BO23ai4OZBgpfTOwN86OL1ggquecLP94IMYXkK4lstptwqiT73WXBLP2OER5ZCZAl5NqjUA4MtTyISVtAqXZAJEI89I33iDVLovReG2L7k7vZBH58ThacMT0DyscXAqZAZAWtKQYzF2o9dh3K7sJH6qd5nTZB6jcK3hyr6C7ZCGkmZBaGWpUW6wunpWBstoKnwNN89Vb0C4YlgA",
     "105976528928889",
 )
 client = whatsapp_config.get_client()
@@ -121,6 +121,7 @@ def handle_booking_session_confirm(active_session: dict, sender: str, msg_contex
             adult_male=active_session.get("adult_male"),
             adult_female=active_session.get("adult_female"),
             child=active_session.get("child"),
+            infant=active_session.get("infant", 0),
             booking_costume_data={},
             booking_type="whatsapp_booking"
         )
@@ -134,6 +135,7 @@ def handle_booking_session_confirm(active_session: dict, sender: str, msg_contex
         cache.delete(f"booking_session_{sender}")
         return res
     except Exception as e:
+        cache.delete(f"booking_session_{sender}")
         return whatsapp_config.send_message(
             sender,
             "text",
@@ -195,7 +197,6 @@ def handle_booking_session_messages(
     elif active_session.get("adult_male") is None:
         if message_type == "text":
             value = payload.isnumeric()
-            print("INSIDE SET MALE: ", payload)
             if value:
                 value = int(payload)
                 if value >= 0:
@@ -222,7 +223,6 @@ def handle_booking_session_messages(
     elif active_session.get("adult_female") is None:
         if message_type == "text":
             value = payload.isnumeric()
-            print("INSIDE SET FEMALE: ", payload)
             if value:
                 value = int(payload)
                 if value >= 0:
@@ -249,7 +249,6 @@ def handle_booking_session_messages(
     elif active_session.get("child") is None:
         if message_type == "text":
             value = payload.isnumeric()
-            print("INSIDE SET CHILD: ", payload)
             if value:
                 value = int(payload)
                 if value >= 0:
@@ -276,7 +275,6 @@ def handle_booking_session_messages(
     elif active_session.get("infant") is None:
         if message_type == "text":
             value = payload.isnumeric()
-            print("INSIDE SET INFANT: ", payload)
             if value:
                 value = int(payload)
                 if value >= 0:

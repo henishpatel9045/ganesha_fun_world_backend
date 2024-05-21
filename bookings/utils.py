@@ -110,11 +110,11 @@ def create_or_update_booking(
                 special_ticket_total_amount if is_discounted_booking else ticket_total
             )
             booking.costume_amount = (
-                special_costume_total_amount if is_discounted_booking and special_costume_total_amount > 0 else costume_total
+                special_costume_total_amount
+                if is_discounted_booking and special_costume_total_amount > 0
+                else costume_total
             )
-            booking.total_amount = (
-                booking.ticket_amount + booking.costume_amount
-            )
+            booking.total_amount = booking.ticket_amount + booking.costume_amount
             booking.received_amount = received_amount
             booking.is_discounted_booking = is_discounted_booking
             booking.booking_type = booking_type
@@ -224,17 +224,12 @@ def create_razorpay_order(amount, wa_number: str, booking: Booking) -> str:
             "amount": amount,
             "currency": "INR",
             "accept_partial": False,
-            "description": f"For Shree Ganesha Fun World Booking App with \
-                                    Phone: +{booking.wa_number}, \
-                                    Date: {booking.date.strftime('%d-%m-%Y')}, \
-                                    Adult (Male): {booking.adult_male}, \
-                                    Adult (Female): {booking.adult_female}, \
-                                    Child: {booking.child}",
+            "description": f"For Shree Ganesha Fun World Booking App with \nPhone: +{booking.wa_number}, \nDate: {booking.date.strftime('%d-%m-%Y')}, \nAdult (Male): {booking.adult_male}, \nAdult (Female): {booking.adult_female}, \nChild: {booking.child}",
             "notify": {"sms": False, "email": False},
             "reminder_enable": False,
             "notes": note_data,
             "expire_by": expire_time,
-            "callback_url": "https://example-callback-url.com/",
+            "callback_url": f"https://leading-blindly-seahorse.ngrok-free.app/bookings/razorpay/webhook/?amount={amount}&booking_id={str(booking.id)}", # TODO change this callback url after setting up the webhook
             "callback_method": "get",
         }
     )
