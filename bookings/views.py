@@ -885,3 +885,54 @@ class CanteenCardFormView(FormView):
         except Exception as e:
             logging.exception(e)
             return super().form_invalid(form)
+
+
+## LOCKER MANAGEMENT VIEWS
+class LockerSummaryTemplateView(TemplateView):
+    template_name = "locker/locker_summary.html"
+    
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        booking_id = kwargs.get("booking_id")
+        if not booking_id:
+            return render(
+                request,
+                "common/error_page.html",
+                {"error_message": "Booking ID is required."},
+            )
+        booking = Booking.objects.filter(id=booking_id).exists()
+        if not booking:
+            return render(
+                request,
+                "common/error_page.html",
+                {"error_message": "Booking not found."},
+            )
+        booking = Booking.objects.prefetch_related(
+            "booking_locker", "booking_locker__locker"
+        ).get(id=booking_id)
+        locker_data = booking.booking_locker.all()
+        is_confirmed = True
+        if booking.received_amount < booking.total_amount :
+            is_confirmed = False
+            
+        is_today_booking = False
+        if booking.date == timezone.now().date():
+            is_today_booking = True            
+            
+        total_locker_returned_amount = 0
+        for locker in locker_data:
+            total_locker_returned_amount += locker.returned_amount
+
+        context = {
+            "booking_id": booking.id,
+            "locker_deposit_amount": booking.locker_amount,
+            "total_amount": booking.total_amount,
+            "received_amount": booking.received_amount,
+            "returned_amount": booking.returned_amount,
+            "locker_returned_amount": total_locker_returned_amount,
+            "wa_number": booking.wa_number,
+            "date": booking.date,
+            "is_confirmed": is_confirmed,
+            "is_today_booking": is_today_booking,
+            "booking_locker": locker_data,
+        }
+        return render(request, self.template_name, context=context)

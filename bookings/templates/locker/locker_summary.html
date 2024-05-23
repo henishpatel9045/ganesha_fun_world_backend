@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Locker Summary
+{% endblock %}
+    
+
+{% block content %}
+    <div class="card mx-2  mx-md-5 mb-0 mb-md-2">
+        <div class="card-header">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'booking_home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'react_app' %}">QR Code Scanner</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Locker Summary</li>
+            </ol>
+        </nav>
+        </div>
+    </div>
+
+    <button class="btn btn-danger" onclick="window.close()" style="position: absolute; top: 1rem; right: 1rem; z-index: 50;">
+        Close
+    </button>
+
+    <div class="container mt-md-5 mt-2">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        Locker Summary
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>WA Number:</strong> +{{ wa_number }}</p>
+                                <p><strong>Date:</strong> {{ date }}</p>
+                            </div>
+
+                        <div class="col-12">
+                            <p><strong>Locker Deposit Amount:</strong> <span>{{ locker_deposit_amount }} ₹</span></p>
+                            <p><strong>Locker Returned Amount:</strong> <span>{{ locker_returned_amount }} ₹</span></p>
+                            <p><strong>Total Amount:</strong> <span>{{ total_amount }} ₹</span></p>
+                            <p><strong>Received Amount:</strong> <span>{{ received_amount }} ₹</span></p>
+                            <p><strong>Returned Amount:</strong> <span>{{ returned_amount }} ₹</span></p>
+                        </div>
+                        </div>
+                    </div>
+                    <div class="col-12 px-2 d-flex align-items-center justify-content-between">
+                        <p>
+                            <strong>Confirmed:
+                                {% if is_confirmed %}
+                                <span class="text-success">Yes</span>
+                                {% else %}
+                                <span class="text-danger">No</span>
+                                {% endif %}
+                            </strong>
+                        </p>
+                    
+                        <p>
+                            <strong>Today Booking:
+                                {% if is_today_booking %}
+                                <span class="text-success">Yes</span>
+                                {% else %}
+                                <span class="text-danger">No</span>
+                                {% endif %}
+                            </strong>
+                        </p>
+                    </div>
+                    <div style="height: 1px; width: 100%; border: 1px dashed black;"></div>
+                    <table class="table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Locker</th>
+                                <th>Deposit</th>
+                                <th>Returned amount</th>
+                                <th>Available</th>
+                            </tr>
+                        </thead>
+
+                        {% for locker in booking_locker %}
+                        <tr>
+                            <th class="text-center">{{ locker.locker.locker_number }}</th>
+                            <td class="text-center">{{ locker.deposit_amount }}</td>
+                            <td class="text-center">{{ locker.returned_amount }}</td>
+                            <td class="text-center">{{ locker.locker.is_available }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                    <div style="height: 1px; width: 100%; border: 1px dashed black;"></div>
+                    <div class="card-footer">
+                        <div class="row">
+                            <div class="col-12">
+                                <a href="#" class="btn btn-primary w-100 h-100 text-center">Edit</a>
+                            </div>
+                            <div class="col mt-2">
+                                <button id="send-locker-update" class="btn btn-success w-100 h-100 text-center">Send Update To WhatsApp</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            {% comment %} let sendUpdateBtn = document.getElementById('send-locker-ticket')
+            sendUpdateBtn.addEventListener('click', async function() {
+                sendUpdateBtn.disabled = true
+                let res = await fetch("{% url 'booking_ticket' booking_id %}")
+                if (!res.ok) {
+                    alert(await res.json())
+                }
+                sendUpdateBtn.disabled = false
+            }) {% endcomment %}
+        </script>
+
+{% endblock %}
+
+
