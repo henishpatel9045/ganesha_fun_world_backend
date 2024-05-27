@@ -22,7 +22,7 @@ LOGO_URL = os.environ.get(
 
 
 whatsapp_config = WhatsAppClient(
-    "EAAabZCi7kE38BO23ai4OZBgpfTOwN86OL1ggquecLP94IMYXkK4lstptwqiT73WXBLP2OER5ZCZAl5NqjUA4MtTyISVtAqXZAJEI89I33iDVLovReG2L7k7vZBH58ThacMT0DyscXAqZAZAWtKQYzF2o9dh3K7sJH6qd5nTZB6jcK3hyr6C7ZCGkmZBaGWpUW6wunpWBstoKnwNN89Vb0C4YlgA",
+    "EAAabZCi7kE38BO6YkJyZBITufTf58BeSX43WfObcbv300qLniyoDT7escFBWwkZC8iZCM9DZA5vkgZBD8dDBerVHtSo8qZBLQ7npflIE1VFiXZCHld3Y8akiwnlIZCYjfSPZCBkdPx7x3C2Ww7sEzDDJPhZAnh0nqOeeHSvaIoMaZAOEwPJRcXg4kJBGFw7z2rmNZCdIo56hEQQMFxsRMZApqx8a0ZD",
     "105976528928889",
 )
 client = whatsapp_config.get_client()
@@ -34,9 +34,8 @@ def send_date_list_message(recipient_number: str, context: dict|None) -> request
 
     :param `recipient_number`: The number to which message is to be sent
     """
-    available_dates = list(TicketPrice.objects.filter(date__gt=timezone.now().date())[:10].values_list("date", flat=True))[::-1]
+    available_dates = list(TicketPrice.objects.filter(date__gt=timezone.now().date()).order_by("date")[:10].values_list("date", flat=True))
     logging.info(f"Available Dates: {available_dates}")
-    
     
     response_payload = {
         "type": "list",

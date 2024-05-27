@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from typing import Any
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.http import HttpRequest
 
 from custom_auth.forms import CustomUserCreationForm
@@ -11,7 +11,7 @@ from .models import User
 
 
 @admin.register(User)
-class UserAdmin(UserAdmin):
+class UserAdmin(DjangoUserAdmin):
     add_form = CustomUserCreationForm
 
     def get_list_display(self, request: HttpRequest) -> Sequence[str]:

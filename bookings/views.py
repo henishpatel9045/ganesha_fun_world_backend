@@ -13,7 +13,7 @@ from rest_framework.request import Request
 from rest_framework import status
 import logging
 
-from bookings.models import Booking, BookingCanteen, BookingCostume, Payment
+from bookings.models import Booking, BookingCanteen, BookingCostume, BookingLocker, Payment
 from custom_auth.models import User
 from common_config.common import ADMIN_USER, BOUNCER_USER, COSTUME_MANAGER_USER, GATE_MANAGER_USER, CANTEEN_MANAGER_USER
 from management_core.models import TicketPrice
@@ -29,6 +29,8 @@ logging.getLogger(__name__)
 @login_required
 def admin_home_redirect(request: HttpRequest) -> HttpResponse:
     user : User = request.user
+    logging.info(f"User: {user}")
+    logging.info(f"User Perms: {str([perm.codename for perm in user.user_permissions.all()])}")
     if user.user_type == ADMIN_USER:
         return redirect("/bookings/dashboard")
     elif user.user_type == GATE_MANAGER_USER:

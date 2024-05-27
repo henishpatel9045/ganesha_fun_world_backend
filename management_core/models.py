@@ -38,8 +38,11 @@ class Costume(DateTimeBaseModel):
 
 
 class Locker(DateTimeBaseModel):
-    locker_number = models.CharField(max_length=100, db_index=True, null=False)
+    locker_number = models.CharField(max_length=100, db_index=True, null=False, unique=True,)
     is_available = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return self.locker_number
 
     class Meta:
         ordering = ["locker_number"]

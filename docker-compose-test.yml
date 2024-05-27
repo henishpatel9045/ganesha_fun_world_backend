@@ -35,7 +35,7 @@ services:
       - 8000
     volumes:
       - test_static_volume:/django/static
-      - H:/WORK/FREELANCE/ganesha-waterpark/generated_media_test/:/home/generated_media/
+      - ../generated_media_test/:/home/generated_media/
       - ./:/django
     env_file:
       - .env.test

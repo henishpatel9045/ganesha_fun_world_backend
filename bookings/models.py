@@ -31,7 +31,7 @@ class Booking(DateTimeBaseModel):
     ticket_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)
     costume_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)
     locker_amount  = models.DecimalField(decimal_places=2, max_digits=10, default=0)
-    # TODO - Add other charges fields
+    # TODO- Add other charges fields
     total_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)
     received_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)
     returned_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0.0)
@@ -108,10 +108,11 @@ class BookingLocker(DateTimeBaseModel):
     )
     deposit_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)
     returned_at = models.DateTimeField(null=True, blank=True)
+    is_returned = models.BooleanField(default=False)
     returned_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)
 
     def __str__(self) -> str:
-        return f"{self.booking.wa_number} - {self.locker.name}"
+        return f"{self.booking.wa_number} - {self.locker.locker_number}"
 
 
 class BookingCanteen(DateTimeBaseModel):
