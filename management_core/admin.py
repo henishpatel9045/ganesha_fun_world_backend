@@ -23,7 +23,7 @@ class TicketPriceAdmin(admin.ModelAdmin):
     list_filter = ("date",)
     search_fields = ("date",)
     date_hierarchy = "date"
-    
+
     def day(self, obj):
         return obj.date.strftime("%A")
 
@@ -42,4 +42,18 @@ class TicketPriceAdmin(admin.ModelAdmin):
         )
 
 
-admin.site.register([Costume, Locker])
+@admin.register(Locker)
+class LockerAdmin(admin.ModelAdmin):
+    list_display = (
+        "locker_number",
+        "is_available",
+    )
+
+
+@admin.register(Costume)
+class CostumeAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "price",
+        "is_available",
+    )

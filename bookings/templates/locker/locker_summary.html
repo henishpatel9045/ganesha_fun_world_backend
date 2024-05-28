@@ -70,10 +70,10 @@
                     <table class="table-bordered">
                         <thead>
                             <tr>
-                                <th>Locker</th>
-                                <th>Deposit</th>
-                                <th>Returned amount</th>
-                                <th>Available</th>
+                                <th class="text-center">Locker</th>
+                                <th class="text-center">Deposit</th>
+                                <th class="text-center">Returned amount</th>
+                                <th class="text-center">Returned</th>
                             </tr>
                         </thead>
 
@@ -82,7 +82,12 @@
                             <th class="text-center">{{ locker.locker.locker_number }}</th>
                             <td class="text-center">{{ locker.deposit_amount }}</td>
                             <td class="text-center">{{ locker.returned_amount }}</td>
-                            <td class="text-center">{{ locker.locker.is_available }}</td>
+                            <td class="text-center">
+                            {% if locker.is_returned %}
+                                Yes
+                            {% else %}
+                                No
+                            {% endif %}</td>
                         </tr>
                         {% endfor %}
                     </table>
@@ -90,7 +95,10 @@
                     <div class="card-footer">
                         <div class="row">
                             <div class="col-12">
-                                <a href="#" class="btn btn-primary w-100 h-100 text-center">Edit</a>
+                                <a href="{% url 'locker_add' booking_id %}" class="btn btn-primary w-100 h-100 text-center">Add</a>
+                            </div>
+                            <div class="col-12 mt-2">
+                                <a href="#" class="btn btn-warning w-100 h-100 text-center">Edit</a>
                             </div>
                             <div class="col mt-2">
                                 <button id="send-locker-update" class="btn btn-success w-100 h-100 text-center">Send Update To WhatsApp</button>

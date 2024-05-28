@@ -1,0 +1,94 @@
+{% extends 'base.html' %} {% block title %}Locker Add {{ booking_id }}{% endblock %} {% load crispy_forms_tags %} {% block content %}
+<style>
+    .readonly-field {
+        background-color: #f8f9fa;
+        border: none;
+    }
+    .title-field {
+        border: none;
+        font-weight: 700;
+    }
+
+    thead > * {
+        font-size: 1.2rem;
+        background-color: #474747;
+        color: white;
+    }
+</style>
+
+<div class="card mx-2 mx-md-5 mb-0 mb-md-2">
+  <div class="card-header">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'booking_home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'react_app' %}">QR Code Scanner</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'locker_summary' booking_id %}">Locker Summary</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Locker Add</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<div class="mt-md-5 mt-2 mb-2 mx-1 mx-md-5">
+  <h3 class="mb-2">Locker Add For: +{{wa_number}}, {{date}}<br></h3>
+    {% comment %} Render errors from the formset below {% endcomment %}
+    {% for error in formset.errors %}
+        <div class="alert alert-danger" role="alert">
+            {{ error }}
+        </div>
+    {% endfor %}
+    {% for error in formset.non_form_errors  %}
+        <div class="alert alert-danger" role="alert">
+            {{ error }}
+        </div>
+    {% endfor %}
+
+    <div>
+        <div class="card px-0">
+            <div class="card-body px-0">
+            <form action="{% url 'locker_add' booking_id %}?payment_mode={{payment_mode}}" method="post" class="px-0">
+                {% csrf_token %}
+                {{ formset.management_form }}
+                <table class="table-bordered w-100">
+                    <thead>
+                        <tr>
+                            <th class="text-center">Locker</th>
+                            <th class="text-center">Deposit Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for form in formset %}
+                        <tr>
+                            <th class="text-center">{{form.locker}}</th>
+                            <td class="text-center">{{form.deposit_amount}}</td>
+                        </tr>            
+                    {% endfor %}                    
+                    </tbody>
+                </table>
+                <input type="submit" value="Save" class="btn btn-primary mt-3 w-100">
+            </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    let inputs = document.getElementsByTagName('input');
+    // Write script so that when user click on the input and the value of input is 0 then it becomes empty and when user click out of the input and the value of input is empty then it becomes 0.
+    for (let i = 0; i < inputs.length; i++) {
+        inputs[i].addEventListener('focus', function () {
+            if (inputs[i].value == 0) {
+                inputs[i].value = '';
+            }
+        });
+        inputs[i].addEventListener('blur', function () {
+            if (inputs[i].value == 0) {
+                inputs[i].value = '0';
+            }
+        });
+    }
+
+</script>
+
+{% endblock %}

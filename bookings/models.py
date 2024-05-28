@@ -129,3 +129,4 @@ class BookingCanteen(DateTimeBaseModel):
 
     def __str__(self) -> str:
         return f"{self.booking.wa_number} - {self.breakfast_quantity_used} - {self.lunch_quantity_used} - {self.evening_snacks_quantity_used} - {self.dinner_quantity_used}"
+    

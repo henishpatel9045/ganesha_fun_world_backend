@@ -15,9 +15,9 @@ import logging
 
 from bookings.models import Booking, BookingCanteen, BookingCostume, BookingLocker, Payment
 from custom_auth.models import User
-from common_config.common import ADMIN_USER, BOUNCER_USER, COSTUME_MANAGER_USER, GATE_MANAGER_USER, CANTEEN_MANAGER_USER
+from common_config.common import ADMIN_USER, BOUNCER_USER, COSTUME_MANAGER_USER, GATE_MANAGER_USER, CANTEEN_MANAGER_USER, PAYMENT_MODES
 from management_core.models import TicketPrice
-from .forms import BookingCostumeFormSet, BookingForm, CanteenCardForm, PaymentRecordForm, PaymentRecordEditForm
+from .forms import BookingCostumeFormSet, BookingForm, CanteenCardForm, PaymentRecordForm, PaymentRecordEditForm, get_locker_add_formset
 from .webhook_utils import handle_razorpay_webhook_booking_payment
 from .ticket.utils import generate_booking_id_qrcode
 from whatsapp.messages.message_handlers import send_booking_ticket
@@ -911,7 +911,7 @@ class LockerSummaryTemplateView(TemplateView):
         booking = Booking.objects.prefetch_related(
             "booking_locker", "booking_locker__locker"
         ).get(id=booking_id)
-        locker_data = booking.booking_locker.all()
+        locker_data: list[BookingLocker] = booking.booking_locker.all()
         is_confirmed = True
         if booking.received_amount < booking.total_amount :
             is_confirmed = False
@@ -921,12 +921,14 @@ class LockerSummaryTemplateView(TemplateView):
             is_today_booking = True            
             
         total_locker_returned_amount = 0
+        total_deposit_amount = 0
         for locker in locker_data:
+            total_deposit_amount += locker.deposit_amount
             total_locker_returned_amount += locker.returned_amount
 
         context = {
             "booking_id": booking.id,
-            "locker_deposit_amount": booking.locker_amount,
+            "locker_deposit_amount": total_deposit_amount,
             "total_amount": booking.total_amount,
             "received_amount": booking.received_amount,
             "returned_amount": booking.returned_amount,
@@ -938,3 +940,89 @@ class LockerSummaryTemplateView(TemplateView):
             "booking_locker": locker_data,
         }
         return render(request, self.template_name, context=context)
+
+
+class LockerAddFormView(FormView):
+    template_name = "locker/locker_add.html"
+    form_class = get_locker_add_formset(1)
+    
+    def get_context_data(self, form=None, **kwargs: Any) -> dict[str, Any]:
+        booking_id = self.kwargs.get("booking_id")
+        booking = Booking.objects.prefetch_related().get(id=booking_id)
+        total_locker: str = self.request.GET.get("total_locker", "0")
+        payment_mode = self.request.GET.get("payment_mode")
+        if not form:
+            if total_locker and total_locker.isnumeric() and payment_mode:
+                total_locker = int(total_locker)
+                formset = get_locker_add_formset(total_locker)
+            else:
+                formset = get_locker_add_formset(1)()
+        else:
+            formset = form
+        context = {
+            "booking_id": booking_id,
+            "wa_number": booking.wa_number,
+            "date": booking.date,
+            "formset": formset,
+            "payment_mode": payment_mode
+        }
+        
+        return context
+    
+    def get(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
+        booking_id = kwargs.get("booking_id")
+        total_locker = request.GET.get("total_locker")
+        payment_mode = request.GET.get("payment_mode")
+        
+        if not booking_id:
+            return render(
+                request,
+                "common/error_page.html",
+                {"error_message": "Booking ID is required."},
+            )
+        # This is to redirect the user to the ask page to ask total forms to generate for add locker.
+        if not total_locker or not payment_mode:
+            return render(request, "locker/locker_add_ask.html", context={"booking_id": booking_id, "payment_modes": PAYMENT_MODES})
+        
+        booking = Booking.objects.filter(id=booking_id).exists()
+        if not booking:
+            return render(
+                request,
+                "common/error_page.html",
+                {"error_message": "Booking not found."},
+            )
+        
+        context = self.get_context_data()
+        
+        return render(request, "locker/locker_add.html", context=context)
+
+    def form_valid(self, form: Any) -> HttpResponse:
+        try:
+            form.is_valid()
+            with transaction.atomic():
+                booking = Booking.objects.get(id=self.kwargs.get("booking_id"))
+                booking_forms = []
+                total_deposit_amount = 0
+                for single_form in form:
+                    res: BookingLocker = single_form.save(booking)
+                    booking_forms.append(res)
+                    total_deposit_amount += res.deposit_amount
+                
+                locker_payment = Payment.objects.filter(booking=booking, payment_for="locker", is_confirmed=True, is_returned_to_customer=False)
+                if locker_payment.exists():
+                    locker_payment = locker_payment.first()
+                else:
+                    locker_payment = Payment(booking=booking, payment_for="locker", is_confirmed=True, is_returned_to_customer=False)                    
+                locker_payment.payment_mode = self.request.GET.get("payment_mode")
+                # Adding the deposit amount here because only new entries will be added to the locker_payment via this view
+                locker_payment.amount += total_deposit_amount
+                booking.received_amount += total_deposit_amount
+                booking.total_amount += total_deposit_amount
+                booking.locker_amount += total_deposit_amount
+                booking.save()
+                locker_payment.save()
+                logging.info(f"Booking forms: {booking_forms}") 
+                return render(self.request, "success_screen.html", {"message": "Locker added successfully."})
+        except Exception as e:
+            logging.exception(e)
+            return super().form_invalid(form)

@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Locker Add
+{% endblock %}
+    
+
+{% block content %}
+    <div class="card mx-2  mx-md-5 mb-0 mb-md-2">
+        <div class="card-header">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'booking_home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'react_app' %}">QR Code Scanner</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'locker_summary' booking_id %}">Locker Summary</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Locker Add</li>
+            </ol>
+        </nav>
+        </div>
+    </div>
+
+    <button class="btn btn-danger" onclick="window.close()" style="position: absolute; top: 1rem; right: 1rem; z-index: 50;">
+        Close
+    </button>
+
+    <div class="container mt-md-5 mt-2">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        Locker Add
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                        <div class="col-12">
+                            <form action="{% url 'locker_add' booking_id %}" method="get">
+                                <div class="form-group mb-2">
+                                    <label for="locker_number">Total Lockers: </label>
+                                    <input type="number" class="form-control" id="total_locker" min="0" placeholder="Enter total number of locker you want to issue" name="total_locker" required>
+                                </div>
+                                <div class="form-group mb-2">
+                                    <label for="payment_mode">Payment Mode: </label>
+                                    <select name="payment_mode" id="payment_mode" class="form-control form-check">
+                                        {% for mode_option in payment_modes %}
+                                            <option value="{{ mode_option.0 }}">{{mode_option.1}}</option>
+                                        {% endfor %}                                            
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">
+                                    Continue
+                                </button>
+                            </form>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+{% endblock %}
+
+

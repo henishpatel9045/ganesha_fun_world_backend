@@ -1,6 +1,6 @@
 from typing import Any
 from django import forms
-from django.forms import formset_factory
+from django.forms import formset_factory, BaseFormSet
 from django.core.validators import MinValueValidator
 from django.db import transaction
 from django.utils import timezone
@@ -13,8 +13,8 @@ import django_rq
 from common_config.common import PAYMENT_MODES_FORM
 from whatsapp.messages.message_handlers import handle_sending_booking_ticket
 from .utils import add_payment_to_booking, create_or_update_booking
-from .models import Booking, BookingCanteen, BookingCostume, Payment
-from management_core.models import Costume, TicketPrice
+from .models import Booking, BookingCanteen, BookingCostume, BookingLocker, Payment
+from management_core.models import Costume, Locker, TicketPrice
 
 
 ## GATE MANAGEMENT FORMS
@@ -527,3 +527,57 @@ class CanteenCardForm(forms.Form):
         except Exception as e:
             self.add_error(None, e.args[0])
             raise forms.ValidationError("")
+
+
+class LockerAddForm(forms.ModelForm):
+    locker = forms.ModelChoiceField(
+        queryset=Locker.objects.filter(is_available=True),
+        label="Locker",
+        required=True,
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
+
+    class Meta:
+        model = BookingLocker
+        fields = [
+            "locker",
+            "deposit_amount",
+            # "returned_amount",
+            # "is_returned",
+        ]
+        widgets = {
+            "deposit_amount": forms.NumberInput(
+                attrs={
+                    "class": "form-control text-center",
+                    "min": 0,
+                }
+            ),
+        }
+
+    def save(self, booking: Booking, commit: bool = ...) -> Any:
+        try:
+            self.instance.booking = booking
+            self.instance.locker.is_available = False
+            self.instance.save()
+            self.instance.locker.save()
+            return super().save(commit)
+        except Exception as e:
+            self.add_error("locker", e.args[0])
+            raise forms.ValidationError("")
+
+
+class LockerBaseFormSet(BaseFormSet):
+    def clean(self) -> None:
+        if any(self.errors):
+            return
+        lockers = set(form.cleaned_data.get("locker") for form in self.forms)
+
+        if len(lockers) != len(self.forms):
+            raise forms.ValidationError("Duplicate locker selected.")
+
+
+def get_locker_add_formset(locker_count: int) -> Any:
+    LockerAddFormSet = formset_factory(
+        LockerAddForm, extra=locker_count, formset=LockerBaseFormSet
+    )
+    return LockerAddFormSet
