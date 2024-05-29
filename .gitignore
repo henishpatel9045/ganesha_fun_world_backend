@@ -1,4 +1,6 @@
 static
+media-files
+
 *.pyc
 __pycache__
 

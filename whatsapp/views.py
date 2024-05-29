@@ -12,6 +12,7 @@ import os
 from .messages.message_handlers import (
     handle_booking_session_messages,
     handle_sending_booking_ticket,
+    handle_whatsapp_inquiry_message,
     send_daily_review_message,
     send_date_list_message,
     send_my_bookings_message,
@@ -23,6 +24,7 @@ from .messages.message_handlers import (
 TESTING_NUMBERS = config("WA_TEST_NUMBERS", cast=Csv())
 
 logging.getLogger(__name__)
+high_queue = django_rq.get_queue("high")
 
 
 class WhatsAppTestTriggerAPIView(APIView):
@@ -150,6 +152,13 @@ class WhatsAppWebhook(APIView):
 
                 if message_payload == "my_bookings":
                     send_my_bookings_message(sender, msg_context)
+                    return Response(200)
+
+                if message_payload == "whatsapp_inquiry":
+                    high_queue.enqueue(
+                        handle_whatsapp_inquiry_message,
+                        sender,
+                    )
                     return Response(200)
 
                 if message_payload.lower().startswith("hi"):

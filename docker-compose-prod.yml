@@ -33,6 +33,7 @@ services:
       - 8000
     volumes:
       - static_volume:/home/ganesha/static
+      - prod_media_volume:/home/ganesha/media-files
       - H:/WORK/FREELANCE/ganesha-waterpark/generated_media/:/home/ganesha/generated_media/
       - ./:/home/ganesha
     env_file:
@@ -50,6 +51,8 @@ volumes:
   postgres_data:
   redis_data:
   static_volume:
+    external: true
+  prod_media_volume:
     external: true
 
 networks:

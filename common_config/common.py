@@ -53,3 +53,13 @@ if os.environ.get("ENVIRONMENT") == "prod":
     TEMPORARY_FILE_LOCATION = "/home/ganesha/generated_media"
 else:
     TEMPORARY_FILE_LOCATION = "/home/generated_media"
+
+
+# MANAGEMENT CORE CONSTANTS
+
+WHATSAPP_INQUIRY_MSG_TYPES = [
+    ("text", "text"),
+    ("image_only", "image_only"),
+    ("image_with_text", "image_with_text"),
+    ("document", "document"),
+]

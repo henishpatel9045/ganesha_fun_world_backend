@@ -10,7 +10,7 @@ import django_rq
 from bookings.models import Booking
 from common_config.common import ADVANCE_PER_PERSON_AMOUNT_FOR_BOOKING, HOST_URL
 from whatsapp.utils import WhatsAppClient
-from management_core.models import TicketPrice
+from management_core.models import TicketPrice, WhatsAppInquiryMessage
 from bookings.utils import create_or_update_booking, create_razorpay_order
 from bookings.ticket.utils import generate_ticket_pdf
 
@@ -22,7 +22,7 @@ LOGO_URL = os.environ.get(
 
 
 whatsapp_config = WhatsAppClient(
-    "EAAabZCi7kE38BO6YkJyZBITufTf58BeSX43WfObcbv300qLniyoDT7escFBWwkZC8iZCM9DZA5vkgZBD8dDBerVHtSo8qZBLQ7npflIE1VFiXZCHld3Y8akiwnlIZCYjfSPZCBkdPx7x3C2Ww7sEzDDJPhZAnh0nqOeeHSvaIoMaZAOEwPJRcXg4kJBGFw7z2rmNZCdIo56hEQQMFxsRMZApqx8a0ZD",
+    "EAAabZCi7kE38BO0OVB7nVf5Wnu7qibW7KTqpg95tbm58m682BaSszycpmDxZClt3rTYERnh9xP5fsxRkYaboUEmLBy7GZAPEFAVxCHywua2ME3MQKO6fDZBVPSjwdeh5akOLy1X6NlEVrLTqq0kXsN9ovSuGtky4s4nzW1W89WuZB7CyrGPU2Ir6C7wthmFoZBZBQcZAb80aWD8P3EKwpfU5",
     "105976528928889",
 )
 client = whatsapp_config.get_client()
@@ -167,7 +167,8 @@ def handle_booking_session_messages(
     # Handle the logic after booking is confirmed i.e. create booking instance and generate razorpay order for the same.
     if message_type == "interactive" and payload == "booking_session_confirm":
         # Create booking
-        django_rq.enqueue(
+        queue = django_rq.get_queue("high")
+        queue.enqueue(
             handle_booking_session_confirm,
             active_session,
             sender,
@@ -445,6 +446,33 @@ def handle_sending_booking_ticket(sender: str, booking_id: str, msg_context: dic
     return
 
 
+def handle_whatsapp_inquiry_message(sender: str) -> None:
+    """
+    Function to handle whatsapp inquiry message.
+
+    :param `sender`: The number to which message is to be sent
+    """
+    inquiry_message = WhatsAppInquiryMessage.objects.all()
+    res = []
+    for msg in inquiry_message:
+        if msg.document:
+            logging.info(str(msg.document.url))
+        if msg.type == "text":
+            re = whatsapp_config.send_message(sender, "text", {"preview_url": True, "body": msg.message_text})
+            res.append(re)
+        elif msg.type == "image_only":
+            re = whatsapp_config.send_message(sender, "image", {"link": f"{HOST_URL}{msg.document.url}"})
+            res.append(re)
+        elif msg.type == "image_with_text":
+            re = whatsapp_config.send_message(sender, "image", {"link": f"{HOST_URL}{msg.document.url}", "caption": msg.message_text})
+            res.append(re)
+        elif msg.type == "document":
+            re = whatsapp_config.send_message(sender, "document", {"link": f"{HOST_URL}{msg.document.url}"})
+            res.append(re)
+    logging.info(f"re: {str(res)}")
+    return [r.json() for r in res]
+            
+    
 def send_review_message(recipient_number: str, review_url: str) -> None:
     """
     Function to send review message to the user.
@@ -468,4 +496,3 @@ def send_daily_review_message():
     if bookings.exists():
         for booking in bookings:
             queue.enqueue(send_review_message, booking.wa_number, review_url)
-

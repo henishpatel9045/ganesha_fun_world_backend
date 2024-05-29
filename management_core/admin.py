@@ -3,7 +3,7 @@ from django.urls import path
 from django.shortcuts import render
 import logging
 
-from .models import TicketPrice, Costume, Locker
+from .models import TicketPrice, Costume, Locker, WhatsAppInquiryMessage
 from .forms import TicketListPriceForm
 
 
@@ -56,4 +56,12 @@ class CostumeAdmin(admin.ModelAdmin):
         "name",
         "price",
         "is_available",
+    )
+
+
+@admin.register(WhatsAppInquiryMessage)
+class WhatsAppInquiryMessageAdmin(admin.ModelAdmin):
+    list_display = (
+        "type",
+        "sent_order",
     )

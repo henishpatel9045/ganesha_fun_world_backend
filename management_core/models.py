@@ -1,5 +1,7 @@
 from django.db import models
 
+from common_config.common import WHATSAPP_INQUIRY_MSG_TYPES
+
 
 class DateTimeBaseModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -38,11 +40,31 @@ class Costume(DateTimeBaseModel):
 
 
 class Locker(DateTimeBaseModel):
-    locker_number = models.CharField(max_length=100, db_index=True, null=False, unique=True,)
+    locker_number = models.CharField(
+        max_length=100,
+        db_index=True,
+        null=False,
+        unique=True,
+    )
     is_available = models.BooleanField(default=True)
-    
+
     def __str__(self):
         return self.locker_number
 
     class Meta:
         ordering = ["locker_number"]
+
+
+class WhatsAppInquiryMessage(DateTimeBaseModel):
+    type = models.CharField(
+        max_length=50, choices=WHATSAPP_INQUIRY_MSG_TYPES, default="text", null=False
+    )
+    message_text = models.TextField(null=True, blank=True)
+    document = models.FileField(null=True, blank=True, upload_to="whatsapp_inquiry")
+    sent_order = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.sent_order} - {self.type}"
+
+    class Meta:
+        ordering = ["sent_order"]

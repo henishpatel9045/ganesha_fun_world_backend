@@ -35,6 +35,7 @@ services:
       - 8000
     volumes:
       - test_static_volume:/django/static
+      - test_media_volume:/django/media-files
       - ../generated_media_test/:/home/generated_media/
       - ./:/django
     env_file:
@@ -52,6 +53,8 @@ volumes:
   test_postgres_data:
   test_redis_data:
   test_static_volume:
+    external: true
+  test_media_volume:
     external: true
 
 networks:

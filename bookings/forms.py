@@ -17,6 +17,9 @@ from .models import Booking, BookingCanteen, BookingCostume, BookingLocker, Paym
 from management_core.models import Costume, Locker, TicketPrice
 
 
+high_queue = django_rq.get_queue("high")
+
+
 ## GATE MANAGEMENT FORMS
 class BookingForm(forms.Form):
     wa_number = forms.CharField(
@@ -253,7 +256,7 @@ class PaymentRecordForm(forms.Form):
                 payment_for="booking",
                 payment_mode=self.cleaned_data["payment_mode"],
             )
-            django_rq.enqueue(
+            high_queue.enqueue(
                 handle_sending_booking_ticket,
                 booking.wa_number,
                 "",
@@ -374,7 +377,8 @@ class PaymentRecordEditForm(forms.Form):
                 ]
                 payment.save()
                 payment.booking.save()
-                django_rq.enqueue(
+
+                high_queue.enqueue(
                     handle_sending_booking_ticket,
                     payment.booking.wa_number,
                     "",
