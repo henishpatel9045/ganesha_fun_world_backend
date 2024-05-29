@@ -23,6 +23,7 @@ from .views import (
     CanteenCardFormView,
     LockerSummaryTemplateView,
     LockerAddFormView,
+    LockerEditFormView
 )
 
 
@@ -108,5 +109,10 @@ urlpatterns = [
         "booking/<str:booking_id>/locker/add",
         LockerAddFormView.as_view(),
         name="locker_add",
+    ),
+    path(
+        "booking/<str:booking_id>/locker/edit",
+        LockerEditFormView.as_view(),
+        name="locker_edit",
     ),
 ]

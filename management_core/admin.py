@@ -48,6 +48,7 @@ class LockerAdmin(admin.ModelAdmin):
         "locker_number",
         "is_available",
     )
+    list_editable = ("is_available",)
 
 
 @admin.register(Costume)
@@ -65,3 +66,4 @@ class WhatsAppInquiryMessageAdmin(admin.ModelAdmin):
         "type",
         "sent_order",
     )
+    list_editable = ("sent_order",)

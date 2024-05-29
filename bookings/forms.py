@@ -1,9 +1,10 @@
 from typing import Any
 from django import forms
-from django.forms import formset_factory, BaseFormSet
+from django.forms import formset_factory, BaseFormSet, modelformset_factory
 from django.core.validators import MinValueValidator
 from django.db import transaction
 from django.utils import timezone
+from django.db.models.query import QuerySet
 from crispy_forms.helper import FormHelper, Layout
 from crispy_forms.layout import Submit, Row, Column
 from crispy_forms.bootstrap import AccordionGroup, InlineRadios, Field
@@ -546,8 +547,6 @@ class LockerAddForm(forms.ModelForm):
         fields = [
             "locker",
             "deposit_amount",
-            # "returned_amount",
-            # "is_returned",
         ]
         widgets = {
             "deposit_amount": forms.NumberInput(
@@ -585,3 +584,55 @@ def get_locker_add_formset(locker_count: int) -> Any:
         LockerAddForm, extra=locker_count, formset=LockerBaseFormSet
     )
     return LockerAddFormSet
+
+
+class LockerEditForm(forms.ModelForm):
+    locker = forms.ModelChoiceField(
+        queryset=Locker.objects.filter(is_available=True),
+        label="Locker",
+        required=False,
+        widget=forms.Select(attrs={"class": "form-control text-center"}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        locker_instance_list = [self.instance]
+        # Create a queryset from the list
+        locker_instance_qs = QuerySet(model=Locker, query=Locker.objects.filter(pk=self.instance.locker.pk).query.clone())
+        locker_instance_qs._result_cache = locker_instance_list
+        self.fields["locker"].queryset = locker_instance_qs | Locker.objects.filter(
+            is_available=True
+        )
+
+    class Meta:
+        model = BookingLocker
+        fields = [
+            "id",
+            "locker",
+            "deposit_amount",
+            "returned_amount",
+            "is_returned",
+        ]
+        widgets = {
+            "deposit_amount": forms.NumberInput(
+                attrs={
+                    "class": "form-control text-center readonly-field",
+                    "min": 0,
+                    "readonly": "readonly",
+                }
+            ),
+            "returned_amount": forms.NumberInput(
+                attrs={
+                    "class": "form-control text-center",
+                    "min": 0,
+                }
+            ),
+            "is_returned": forms.CheckboxInput(
+                attrs={"class": "form-control form-check-input"}
+            ),
+        }
+
+
+LockerEditFormSet = modelformset_factory(
+    BookingLocker, form=LockerEditForm, extra=0
+)

@@ -17,7 +17,7 @@ from bookings.models import Booking, BookingCanteen, BookingCostume, BookingLock
 from custom_auth.models import User
 from common_config.common import ADMIN_USER, BOUNCER_USER, COSTUME_MANAGER_USER, GATE_MANAGER_USER, CANTEEN_MANAGER_USER, PAYMENT_MODES
 from management_core.models import TicketPrice
-from .forms import BookingCostumeFormSet, BookingForm, CanteenCardForm, PaymentRecordForm, PaymentRecordEditForm, get_locker_add_formset
+from .forms import BookingCostumeFormSet, BookingForm, CanteenCardForm, LockerEditFormSet, PaymentRecordForm, PaymentRecordEditForm, get_locker_add_formset
 from .webhook_utils import handle_razorpay_webhook_booking_payment
 from .ticket.utils import generate_booking_id_qrcode
 from whatsapp.messages.message_handlers import send_booking_ticket
@@ -1023,6 +1023,77 @@ class LockerAddFormView(FormView):
                 locker_payment.save()
                 logging.info(f"Booking forms: {booking_forms}") 
                 return render(self.request, "success_screen.html", {"message": "Locker added successfully."})
+        except Exception as e:
+            logging.exception(e)
+            return super().form_invalid(form)
+
+
+class LockerEditFormView(FormView):
+    template_name = "locker/locker_edit.html"
+    form_class = LockerEditFormSet
+    
+    def get_context_data(self, form=None, **kwargs: Any) -> dict[str, Any]:
+        booking_id = self.kwargs.get("booking_id")
+        booking = Booking.objects.prefetch_related("booking_locker", "booking_locker__locker").get(id=booking_id)
+        booking_lockers = booking.booking_locker.all()
+        if not form:
+            formset = LockerEditFormSet(queryset=booking_lockers)
+        else:
+            formset = form
+        context = {
+            "booking_id": booking_id,
+            "wa_number": booking.wa_number,
+            "date": booking.date,
+            "formset": formset,
+        }
+        
+        return context
+    
+    def get(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
+        booking_id = kwargs.get("booking_id")
+        
+        if not booking_id:
+            return render(
+                request,
+                "common/error_page.html",
+                {"error_message": "Booking ID is required."},
+            )
+        
+        booking = Booking.objects.filter(id=booking_id).exists()
+        if not booking:
+            return render(
+                request,
+                "common/error_page.html",
+                {"error_message": "Booking not found."},
+            )
+        
+        context = self.get_context_data()
+        
+        return render(request, self.template_name, context=context)
+
+    def form_valid(self, form: Any) -> HttpResponse:
+        try:
+            form.is_valid()
+            with transaction.atomic():
+                total_return_amount = 0
+                for single_form in form:
+                    res: BookingLocker = single_form.save()
+                    total_return_amount += res.returned_amount
+                booking = Booking.objects.get(id=self.kwargs.get("booking_id"))
+                booking_payment = Payment.objects.filter(booking=booking, payment_for="locker", is_confirmed=True, is_returned_to_customer=True)
+                if booking_payment.exists():
+                    booking_payment = booking_payment.first()
+                    booking.returned_amount -= booking_payment.amount
+                    booking.locker_amount += total_return_amount
+                else:
+                    booking_payment = Payment(booking=booking, payment_for="locker", is_confirmed=True, is_returned_to_customer=True)
+                booking_payment.payment_mode = "gate_cash"
+                booking_payment.amount = total_return_amount
+                booking.returned_amount += total_return_amount
+                booking.locker_amount -= total_return_amount
+                booking.save()
+                booking_payment.save()
+                return render(self.request, "success_screen.html", {"message": "Lockers edited successfully."})
         except Exception as e:
             logging.exception(e)
             return super().form_invalid(form)
