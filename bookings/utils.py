@@ -109,12 +109,14 @@ def create_or_update_booking(
             booking.ticket_amount = (
                 special_ticket_total_amount if is_discounted_booking else ticket_total
             )
-            booking.costume_amount = (
+            booking.costume_received_amount = (
                 special_costume_total_amount
                 if is_discounted_booking and special_costume_total_amount > 0
                 else costume_total
             )
-            booking.total_amount = booking.ticket_amount + booking.costume_amount
+            booking.total_amount = (
+                booking.ticket_amount + booking.costume_received_amount + booking.locker_received_amount
+            )
             booking.received_amount = received_amount
             booking.is_discounted_booking = is_discounted_booking
             booking.booking_type = booking_type
@@ -229,7 +231,7 @@ def create_razorpay_order(amount, wa_number: str, booking: Booking) -> str:
             "reminder_enable": False,
             "notes": note_data,
             "expire_by": expire_time,
-            "callback_url": f"https://leading-blindly-seahorse.ngrok-free.app/bookings/razorpay/webhook/?amount={amount}&booking_id={str(booking.id)}", # TODO change this callback url after setting up the webhook
+            "callback_url": f"https://leading-blindly-seahorse.ngrok-free.app/bookings/razorpay/webhook/?amount={amount}&booking_id={str(booking.id)}",  # TODO change this callback url after setting up the webhook
             "callback_method": "get",
         }
     )

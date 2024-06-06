@@ -22,7 +22,7 @@ LOGO_URL = os.environ.get(
 
 
 whatsapp_config = WhatsAppClient(
-    "EAAabZCi7kE38BO0OVB7nVf5Wnu7qibW7KTqpg95tbm58m682BaSszycpmDxZClt3rTYERnh9xP5fsxRkYaboUEmLBy7GZAPEFAVxCHywua2ME3MQKO6fDZBVPSjwdeh5akOLy1X6NlEVrLTqq0kXsN9ovSuGtky4s4nzW1W89WuZB7CyrGPU2Ir6C7wthmFoZBZBQcZAb80aWD8P3EKwpfU5",
+    "EAAabZCi7kE38BO05ZAL1szU2SGr76ZCjcGhXJQw1G3KvSNXqlJGfZCq0hFmRtX7gc52lsJNL2JugHpfE5KZBqxIFv0ya0iFh3K2xBbOTsW6ELeGnYmZCsbGHczVZCUSest6Mv46SkG6zWvaIwl4NsdhzB2i6kSOPwpfZAZCZBuL9BmVxTdksRz5gFFXYNtkowCfKyUNhE3ZBlzVX0vVZC0BZAkV4ZD",
     "105976528928889",
 )
 client = whatsapp_config.get_client()

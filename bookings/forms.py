@@ -590,7 +590,7 @@ class LockerEditForm(forms.ModelForm):
     locker = forms.ModelChoiceField(
         queryset=Locker.objects.filter(is_available=True),
         label="Locker",
-        required=False,
+        required=True,
         widget=forms.Select(attrs={"class": "form-control text-center"}),
     )
 
@@ -603,6 +603,39 @@ class LockerEditForm(forms.ModelForm):
         self.fields["locker"].queryset = locker_instance_qs | Locker.objects.filter(
             is_available=True
         )
+
+    class Meta:
+        model = BookingLocker
+        fields = [
+            "id",
+            "locker",
+            "deposit_amount",
+        ]
+        widgets = {
+            "deposit_amount": forms.NumberInput(
+                attrs={
+                    "class": "form-control text-center readonly-field",
+                    "min": 0,
+                }
+            ),
+        }
+
+
+class LockerReturnForm(forms.ModelForm):
+    locker = forms.ModelChoiceField(
+        queryset=Locker.objects.filter(is_available=True),
+        label="Locker",
+        required=True,
+        widget=forms.Select(attrs={"class": "form-control text-center", "readonly": "readonly"}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        locker_instance_list = [self.instance]
+        # Create a queryset from the list
+        locker_instance_qs = QuerySet(model=Locker, query=Locker.objects.filter(pk=self.instance.locker.pk).query.clone())
+        locker_instance_qs._result_cache = locker_instance_list
+        self.fields["locker"].queryset = locker_instance_qs
 
     class Meta:
         model = BookingLocker
@@ -635,4 +668,8 @@ class LockerEditForm(forms.ModelForm):
 
 LockerEditFormSet = modelformset_factory(
     BookingLocker, form=LockerEditForm, extra=0
+)
+
+LockerReturnFormSet = modelformset_factory(
+    BookingLocker, form=LockerReturnForm, extra=0
 )

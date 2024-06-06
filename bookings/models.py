@@ -29,8 +29,10 @@ class Booking(DateTimeBaseModel):
     )
     date = models.DateField(null=True, blank=True)
     ticket_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)
-    costume_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)
-    locker_amount  = models.DecimalField(decimal_places=2, max_digits=10, default=0)
+    costume_received_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)
+    costume_returned_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)
+    locker_received_amount  = models.DecimalField(decimal_places=2, max_digits=10, default=0)
+    locker_returned_amount  = models.DecimalField(decimal_places=2, max_digits=10, default=0)
     # TODO- Add other charges fields
     total_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)
     received_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)

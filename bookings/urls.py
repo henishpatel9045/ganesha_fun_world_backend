@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    LockerReturnFormView,
     qr_code_homepage_redirect,
     AdminDataDashboard,
     AdminDashboardTemplateView,
@@ -114,5 +115,10 @@ urlpatterns = [
         "booking/<str:booking_id>/locker/edit",
         LockerEditFormView.as_view(),
         name="locker_edit",
+    ),
+    path(
+        "booking/<str:booking_id>/locker/return",
+        LockerReturnFormView.as_view(),
+        name="locker_return",
     ),
 ]

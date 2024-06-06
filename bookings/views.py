@@ -1,8 +1,10 @@
 from typing import Any
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.http import HttpRequest, HttpResponse
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.db import transaction
@@ -15,9 +17,9 @@ import logging
 
 from bookings.models import Booking, BookingCanteen, BookingCostume, BookingLocker, Payment
 from custom_auth.models import User
-from common_config.common import ADMIN_USER, BOUNCER_USER, COSTUME_MANAGER_USER, GATE_MANAGER_USER, CANTEEN_MANAGER_USER, PAYMENT_MODES
+from common_config.common import ADMIN_USER, BOUNCER_USER, COSTUME_MANAGER_USER, GATE_MANAGER_USER, CANTEEN_MANAGER_USER, PAYMENT_MODES, LOCKER_MANAGER_USER
 from management_core.models import TicketPrice
-from .forms import BookingCostumeFormSet, BookingForm, CanteenCardForm, LockerEditFormSet, PaymentRecordForm, PaymentRecordEditForm, get_locker_add_formset
+from .forms import BookingCostumeFormSet, BookingForm, CanteenCardForm, LockerEditFormSet, LockerReturnFormSet, PaymentRecordForm, PaymentRecordEditForm, get_locker_add_formset
 from .webhook_utils import handle_razorpay_webhook_booking_payment
 from .ticket.utils import generate_booking_id_qrcode
 from whatsapp.messages.message_handlers import send_booking_ticket
@@ -53,6 +55,8 @@ def qr_code_homepage_redirect(request: HttpRequest, booking_id: str) -> HttpResp
         return redirect(f"/bookings/booking/{booking_id}/bouncer/summary")
     if user.user_type == CANTEEN_MANAGER_USER:
         return redirect(f"/bookings/booking/{booking_id}/canteen/card")
+    if user.user_type == LOCKER_MANAGER_USER:
+        return redirect(f"/bookings/booking/{booking_id}/locker/summary")
     return redirect("/bookings")
 
 
@@ -264,7 +268,7 @@ class BookingEditFormView(LoginRequiredMixin, FormView):
                 booking.ticket_amount if booking.is_discounted_booking else 0
             ),
             "special_costume_total_amount": (
-                booking.costume_amount if booking.is_discounted_booking else 0
+                booking.costume_received_amount if booking.is_discounted_booking else 0
             ),
             **{costume.costume.name: costume.quantity for costume in costumes},
         }
@@ -438,7 +442,7 @@ class BookingSummaryCardTemplateView(LoginRequiredMixin, TemplateView):
             "child": booking.child,
             "infant": booking.infant,
             "ticket_amount": booking.ticket_amount,
-            "costume_amount": booking.costume_amount,
+            "costume_amount": booking.costume_received_amount,
             "total_amount": booking.total_amount,
             "received_amount": booking.received_amount,
             "amount_to_collect": booking.total_amount - booking.received_amount,
@@ -629,7 +633,7 @@ class CostumeSummaryTemplateView(TemplateView):
             
         context = {
             "booking_id": booking.id,
-            "costume_amount": booking.costume_amount,
+            "costume_amount": booking.costume_received_amount,
             "total_amount": booking.total_amount,
             "received_amount": booking.received_amount,
             "returned_amount": booking.returned_amount,
@@ -1018,7 +1022,7 @@ class LockerAddFormView(FormView):
                 locker_payment.amount += total_deposit_amount
                 booking.received_amount += total_deposit_amount
                 booking.total_amount += total_deposit_amount
-                booking.locker_amount += total_deposit_amount
+                booking.locker_received_amount += total_deposit_amount
                 booking.save()
                 locker_payment.save()
                 logging.info(f"Booking forms: {booking_forms}") 
@@ -1075,6 +1079,80 @@ class LockerEditFormView(FormView):
         try:
             form.is_valid()
             with transaction.atomic():
+                total_deposit_amount = 0
+                for single_form in form:
+                    res: BookingLocker = single_form.save()
+                    total_deposit_amount += res.deposit_amount
+                booking = Booking.objects.get(id=self.kwargs.get("booking_id"))
+                booking_payment = Payment.objects.filter(booking=booking, payment_for="locker", is_confirmed=True, is_returned_to_customer=False)
+                if booking_payment.exists():
+                    booking_payment = booking_payment.first()
+                    booking.locker_received_amount -= booking_payment.amount
+                    booking.total_amount -= booking_payment.amount
+                    booking.received_amount -= booking_payment.amount
+                else:
+                    booking_payment = Payment(booking=booking, payment_for="locker", is_confirmed=True, is_returned_to_customer=False)
+                booking_payment.payment_mode = "gate_cash"
+                booking_payment.amount = total_deposit_amount
+                booking.total_amount += total_deposit_amount
+                booking.received_amount += total_deposit_amount
+                booking.locker_received_amount += total_deposit_amount
+                booking.save()
+                booking_payment.save()
+                messages.success(self.request, "Lockers edited successfully.")
+                return redirect(reverse("locker_summary", kwargs={"booking_id": self.kwargs.get("booking_id")}))
+        except Exception as e:
+            logging.exception(e)
+            return super().form_invalid(form)
+
+
+class LockerReturnFormView(FormView):
+    template_name = "locker/locker_return.html"
+    form_class = LockerReturnFormSet
+    
+    def get_context_data(self, form=None, **kwargs: Any) -> dict[str, Any]:
+        booking_id = self.kwargs.get("booking_id")
+        booking = Booking.objects.prefetch_related("booking_locker", "booking_locker__locker").get(id=booking_id)
+        booking_lockers = booking.booking_locker.all()
+        if not form:
+            formset = LockerReturnFormSet(queryset=booking_lockers)
+        else:
+            formset = form
+        context = {
+            "booking_id": booking_id,
+            "wa_number": booking.wa_number,
+            "date": booking.date,
+            "formset": formset,
+        }
+        
+        return context
+    
+    def get(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
+        booking_id = kwargs.get("booking_id")
+        
+        if not booking_id:
+            return render(
+                request,
+                "common/error_page.html",
+                {"error_message": "Booking ID is required."},
+            )
+        
+        booking = Booking.objects.filter(id=booking_id).exists()
+        if not booking:
+            return render(
+                request,
+                "common/error_page.html",
+                {"error_message": "Booking not found."},
+            )
+        
+        context = self.get_context_data()
+        
+        return render(request, self.template_name, context=context)
+
+    def form_valid(self, form: Any) -> HttpResponse:
+        try:
+            form.is_valid()
+            with transaction.atomic():
                 total_return_amount = 0
                 for single_form in form:
                     res: BookingLocker = single_form.save()
@@ -1084,16 +1162,17 @@ class LockerEditFormView(FormView):
                 if booking_payment.exists():
                     booking_payment = booking_payment.first()
                     booking.returned_amount -= booking_payment.amount
-                    booking.locker_amount += total_return_amount
+                    booking.locker_returned_amount += booking_payment.amount
                 else:
                     booking_payment = Payment(booking=booking, payment_for="locker", is_confirmed=True, is_returned_to_customer=True)
                 booking_payment.payment_mode = "gate_cash"
                 booking_payment.amount = total_return_amount
                 booking.returned_amount += total_return_amount
-                booking.locker_amount -= total_return_amount
+                booking.locker_returned_amount -= total_return_amount
                 booking.save()
                 booking_payment.save()
-                return render(self.request, "success_screen.html", {"message": "Lockers edited successfully."})
+                messages.success(self.request, "Lockers edited successfully.")
+                return redirect(reverse("locker_summary", kwargs={"booking_id": self.kwargs.get("booking_id")}))
         except Exception as e:
             logging.exception(e)
             return super().form_invalid(form)
