@@ -56,6 +56,7 @@ class Locker(DateTimeBaseModel):
 
 
 class WhatsAppInquiryMessage(DateTimeBaseModel):
+    name = models.CharField(max_length=200, blank=True, null=True)
     type = models.CharField(
         max_length=50, choices=WHATSAPP_INQUIRY_MSG_TYPES, default="text", null=False
     )

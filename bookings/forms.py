@@ -664,6 +664,12 @@ class LockerReturnForm(forms.ModelForm):
                 attrs={"class": "form-control form-check-input"}
             ),
         }
+        
+    def save(self, commit: bool = ...) -> Any:
+        locker: BookingLocker = super().save(commit)
+        locker.locker.is_available = True
+        locker.locker.save()        
+        return locker
 
 
 LockerEditFormSet = modelformset_factory(

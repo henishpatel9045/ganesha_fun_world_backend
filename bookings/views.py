@@ -104,11 +104,11 @@ class AdminDataDashboard(APIView):
         payments = Payment.objects.prefetch_related("booking").filter(
             booking__date__range=[from_date, to_date], 
             is_confirmed=True,
-            is_returned_to_customer=False
         ).values_list("booking__date", 
                       "amount", 
                       "payment_mode", 
-                      "payment_for",)
+                      "payment_for",
+                      "is_returned_to_customer",)
         logging.info("Payments: %s", payments)
         total_bookings = len(bookings)
         total_persons = 0
@@ -161,18 +161,24 @@ class AdminDataDashboard(APIView):
         date_wise_income = {}
         for payment in payments:
             date = payment[0].strftime("%d-%m-%Y")
-            total_income += payment[1]
+            if payment[4]: # If it's returned to customer than it will be reduced from the total income
+                total_income -= payment[1]
+            else:
+                total_income += payment[1]
             payment_methods[payment[2]] += payment[1]
-            if payment[2] == "gate_cash":
+            if payment[4]: # Do not count the returned amount in the payment methods
+                pass
+            elif payment[2] == "gate_cash":
                 total_gate_cash += payment[1]
             elif payment[2] == "gate_upi":
                 total_gate_upi += payment[1]
             elif payment[2] == "payment_gateway":
                 total_gateway_income += payment[1]
+                
             if date in date_wise_income:
-                date_wise_income[date] += payment[1]
+                date_wise_income[date] += (-payment[1]) if payment[4] else payment[1]
             else:
-                date_wise_income[date] = payment[1]
+                date_wise_income[date] = (-payment[1]) if payment[4] else payment[1]
         date_wise_income = [{"date": timezone.datetime.strptime(date, "%d-%m-%Y"),
                             "total_income": total_income}
                             for date, total_income in date_wise_income.items()]
@@ -529,6 +535,8 @@ class BookingPaymentRecordsTemplateView(LoginRequiredMixin, TemplateView):
         booking = Booking.objects.prefetch_related("booking_payment").get(id=booking_id)
         context = {
             "booking_id": booking.id,
+            "phone_number": booking.wa_number,
+            "date": booking.date,
             "booking_payments": booking.booking_payment.all(),
         }
         return render(request, self.template_name, context=context)
@@ -1026,7 +1034,8 @@ class LockerAddFormView(FormView):
                 booking.save()
                 locker_payment.save()
                 logging.info(f"Booking forms: {booking_forms}") 
-                return render(self.request, "success_screen.html", {"message": "Locker added successfully."})
+                messages.success("Locker added successfully.")
+                return redirect(reverse("locker_summary", kwargs={"booking_id": self.kwargs.get("booking_id")}))
         except Exception as e:
             logging.exception(e)
             return super().form_invalid(form)
@@ -1162,13 +1171,13 @@ class LockerReturnFormView(FormView):
                 if booking_payment.exists():
                     booking_payment = booking_payment.first()
                     booking.returned_amount -= booking_payment.amount
-                    booking.locker_returned_amount += booking_payment.amount
+                    booking.locker_returned_amount -= booking_payment.amount
                 else:
                     booking_payment = Payment(booking=booking, payment_for="locker", is_confirmed=True, is_returned_to_customer=True)
                 booking_payment.payment_mode = "gate_cash"
                 booking_payment.amount = total_return_amount
                 booking.returned_amount += total_return_amount
-                booking.locker_returned_amount -= total_return_amount
+                booking.locker_returned_amount += total_return_amount
                 booking.save()
                 booking_payment.save()
                 messages.success(self.request, "Lockers edited successfully.")
