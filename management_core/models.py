@@ -69,3 +69,10 @@ class WhatsAppInquiryMessage(DateTimeBaseModel):
 
     class Meta:
         ordering = ["sent_order"]
+
+
+class ExtraWhatsAppNumbers(DateTimeBaseModel):
+    number = models.CharField(max_length=20, blank=False, null=False, unique=True)
+
+    def __str__(self) -> str:
+        return self.number

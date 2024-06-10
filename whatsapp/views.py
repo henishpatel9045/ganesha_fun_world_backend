@@ -22,6 +22,7 @@ from .messages.message_handlers import (
 
 
 TESTING_NUMBERS = config("WA_TEST_NUMBERS", cast=Csv())
+CURRENT_ENVIRONMENT = config("ENVIRONMENT", "test")
 
 logging.getLogger(__name__)
 high_queue = django_rq.get_queue("high")
@@ -94,8 +95,8 @@ class WhatsAppWebhook(APIView):
             msg_context = {
                 "message_id": received_msg_id,
             }
-            # TODO remove below line to enable production i.e. remove reply only to testing numbers feature
-            if sender not in TESTING_NUMBERS:
+            # TODO updated the below line to handle the test environment remove the testing condition
+            if CURRENT_ENVIRONMENT == "test" and sender not in TESTING_NUMBERS:
                 return Response(200)
             message_payload, message_type = "", ""
 

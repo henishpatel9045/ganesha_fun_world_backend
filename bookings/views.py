@@ -13,6 +13,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework import status
+import django_rq
 import logging
 
 from bookings.models import Booking, BookingCanteen, BookingCostume, BookingLocker, Payment
@@ -22,10 +23,13 @@ from management_core.models import TicketPrice
 from .forms import BookingCostumeFormSet, BookingForm, CanteenCardForm, LockerEditFormSet, LockerReturnFormSet, PaymentRecordForm, PaymentRecordEditForm, get_locker_add_formset
 from .webhook_utils import handle_razorpay_webhook_booking_payment
 from .ticket.utils import generate_booking_id_qrcode
-from whatsapp.messages.message_handlers import send_booking_ticket
+from whatsapp.messages.message_handlers import send_booking_ticket, whatsapp_config
 from .decorators import user_type_required
 
 logging.getLogger(__name__)
+
+default_queue = django_rq.get_queue("default")
+low_queue = django_rq.get_queue("low")
 
 
 @login_required
@@ -954,6 +958,17 @@ class LockerSummaryTemplateView(TemplateView):
         return render(request, self.template_name, context=context)
 
 
+def send_locker_update_whatsapp_message(receiver:str, date: str, locker_numbers: list[int|str]) -> None:
+    """Send the locker update message to the receiver.
+
+    :param receiver: The receiver's phone number.
+    :param locker_numbers: The locker numbers to be sent in the message.  
+    """
+    message = f"Your Issued lockers for booking on {date} are:\n {', '.join(locker_numbers)}"
+    whatsapp_config.send_message(receiver, "text", {
+        "body": message
+    })
+
 class LockerAddFormView(FormView):
     template_name = "locker/locker_add.html"
     form_class = get_locker_add_formset(1)
@@ -1015,8 +1030,10 @@ class LockerAddFormView(FormView):
                 booking = Booking.objects.get(id=self.kwargs.get("booking_id"))
                 booking_forms = []
                 total_deposit_amount = 0
+                locker_numbers = []
                 for single_form in form:
                     res: BookingLocker = single_form.save(booking)
+                    locker_numbers.append(res.locker.locker_number)
                     booking_forms.append(res)
                     total_deposit_amount += res.deposit_amount
                 
@@ -1034,7 +1051,13 @@ class LockerAddFormView(FormView):
                 booking.save()
                 locker_payment.save()
                 logging.info(f"Booking forms: {booking_forms}") 
-                messages.success("Locker added successfully.")
+                messages.success(self.request, "Locker added successfully.")
+                default_queue.enqueue(
+                    send_locker_update_whatsapp_message,
+                    booking.wa_number,
+                    booking.date.strftime("%d-%m-%Y"),
+                    locker_numbers
+                )
                 return redirect(reverse("locker_summary", kwargs={"booking_id": self.kwargs.get("booking_id")}))
         except Exception as e:
             logging.exception(e)

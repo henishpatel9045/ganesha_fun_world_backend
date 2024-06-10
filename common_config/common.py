@@ -2,7 +2,7 @@ from django.conf import settings
 import os
 
 
-HOST_URL = "https://leading-blindly-seahorse.ngrok-free.app"
+HOST_URL = os.environ.get("HOST_URL", "https://leading-blindly-seahorse.ngrok-free.app")
 
 # USER RELATED CONSTANTS
 ADMIN_USER = "admin"

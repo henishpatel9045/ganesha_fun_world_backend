@@ -22,7 +22,7 @@ LOGO_URL = os.environ.get(
 
 
 whatsapp_config = WhatsAppClient(
-    "EAAabZCi7kE38BO05ZAL1szU2SGr76ZCjcGhXJQw1G3KvSNXqlJGfZCq0hFmRtX7gc52lsJNL2JugHpfE5KZBqxIFv0ya0iFh3K2xBbOTsW6ELeGnYmZCsbGHczVZCUSest6Mv46SkG6zWvaIwl4NsdhzB2i6kSOPwpfZAZCZBuL9BmVxTdksRz5gFFXYNtkowCfKyUNhE3ZBlzVX0vVZC0BZAkV4ZD",
+    "EAAabZCi7kE38BO9MR7JWR7KZCgTBKAAKpiDeTBgjItF8boIktZBRbFPFkQxSnhqtbkV3DrsRMjNznvAtIiMyvWUZBPSWXEj7kYhm6kWZC87QOrj098rjLZC8KnyVEeCqZBFfSfVahiaAaBbDYZBKYUi5bROiPz0BXiwdLHZA7CYPqnbSTRmaIz30C1BS36n2Q0iIZBoZCxmT503ZAmevu5Pex6OM",
     "105976528928889",
 )
 client = whatsapp_config.get_client()
@@ -440,10 +440,11 @@ def handle_sending_booking_ticket(sender: str, booking_id: str, msg_context: dic
     if not booking:
         booking = Booking.objects.filter(id=booking_id).first()
     if booking:
-        send_booking_ticket(booking)
+        res = send_booking_ticket(booking)
     else:
-        whatsapp_config.send_message(sender, "text", {"body": "No booking found with given id."}, msg_context)
-    return
+        res = whatsapp_config.send_message(sender, "text", {"body": "No booking found with given id."}, msg_context)
+        res.json()
+    return res
 
 
 def handle_whatsapp_inquiry_message(sender: str) -> None:
@@ -455,8 +456,6 @@ def handle_whatsapp_inquiry_message(sender: str) -> None:
     inquiry_message = WhatsAppInquiryMessage.objects.all()
     res = []
     for msg in inquiry_message:
-        if msg.document:
-            logging.info(str(msg.document.url))
         if msg.type == "text":
             re = whatsapp_config.send_message(sender, "text", {"preview_url": True, "body": msg.message_text})
             res.append(re)
@@ -465,9 +464,6 @@ def handle_whatsapp_inquiry_message(sender: str) -> None:
             res.append(re)
         elif msg.type == "image_with_text":
             re = whatsapp_config.send_message(sender, "image", {"link": f"{HOST_URL}{msg.document.url}", "caption": msg.message_text})
-            res.append(re)
-        elif msg.type == "document":
-            re = whatsapp_config.send_message(sender, "document", {"link": f"{HOST_URL}{msg.document.url}"})
             res.append(re)
     logging.info(f"re: {str(res)}")
     return [r.json() for r in res]
