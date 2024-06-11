@@ -157,7 +157,12 @@ class AdminDataDashboard(APIView):
         total_gateway_income = 0
         total_gate_cash = 0
         total_gate_upi = 0
-        payment_methods = {
+        payment_methods_income = {
+            "gate_cash": 0,
+            "gate_upi": 0,
+            "payment_gateway": 0,
+        }
+        payment_methods_returned = {
             "gate_cash": 0,
             "gate_upi": 0,
             "payment_gateway": 0,
@@ -167,9 +172,10 @@ class AdminDataDashboard(APIView):
             date = payment[0].strftime("%d-%m-%Y")
             if payment[4]: # If it's returned to customer than it will be reduced from the total income
                 total_income -= payment[1]
+                payment_methods_returned[payment[2]] += payment[1]
             else:
                 total_income += payment[1]
-            payment_methods[payment[2]] += payment[1]
+                payment_methods_income[payment[2]] += payment[1]
             if payment[4]: # Do not count the returned amount in the payment methods
                 pass
             elif payment[2] == "gate_cash":
@@ -189,13 +195,15 @@ class AdminDataDashboard(APIView):
         date_wise_income.sort(key=lambda x: x["date"])
         
         total_income_line_chart = [{"x": data["date"].strftime("%d-%m-%Y"), "y": data["total_income"]} for data in date_wise_income]
-        payment_method_pie_chart = [{"x": key, "y": value} for key, value in payment_methods.items()]
+        payment_method_income_pie_chart = [{"x": key, "y": value} for key, value in payment_methods_income.items()]
+        payment_method_returned_pie_chart = [{"x": key, "y": value} for key, value in payment_methods_returned.items()]
         
         return Response({
             "total_bookings": total_bookings,
             "total_income": total_income,
             "total_persons": total_persons,
-            "payment_method_pie_chart": payment_method_pie_chart,
+            "payment_method_income_pie_chart": payment_method_income_pie_chart,
+            "payment_method_returned_pie_chart": payment_method_returned_pie_chart,
             "person_type_pie_chart": person_type_pie_chart,
             "total_persons_line_chart": total_persons_line_chart,
             "total_income_line_chart": total_income_line_chart,
@@ -1086,26 +1094,34 @@ class LockerEditFormView(FormView):
         return context
     
     def get(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
-        booking_id = kwargs.get("booking_id")
-        
-        if not booking_id:
+        try:
+            booking_id = kwargs.get("booking_id")
+            
+            if not booking_id:
+                return render(
+                    request,
+                    "common/error_page.html",
+                    {"error_message": "Booking ID is required."},
+                )
+            
+            booking = Booking.objects.filter(id=booking_id).exists()
+            if not booking:
+                return render(
+                    request,
+                    "common/error_page.html",
+                    {"error_message": "Booking not found."},
+                )
+            
+            context = self.get_context_data()
+            
+            return render(request, self.template_name, context=context)
+        except Exception as e:
+            logging.exception(e)
             return render(
                 request,
                 "common/error_page.html",
-                {"error_message": "Booking ID is required."},
+                {"error_message": f"Error: {e}"},
             )
-        
-        booking = Booking.objects.filter(id=booking_id).exists()
-        if not booking:
-            return render(
-                request,
-                "common/error_page.html",
-                {"error_message": "Booking not found."},
-            )
-        
-        context = self.get_context_data()
-        
-        return render(request, self.template_name, context=context)
 
     def form_valid(self, form: Any) -> HttpResponse:
         try:
@@ -1160,26 +1176,34 @@ class LockerReturnFormView(FormView):
         return context
     
     def get(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
-        booking_id = kwargs.get("booking_id")
-        
-        if not booking_id:
+        try:
+            booking_id = kwargs.get("booking_id")
+            
+            if not booking_id:
+                return render(
+                    request,
+                    "common/error_page.html",
+                    {"error_message": "Booking ID is required."},
+                )
+            
+            booking = Booking.objects.filter(id=booking_id).exists()
+            if not booking:
+                return render(
+                    request,
+                    "common/error_page.html",
+                    {"error_message": "Booking not found."},
+                )
+            
+            context = self.get_context_data()
+            
+            return render(request, self.template_name, context=context)
+        except Exception as e:
+            logging.exception(e)
             return render(
                 request,
                 "common/error_page.html",
-                {"error_message": "Booking ID is required."},
+                {"error_message": f"Error: {e}"},
             )
-        
-        booking = Booking.objects.filter(id=booking_id).exists()
-        if not booking:
-            return render(
-                request,
-                "common/error_page.html",
-                {"error_message": "Booking not found."},
-            )
-        
-        context = self.get_context_data()
-        
-        return render(request, self.template_name, context=context)
 
     def form_valid(self, form: Any) -> HttpResponse:
         try:

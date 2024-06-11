@@ -3,8 +3,14 @@ from django.urls import path
 from django.shortcuts import render
 import logging
 
-from .models import TicketPrice, Costume, Locker, WhatsAppInquiryMessage
-from .forms import TicketListPriceForm
+from .models import (
+    TicketPrice,
+    Costume,
+    Locker,
+    WhatsAppInquiryMessage,
+    ExtraWhatsAppNumbers,
+)
+from .forms import TicketListPriceForm, LockerBulkAddForm
 
 
 logging.getLogger(__name__)
@@ -44,11 +50,29 @@ class TicketPriceAdmin(admin.ModelAdmin):
 
 @admin.register(Locker)
 class LockerAdmin(admin.ModelAdmin):
+    change_list_template = "management/locker_admin_changelist.html"
+    
     list_display = (
         "locker_number",
         "is_available",
     )
+    search_fields = ("locker_number",)
     list_editable = ("is_available",)
+    list_per_page = 25
+    
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            path("create-multi/", self.open_multi_slot_form),
+        ]
+        return my_urls + urls
+
+    def open_multi_slot_form(self, request):
+        return render(
+            request,
+            "management/bulk_locker_add_list.html",
+            context={"form": LockerBulkAddForm()},
+        )
 
 
 @admin.register(Costume)
@@ -67,3 +91,10 @@ class WhatsAppInquiryMessageAdmin(admin.ModelAdmin):
         "sent_order",
     )
     list_editable = ("sent_order",)
+
+
+@admin.register(ExtraWhatsAppNumbers)
+class ExtraWhatsAppNumbersAdmin(admin.ModelAdmin):
+    list_display = ("number",)
+    search_fields = ("number",)
+    

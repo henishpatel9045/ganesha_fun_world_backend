@@ -3,7 +3,7 @@ from django import forms
 from django.db import transaction
 import logging
 
-from .models import TicketPrice
+from .models import Locker, TicketPrice
 
 
 logging.getLogger(__name__)
@@ -59,6 +59,30 @@ class TicketListPriceForm(forms.Form):
                         None,
                         "An error occurred while saving the data for date: "
                         + date.strftime("%Y-%m-%d"),
+                    )
+        except Exception as e:
+            logging.exception(e)
+            self.add_error(
+                None, "An error occurred while saving the data: " + str(e.args[0])
+            )
+
+
+class LockerBulkAddForm(forms.Form):
+    starting_number = forms.IntegerField()
+    ending_number = forms.IntegerField()
+    
+    def save(self):
+        try:
+            validated_data = self.cleaned_data
+            for i in range(validated_data["starting_number"], validated_data["ending_number"] + 1):
+                try:
+                    Locker.objects.create(locker_number=i)
+                except Exception as e:
+                    logging.exception(e)
+                    self.add_error(
+                        None,
+                        "An error occurred while saving the data for locker number: "
+                        + str(i),
                     )
         except Exception as e:
             logging.exception(e)

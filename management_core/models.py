@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.validators import MinValueValidator
 
 from common_config.common import WHATSAPP_INQUIRY_MSG_TYPES
 
@@ -40,8 +41,8 @@ class Costume(DateTimeBaseModel):
 
 
 class Locker(DateTimeBaseModel):
-    locker_number = models.CharField(
-        max_length=100,
+    locker_number = models.IntegerField(
+        validators=[MinValueValidator(0, "Locker number must be positive")],
         db_index=True,
         null=False,
         unique=True,
@@ -49,7 +50,7 @@ class Locker(DateTimeBaseModel):
     is_available = models.BooleanField(default=True)
 
     def __str__(self):
-        return self.locker_number
+        return str(self.locker_number)
 
     class Meta:
         ordering = ["locker_number"]

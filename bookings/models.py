@@ -106,7 +106,7 @@ class BookingLocker(DateTimeBaseModel):
         Booking, on_delete=models.CASCADE, db_index=True, related_name="booking_locker"
     )
     locker = models.ForeignKey(
-        "management_core.Locker", on_delete=models.DO_NOTHING, db_index=True
+        "management_core.Locker", on_delete=models.SET_NULL, db_index=True, null=True
     )
     deposit_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)
     returned_at = models.DateTimeField(null=True, blank=True)
@@ -114,7 +114,7 @@ class BookingLocker(DateTimeBaseModel):
     returned_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)
 
     def __str__(self) -> str:
-        return f"{self.booking.wa_number} - {self.locker.locker_number}"
+        return f"{self.booking.wa_number} - {self.locker}"
 
 
 class BookingCanteen(DateTimeBaseModel):
