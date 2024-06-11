@@ -1,6 +1,8 @@
 from datetime import timedelta
+import os
 from django import forms
-from django.db import transaction
+from django.core.files.uploadedfile import InMemoryUploadedFile
+from urllib.parse import quote
 from crispy_forms.helper import FormHelper, Layout
 from crispy_forms.layout import Submit
 from crispy_bootstrap5.bootstrap5 import FloatingField
@@ -10,6 +12,11 @@ import logging
 from .models import Locker, TicketPrice, ExtraWhatsAppNumbers
 from bookings.models import Booking
 from whatsapp.messages.message_handlers import whatsapp_config
+from common_config.common import (
+    HOST_URL,
+    TEMPORARY_FILE_LOCATION,
+    GENERATED_MEDIA_BASE_URL,
+)
 
 
 logging.getLogger(__name__)
@@ -126,10 +133,7 @@ class TextOnlyPromotionalMessageForm(forms.Form):
                 ExtraWhatsAppNumbers.objects.all().values_list("number", flat=True)
             )
             phone_numbers = set(booking_phone_numbers + extra_phone_numbers)
-            logging.info(f"Booking phone numbers: {booking_phone_numbers}")
-            logging.info(f"Extra phone numbers: {extra_phone_numbers}")
-            logging.info(f"Phone numbers: {phone_numbers}")
-            
+
             for number in phone_numbers:
                 try:
                     low_queue.enqueue(
@@ -141,6 +145,62 @@ class TextOnlyPromotionalMessageForm(forms.Form):
                     )
                 except Exception as e:
                     logging.exception(e)
+        except Exception as e:
+            logging.exception(e)
+            self.add_error(
+                None, "An error occurred while sending the message: " + str(e.args[0])
+            )
+
+
+class ImageOnlyPromotionalMessageForm(forms.Form):
+    image = forms.ImageField(
+        required=True,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = "post"
+        self.helper.layout = Layout(
+            FloatingField("image"),
+            Submit("submit", "Submit"),
+        )
+
+    def send_messages(self) -> None:
+        try:
+            image: InMemoryUploadedFile = self.cleaned_data["image"]
+            image_path = f"{TEMPORARY_FILE_LOCATION}/promotional_images"
+            os.makedirs(image_path, exist_ok=True)
+            image_path = f"{image_path}/{image.name}"
+            # save above file in the path
+            with open(image_path, "wb") as f:
+                for chunk in image.chunks():
+                    f.write(chunk)
+
+            hosted_image_path = (
+                f"{HOST_URL}{GENERATED_MEDIA_BASE_URL}/promotional_images/{quote(image.name)}"
+            )
+            # Getting phone numbers from all the bookings so far and extra numbers from admin panel
+            booking_phone_numbers = list(
+                Booking.objects.all().values_list("wa_number", flat=True)
+            )
+            extra_phone_numbers = list(
+                ExtraWhatsAppNumbers.objects.all().values_list("number", flat=True)
+            )
+            phone_numbers = set(booking_phone_numbers + extra_phone_numbers)
+
+            for phone in phone_numbers:
+                try:
+                    low_queue.enqueue(
+                        whatsapp_config.send_message,
+                        phone,
+                        "image",
+                        {"link": hosted_image_path},
+                        None,
+                    )
+                except Exception as e:
+                    logging.exception(e)
+
         except Exception as e:
             logging.exception(e)
             self.add_error(

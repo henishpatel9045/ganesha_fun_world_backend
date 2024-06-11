@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    ImageOnlyPromotionalMessageFormView,
     TicketListPriceFormView,
     LockerBulkAddFormView,
     TextOnlyPromotionalMessageFormView,
@@ -23,6 +24,11 @@ urlpatterns = [
         "text-only-promotional-message",
         TextOnlyPromotionalMessageFormView.as_view(),
         name="text_only_promotional",
+    ),
+    path(
+        "image-only-promotional-message",
+        ImageOnlyPromotionalMessageFormView.as_view(),
+        name="image_only_promotional",
     ),
     path(
         "promotional-messages-home",

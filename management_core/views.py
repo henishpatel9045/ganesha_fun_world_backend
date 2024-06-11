@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 import logging
 
 from .forms import (
+    ImageOnlyPromotionalMessageForm,
     TicketListPriceForm,
     LockerBulkAddForm,
     TextOnlyPromotionalMessageForm,
@@ -55,9 +56,22 @@ class LockerBulkAddFormView(LoginRequiredMixin, APIView):
 class TextOnlyPromotionalMessageFormView(FormView):
     form_class = TextOnlyPromotionalMessageForm
     template_name = "promotional/only_text.html"
-    success_url = "/bookings/"
+    success_url = "/management_core/promotional-messages-home"
 
     def form_valid(self, form: TextOnlyPromotionalMessageForm):
+        try:
+            form.send_messages()
+            return super().form_valid(form)
+        except Exception as e:
+            return self.form_invalid(form)
+
+
+class ImageOnlyPromotionalMessageFormView(FormView):
+    form_class = ImageOnlyPromotionalMessageForm
+    template_name = "promotional/only_image.html"
+    success_url = "/management_core/promotional-messages-home"
+
+    def form_valid(self, form: ImageOnlyPromotionalMessageForm):
         try:
             form.send_messages()
             return super().form_valid(form)
