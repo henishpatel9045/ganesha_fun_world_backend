@@ -7,6 +7,7 @@ import logging
 
 from .forms import (
     ImageOnlyPromotionalMessageForm,
+    ImageWithCaptionPromotionalMessageForm,
     TicketListPriceForm,
     LockerBulkAddForm,
     TextOnlyPromotionalMessageForm,
@@ -72,6 +73,19 @@ class ImageOnlyPromotionalMessageFormView(FormView):
     success_url = "/management_core/promotional-messages-home"
 
     def form_valid(self, form: ImageOnlyPromotionalMessageForm):
+        try:
+            form.send_messages()
+            return super().form_valid(form)
+        except Exception as e:
+            return self.form_invalid(form)
+
+
+class ImageWithCaptionPromotionalMessageFormView(FormView):
+    form_class = ImageWithCaptionPromotionalMessageForm
+    template_name = "promotional/image_with_caption.html"
+    success_url = "/management_core/promotional-messages-home"
+
+    def form_valid(self, form: ImageWithCaptionPromotionalMessageForm):
         try:
             form.send_messages()
             return super().form_valid(form)

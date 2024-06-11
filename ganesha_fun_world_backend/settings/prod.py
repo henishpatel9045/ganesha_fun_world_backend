@@ -13,18 +13,19 @@ RQ_QUEUES = {
         "HOST": "redis",
         "PORT": 6379,
         "DB": 0,
-        "DEFAULT_TIMEOUT": 360,
+        "DEFAULT_TIMEOUT": 600,
     },
     "high": {
         "HOST": "redis",
         "PORT": 6379,
         "DB": 0,
-        "DEFAULT_TIMEOUT": 500,
+        "DEFAULT_TIMEOUT": 600,
     },
     "low": {
         "HOST": "redis",
         "PORT": 6379,
         "DB": 0,
+        "DEFAULT_TIMEOUT": 10000,
     },
 }
 

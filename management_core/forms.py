@@ -107,6 +107,16 @@ class LockerBulkAddForm(forms.Form):
             )
 
 
+def get_combined_numbers_for_promotional_message() -> set:
+    booking_phone_numbers = list(
+        Booking.objects.all().values_list("wa_number", flat=True)
+    )
+    extra_phone_numbers = list(
+        ExtraWhatsAppNumbers.objects.all().values_list("number", flat=True)
+    )
+    return set(booking_phone_numbers + extra_phone_numbers)
+
+
 class TextOnlyPromotionalMessageForm(forms.Form):
     text = forms.CharField(
         widget=forms.Textarea(attrs={"rows": "5"}),
@@ -126,13 +136,7 @@ class TextOnlyPromotionalMessageForm(forms.Form):
     def send_messages(self) -> None:
         try:
             msg_text = self.cleaned_data["text"]
-            booking_phone_numbers = list(
-                Booking.objects.all().values_list("wa_number", flat=True)
-            )
-            extra_phone_numbers = list(
-                ExtraWhatsAppNumbers.objects.all().values_list("number", flat=True)
-            )
-            phone_numbers = set(booking_phone_numbers + extra_phone_numbers)
+            phone_numbers = get_combined_numbers_for_promotional_message()
 
             for number in phone_numbers:
                 try:
@@ -152,6 +156,20 @@ class TextOnlyPromotionalMessageForm(forms.Form):
             )
 
 
+def save_promotional_image(image: InMemoryUploadedFile) -> str:
+    image_path = f"{TEMPORARY_FILE_LOCATION}/promotional_images"
+    os.makedirs(image_path, exist_ok=True)
+    image_path = f"{image_path}/{image.name}"
+    # save above file in the path
+    with open(image_path, "wb") as f:
+        for chunk in image.chunks():
+            f.write(chunk)
+
+    return (
+        f"{HOST_URL}{GENERATED_MEDIA_BASE_URL}/promotional_images/{quote(image.name)}"
+    )
+
+
 class ImageOnlyPromotionalMessageForm(forms.Form):
     image = forms.ImageField(
         required=True,
@@ -169,25 +187,9 @@ class ImageOnlyPromotionalMessageForm(forms.Form):
     def send_messages(self) -> None:
         try:
             image: InMemoryUploadedFile = self.cleaned_data["image"]
-            image_path = f"{TEMPORARY_FILE_LOCATION}/promotional_images"
-            os.makedirs(image_path, exist_ok=True)
-            image_path = f"{image_path}/{image.name}"
-            # save above file in the path
-            with open(image_path, "wb") as f:
-                for chunk in image.chunks():
-                    f.write(chunk)
+            hosted_image_path = save_promotional_image(image)
 
-            hosted_image_path = (
-                f"{HOST_URL}{GENERATED_MEDIA_BASE_URL}/promotional_images/{quote(image.name)}"
-            )
-            # Getting phone numbers from all the bookings so far and extra numbers from admin panel
-            booking_phone_numbers = list(
-                Booking.objects.all().values_list("wa_number", flat=True)
-            )
-            extra_phone_numbers = list(
-                ExtraWhatsAppNumbers.objects.all().values_list("number", flat=True)
-            )
-            phone_numbers = set(booking_phone_numbers + extra_phone_numbers)
+            phone_numbers = get_combined_numbers_for_promotional_message()
 
             for phone in phone_numbers:
                 try:
@@ -196,6 +198,52 @@ class ImageOnlyPromotionalMessageForm(forms.Form):
                         phone,
                         "image",
                         {"link": hosted_image_path},
+                        None,
+                    )
+                except Exception as e:
+                    logging.exception(e)
+
+        except Exception as e:
+            logging.exception(e)
+            self.add_error(
+                None, "An error occurred while sending the message: " + str(e.args[0])
+            )
+
+
+class ImageWithCaptionPromotionalMessageForm(forms.Form):
+    image = forms.ImageField(
+        required=True,
+    )
+    caption = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": "5"}),
+        required=True,
+        initial="",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = "post"
+        self.helper.layout = Layout(
+            FloatingField("image"),
+            FloatingField("caption"),
+            Submit("submit", "Submit"),
+        )
+
+    def send_messages(self) -> None:
+        try:
+            image: InMemoryUploadedFile = self.cleaned_data["image"]
+            caption: str = self.cleaned_data["caption"]
+            hosted_image_path = save_promotional_image(image)
+            phone_numbers = get_combined_numbers_for_promotional_message()
+
+            for phone in phone_numbers:
+                try:
+                    low_queue.enqueue(
+                        whatsapp_config.send_message,
+                        phone,
+                        "image",
+                        {"link": hosted_image_path, "caption": caption},
                         None,
                     )
                 except Exception as e:

@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %} 
+{% block title %}Image with caption WhatsApp promotional messages{% endblock %}
+
+
+{% block content %}
+<div class="card  mx-5 mb-2">
+    <div class="card-header">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{% url 'admin_home' %}">Admin Home</a></li>
+          <li class="breadcrumb-item"><a href="{% url 'promotional_message_home' %}">Promotional Messages</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Image with Caption</li>
+        </ol>
+      </nav>
+    </div>
+</div>
+  
+<div class="mx-5 mb-2">
+    <h1 class="mb-2">Send WhatsApp promotional message (Image with Caption)</h1>
+    <div class="card">
+        {% if form.errors %}
+          {% for error in form.errors %}
+            <div class="alert alert-danger">
+              {{ error }}
+            </div>
+          {% endfor %}
+        {% endif %}
+        <div class="card-body">
+            {% crispy form %}
+        </div>
+    </div>
+</div>
+{% endblock %}
