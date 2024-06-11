@@ -6,6 +6,7 @@ from drf_yasg import openapi
 import os
 
 from bookings.views import admin_home_redirect
+from management_core.views import AdminHomeTemplateView
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -19,6 +20,7 @@ schema_view = get_schema_view(
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("home/", admin_home_redirect),
+    path("admin_home/", AdminHomeTemplateView.as_view(), name="admin_home"),
     path("django-rq/", include("django_rq.urls")),
     path("frontend/", include("frontend.urls")),
     path("management_core/", include("management_core.urls")),

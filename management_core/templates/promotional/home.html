@@ -1,0 +1,44 @@
+{% extends 'base.html' %} 
+{% block title %} Promotional Messages Home {% endblock %}
+{% block content %}
+{% load cache %}
+{% cache 30000 promotional_home_template %}
+<style>
+  .card-link-item {
+    min-height: 150px;
+    background-color: white;
+    box-shadow: 0px 0px 10px 0px #00000033;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: black;
+    transition: all 0.3s;
+  }
+
+  body {
+    background-color: #888;
+  }
+
+  .card-link-item:hover {
+    background-color: #74b5f7;
+    transform: scale(1.05);
+  }
+</style>
+<div class="w-100 px-2 pt-3" style="border-bottom: 5px solid #f8f9fa; background-color: white;">
+  <h3 class="p-3 pb-3">Promotional Messages Home</h3>
+</div>
+
+<div class="card-footer p-4">
+  <div class="row">
+      <div class="col-12 col-md-4">
+        <a href="{% url 'text_only_promotional' %}" class="btn btn-outline-secondary text-center card-link-item">
+          Text Only
+        </a>
+      </div>
+  </div>
+</div>  
+  
+</div>
+{% endcache %}
+{% endblock %}

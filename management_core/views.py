@@ -1,10 +1,15 @@
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import FormView, TemplateView
 from rest_framework.views import APIView
 import logging
 
-from .forms import TicketListPriceForm, LockerBulkAddForm
+from .forms import (
+    TicketListPriceForm,
+    LockerBulkAddForm,
+    TextOnlyPromotionalMessageForm,
+)
 from bookings.decorators import user_type_required
 from common_config.common import ADMIN_USER
 
@@ -45,3 +50,24 @@ class LockerBulkAddFormView(LoginRequiredMixin, APIView):
             )
         else:
             return HttpResponseRedirect("/admin/management_core/locker/")
+
+
+class TextOnlyPromotionalMessageFormView(FormView):
+    form_class = TextOnlyPromotionalMessageForm
+    template_name = "promotional/only_text.html"
+    success_url = "/bookings/"
+
+    def form_valid(self, form: TextOnlyPromotionalMessageForm):
+        try:
+            form.send_messages()
+            return super().form_valid(form)
+        except Exception as e:
+            return self.form_invalid(form)
+
+
+class AdminHomeTemplateView(TemplateView):
+    template_name = "admin_home.html"
+
+
+class PromotionalHomeTemplateView(TemplateView):
+    template_name = "promotional/home.html"

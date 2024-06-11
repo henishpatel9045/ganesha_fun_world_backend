@@ -1,12 +1,19 @@
 from datetime import timedelta
 from django import forms
 from django.db import transaction
+from crispy_forms.helper import FormHelper, Layout
+from crispy_forms.layout import Submit
+from crispy_bootstrap5.bootstrap5 import FloatingField
+import django_rq
 import logging
 
-from .models import Locker, TicketPrice
+from .models import Locker, TicketPrice, ExtraWhatsAppNumbers
+from bookings.models import Booking
+from whatsapp.messages.message_handlers import whatsapp_config
 
 
 logging.getLogger(__name__)
+low_queue = django_rq.get_queue("low")
 
 
 class TicketListPriceForm(forms.Form):
@@ -70,11 +77,13 @@ class TicketListPriceForm(forms.Form):
 class LockerBulkAddForm(forms.Form):
     starting_number = forms.IntegerField()
     ending_number = forms.IntegerField()
-    
+
     def save(self):
         try:
             validated_data = self.cleaned_data
-            for i in range(validated_data["starting_number"], validated_data["ending_number"] + 1):
+            for i in range(
+                validated_data["starting_number"], validated_data["ending_number"] + 1
+            ):
                 try:
                     Locker.objects.create(locker_number=i)
                 except Exception as e:
@@ -88,4 +97,52 @@ class LockerBulkAddForm(forms.Form):
             logging.exception(e)
             self.add_error(
                 None, "An error occurred while saving the data: " + str(e.args[0])
+            )
+
+
+class TextOnlyPromotionalMessageForm(forms.Form):
+    text = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": "5"}),
+        required=True,
+        initial="",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = "post"
+        self.helper.layout = Layout(
+            FloatingField("text"),
+            Submit("submit", "Submit"),
+        )
+
+    def send_messages(self) -> None:
+        try:
+            msg_text = self.cleaned_data["text"]
+            booking_phone_numbers = list(
+                Booking.objects.all().values_list("wa_number", flat=True)
+            )
+            extra_phone_numbers = list(
+                ExtraWhatsAppNumbers.objects.all().values_list("number", flat=True)
+            )
+            phone_numbers = set(booking_phone_numbers + extra_phone_numbers)
+            logging.info(f"Booking phone numbers: {booking_phone_numbers}")
+            logging.info(f"Extra phone numbers: {extra_phone_numbers}")
+            logging.info(f"Phone numbers: {phone_numbers}")
+            
+            for number in phone_numbers:
+                try:
+                    low_queue.enqueue(
+                        whatsapp_config.send_message,
+                        number,
+                        "text",
+                        {"preview_url": True, "body": msg_text},
+                        None,
+                    )
+                except Exception as e:
+                    logging.exception(e)
+        except Exception as e:
+            logging.exception(e)
+            self.add_error(
+                None, "An error occurred while sending the message: " + str(e.args[0])
             )

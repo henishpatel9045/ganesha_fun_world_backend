@@ -35,10 +35,8 @@ low_queue = django_rq.get_queue("low")
 @login_required
 def admin_home_redirect(request: HttpRequest) -> HttpResponse:
     user : User = request.user
-    logging.info(f"User: {user}")
-    logging.info(f"User Perms: {str([perm.codename for perm in user.user_permissions.all()])}")
     if user.user_type == ADMIN_USER:
-        return redirect("/bookings/dashboard")
+        return redirect("/admin_home")
     elif user.user_type == GATE_MANAGER_USER:
         return redirect("/bookings/")
     elif user.user_type == COSTUME_MANAGER_USER:
