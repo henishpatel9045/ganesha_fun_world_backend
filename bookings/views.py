@@ -228,6 +228,25 @@ class BookingHomeTemplateView(LoginRequiredMixin, TemplateView):
         return super().get(request, *args, **kwargs)
 
 
+class BookingHomeSummaryTemplateView(LoginRequiredMixin, TemplateView):
+    template_name = "booking/booking_home_summary.html"
+    
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        bookings = Booking.objects.prefetch_related("booking_costume").filter(date=timezone.now().date(), received_amount__gt=0)
+        total_amount = 0
+        costumes: list[BookingCostume] = []
+        for booking in bookings:
+            costumes.extend(booking.booking_costume.all())
+        for costume in costumes:
+            total_amount += costume.deposit_amount
+        
+        return {"costume_total_deposit": total_amount, "date": timezone.now().date(),}
+    
+    @user_type_required([ADMIN_USER, GATE_MANAGER_USER])
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        return super().get(request, *args, **kwargs)
+
+
 class BookingFormView(LoginRequiredMixin, FormView):
     template_name = "booking/booking.html"
     form_class = BookingForm
@@ -465,6 +484,8 @@ class BookingSummaryCardTemplateView(LoginRequiredMixin, TemplateView):
             "total_amount": booking.total_amount,
             "received_amount": booking.received_amount,
             "amount_to_collect": booking.total_amount - booking.received_amount,
+            "is_confirmed": booking.total_amount == booking.received_amount,
+            "is_today_booking": booking.date == timezone.now().date(),
         }
         return context
 

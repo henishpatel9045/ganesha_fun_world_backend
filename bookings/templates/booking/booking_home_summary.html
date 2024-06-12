@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+
+{% block title %}
+    Booking Home Summary
+{% endblock %}
+
+
+{% block content %}
+
+<div class="w-100 px-5 pb-2">
+    <h1 class="mb-2">Costume Summary for - {{ date }}</h1>
+    <table class="table table-hover table-bordered table-responsive">
+        <tbody>            
+            <tr>
+                <th>Total Deposit</th>                
+                <th>
+                    {{ costume_total_deposit }}
+                </th>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
+    
+    

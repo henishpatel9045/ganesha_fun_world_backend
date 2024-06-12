@@ -7,6 +7,7 @@ from .views import (
     AdminDashboardTemplateView,
     RazorpayPaymentWebhookAPIView,
     BookingHomeTemplateView,
+    BookingHomeSummaryTemplateView,
     BookingFormView,
     PaymentFormView,
     BookingSummaryCardTemplateView,
@@ -41,6 +42,7 @@ urlpatterns = [
         name="razorpay_payment_webhook",
     ),
     path("booking/", BookingFormView.as_view(), name="booking_create"),
+    path("home-summary/", BookingHomeSummaryTemplateView.as_view(), name="booking_home_summary"),
     path("history/", BookingHistoryTemplateView.as_view(), name="booking_history"),
     path("cron-handler/", CronHandlerAPIView.as_view(), name="cron_handler"),
     path(

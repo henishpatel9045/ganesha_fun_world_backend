@@ -487,7 +487,7 @@ def send_daily_review_message():
     Function to send daily review message to the user.
     """
     bookings = Booking.objects.filter(date=timezone.now().date(), received_amount__gt=0)
-    review_url = os.environ.get("GOOGLE_REVIEW_LINK")
+    review_url = os.environ.get("GOOGLE_REVIEW_LINK", "https://maps.app.goo.gl/KvjuDHHtCr6ZJFsu7")
     queue = django_rq.get_queue("low")
     if bookings.exists():
         for booking in bookings:

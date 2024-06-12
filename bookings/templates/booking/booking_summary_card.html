@@ -40,6 +40,27 @@
                                 <p><strong>Received Amount:</strong> <span>{{ received_amount }} ₹</span></p>
                                 <p><strong>Amount to Collect:</strong> <span>{{ amount_to_collect }} ₹</span></p>
                             </div>
+                            <div class="col-12 d-flex align-items-center justify-content-between">
+                                <p>
+                                    <strong>Confirmed:
+                                        {% if is_confirmed %}
+                                        <span class="text-success">Yes</span>
+                                        {% else %}
+                                        <span class="text-danger">No</span>
+                                        {% endif %}
+                                    </strong>
+                                </p>
+                            
+                                <p>
+                                    <strong>Today Booking:
+                                        {% if is_today_booking %}
+                                        <span class="text-success">Yes</span>
+                                        {% else %}
+                                        <span class="text-danger">No</span>
+                                        {% endif %}
+                                    </strong>
+                                </p>
+                            </div>
                         </div>
                     </div>
                     {% comment %} this buttons should be equally spaced and have some gap in between them also use icons along with text if possible {% endcomment %}
