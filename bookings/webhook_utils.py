@@ -13,23 +13,18 @@ logging.getLogger(__name__)
 def handle_razorpay_webhook_booking_payment(data: dict) -> bool:
     try:
         # TODO uncomment below lines after implementing the razorpay payment gateway webhook
-        # payment_payload = data["payload"]["payment"]["entity"]
-        # status = payment_payload["status"]
-        # received_amount = payment_payload["amount"]
-        # notes = payment_payload["notes"]
+        payment_payload = data["payload"]["payment"]["entity"]
+        status = payment_payload["status"]
+        received_amount = payment_payload["amount"]
+        notes = payment_payload["notes"]
 
-        # if status != "captured":
-        #     raise Exception("Payment not captured")
-        # booking_id = notes.get("booking_id")
-        # if not booking_id:
-        #     raise Exception("Booking ID not found in notes")
-        # received_amount = received_amount / 100
-
-        # TODO remove below lines for getting ids from req
-        booking_id = data.get("booking_id")
-        received_amount = int(data.get("amount", 0))
+        if status != "captured":
+            raise Exception("Payment not captured")
+        booking_id = notes.get("booking_id")
+        if not booking_id:
+            raise Exception("Booking ID not found in notes")
         received_amount = received_amount / 100
-        
+
         booking = Booking.objects.get(id=booking_id)
         # FIXME currently we are just taking advanced payment only, for the booking
         total_persons = booking.adult_male + booking.adult_female + booking.child

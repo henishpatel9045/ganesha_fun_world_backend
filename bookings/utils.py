@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import os
 from django.db import transaction
 from django.utils import timezone
 import razorpay
@@ -9,7 +10,14 @@ from management_core.models import TicketPrice, Costume
 
 logging.getLogger(__name__)
 razorpay_client = razorpay.Client(
-    auth=("rzp_test_G9nG6xHNVssnUs", "lgQOpFTgjnTjyLP6kybwUbc7")
+    auth=(
+        os.environ.get(
+            "RAZORPAY_API_KEY",
+        ),
+        os.environ.get(
+            "RAZORPAY_API_SECRET",
+        ),
+    ),
 )
 razorpay_client.set_app_details(
     {"title": "Ganesha WhatsApp Booking App", "version": "1.0.0"}
@@ -115,7 +123,9 @@ def create_or_update_booking(
                 else costume_total
             )
             booking.total_amount = (
-                booking.ticket_amount + booking.costume_received_amount + booking.locker_received_amount
+                booking.ticket_amount
+                + booking.costume_received_amount
+                + booking.locker_received_amount
             )
             booking.received_amount = received_amount
             booking.is_discounted_booking = is_discounted_booking
@@ -231,8 +241,8 @@ def create_razorpay_order(amount, wa_number: str, booking: Booking) -> str:
             "reminder_enable": False,
             "notes": note_data,
             "expire_by": expire_time,
-            "callback_url": f"https://leading-blindly-seahorse.ngrok-free.app/bookings/razorpay/webhook/?amount={amount}&booking_id={str(booking.id)}",  # TODO change this callback url after setting up the webhook
-            "callback_method": "get",
+            # "callback_url": f"https://leading-blindly-seahorse.ngrok-free.app/bookings/razorpay/webhook/?amount={amount}&booking_id={str(booking.id)}",  # TODO change this callback url after setting up the webhook
+            # "callback_method": "get",
         }
     )
     return order["short_url"]

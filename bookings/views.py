@@ -66,20 +66,21 @@ def qr_code_homepage_redirect(request: HttpRequest, booking_id: str) -> HttpResp
 
 class RazorpayPaymentWebhookAPIView(APIView):
     # TODO remove this method after setting up the webhook
-    def get(self, request: Request) -> Response:
-        try:
-            data = request.GET
-            handling_status = handle_razorpay_webhook_booking_payment(data)
-            if not handling_status:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
-            return Response(200)
-        except Exception as e:
-            logging.exception(e)
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+    # def get(self, request: Request) -> Response:
+    #     try:
+    #         data = request.GET
+    #         handling_status = handle_razorpay_webhook_booking_payment(data)
+    #         if not handling_status:
+    #             return Response(status=status.HTTP_400_BAD_REQUEST)
+    #         return Response(200)
+    #     except Exception as e:
+    #         logging.exception(e)
+    #         return Response(status=status.HTTP_400_BAD_REQUEST)
     
     def post(self, request: Request) -> Response:
         try:
             data = request.data
+            logging.info(f"Razorpay Webhook Data: {data}")
             handling_status = handle_razorpay_webhook_booking_payment(data)
             if not handling_status:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
