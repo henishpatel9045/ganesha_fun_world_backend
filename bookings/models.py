@@ -29,10 +29,18 @@ class Booking(DateTimeBaseModel):
     )
     date = models.DateField(null=True, blank=True)
     ticket_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)
-    costume_received_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)
-    costume_returned_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)
-    locker_received_amount  = models.DecimalField(decimal_places=2, max_digits=10, default=0)
-    locker_returned_amount  = models.DecimalField(decimal_places=2, max_digits=10, default=0)
+    costume_received_amount = models.DecimalField(
+        decimal_places=2, max_digits=10, default=0
+    )
+    costume_returned_amount = models.DecimalField(
+        decimal_places=2, max_digits=10, default=0
+    )
+    locker_received_amount = models.DecimalField(
+        decimal_places=2, max_digits=10, default=0
+    )
+    locker_returned_amount = models.DecimalField(
+        decimal_places=2, max_digits=10, default=0
+    )
     # TODO- Add other charges fields
     total_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)
     received_amount = models.DecimalField(decimal_places=2, max_digits=10, default=0)
@@ -49,6 +57,9 @@ class Booking(DateTimeBaseModel):
 
     def __str__(self) -> str:
         return f"{self.wa_number} - {self.date.strftime('%d-%m-%Y')}"
+
+    def update_booking(self, **kwargs):
+        self.delete(**kwargs)
 
 
 class Payment(DateTimeBaseModel):
@@ -131,4 +142,3 @@ class BookingCanteen(DateTimeBaseModel):
 
     def __str__(self) -> str:
         return f"{self.booking.wa_number} - {self.breakfast_quantity_used} - {self.lunch_quantity_used} - {self.evening_snacks_quantity_used} - {self.dinner_quantity_used}"
-    

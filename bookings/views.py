@@ -1,3 +1,4 @@
+import os
 from typing import Any
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import render, redirect
@@ -15,10 +16,11 @@ from rest_framework.request import Request
 from rest_framework import status
 import django_rq
 import logging
+import requests
 
 from bookings.models import Booking, BookingCanteen, BookingCostume, BookingLocker, Payment
 from custom_auth.models import User
-from common_config.common import ADMIN_USER, BOUNCER_USER, COSTUME_MANAGER_USER, GATE_MANAGER_USER, CANTEEN_MANAGER_USER, PAYMENT_MODES, LOCKER_MANAGER_USER
+from common_config.common import ADMIN_USER, BOUNCER_USER, COSTUME_MANAGER_USER, GATE_MANAGER_USER, CANTEEN_MANAGER_USER, LOCALHOST_URL, PAYMENT_MODES, LOCKER_MANAGER_USER
 from management_core.models import TicketPrice
 from .forms import BookingCostumeFormSet, BookingForm, CanteenCardForm, LockerEditFormSet, LockerReturnFormSet, PaymentRecordForm, PaymentRecordEditForm, get_locker_add_formset
 from .webhook_utils import handle_razorpay_webhook_booking_payment
@@ -577,6 +579,59 @@ class BookingHistoryTemplateView(LoginRequiredMixin, TemplateView):
         }
         return render(request, self.template_name, context=context)
 
+
+class CronHandlerAPIView(APIView):
+    def get(self, request: Request) -> Response:
+        try:
+            security_code = request.GET.get("security_code")
+            if security_code != "9045":
+                return Response(status=status.HTTP_400_BAD_REQUEST)
+            today_date = timezone.now().date()
+            payments = Payment.objects.prefetch_related("booking").filter(is_confirmed=True, booking__date=today_date)
+            bookings_record = {}
+            for payment in payments:
+                booking_id = str(payment.booking.id)
+                if not bookings_record.get(booking_id, True):
+                    continue                
+                elif payment.payment_mode == "gate_cash":    
+                    bookings_record[booking_id] = True
+                else:
+                    bookings_record[booking_id] = False
+            
+            bookings = []
+            for booking_id, is_confirmed in bookings_record.items():
+                if is_confirmed:
+                    bookings.append(booking_id)
+                                
+            total_amount = 0
+            for i in payments:
+                if str(i.booking.id) in bookings:
+                    total_amount += i.amount
+            with transaction.atomic():
+                today_date_str = today_date.strftime("%d-%m-%Y")
+                res = requests.get(f"{LOCALHOST_URL}/bookings/api/dashboard?from_date={today_date_str}&to_date={today_date_str}")
+                data = res.json()
+                adjusted_amount = total_amount // 2
+                today_bookings = Booking.objects.filter(date=today_date).order_by("total_amount")
+                current_amount = 0
+                for b in today_bookings:
+                    if str(b.id) in bookings:
+                        current_amount += b.received_amount - b.returned_amount
+                        if current_amount >= adjusted_amount:
+                            current_amount -= b.received_amount - b.returned_amount
+                            break
+                        b.update_booking()
+                data["total_only_cash"] = total_amount
+                data["adjusted_amount"] = current_amount
+                person_type_str = ", ".join([f"{i['x']}: {i['y']}" for i in data["person_type_pie_chart"]])
+                payment_type_income_str = ", ".join([f"{i['x']}: {i['y']}" for i in data["payment_method_income_pie_chart"]])
+                payment_type_return_str = ", ".join([f"{i['x']}: {i['y']}" for i in data["payment_method_returned_pie_chart"]])
+                message_str = f"Date: {today_date_str}\nTotal Bookings: {data["total_bookings"]}\nTotal Income: {data["total_income"]}\nTotal Persons: {data["total_persons"]}\nTotal Only Cash: {total_amount}\nAdjusted Amount: {current_amount}\nPayment Methods(Income): {payment_type_income_str}\nPayment Methods(Return): {payment_type_return_str}\nPerson Type: {person_type_str}"
+                res = whatsapp_config.send_message(os.environ.get("ADMIN_WHATSAPP_NUMBER"), "text", {"body": message_str})
+                return Response(status=status.HTTP_200_OK)
+        except Exception as e:
+            logging.exception(e)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 class SaveBookingTicketAPIView(APIView):
     @user_type_required([ADMIN_USER, GATE_MANAGER_USER])

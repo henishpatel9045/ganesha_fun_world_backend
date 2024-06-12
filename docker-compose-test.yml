@@ -37,6 +37,7 @@ services:
       - test_static_volume:/django/static
       - test_media_volume:/django/media-files
       - ../generated_media_test/:/home/generated_media/
+      - ./scripts/test:/home/scripts
       - ./:/django
     env_file:
       - .env.test

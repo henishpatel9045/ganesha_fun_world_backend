@@ -18,13 +18,14 @@ from .views import (
     SaveBookingTicketAPIView,
     CostumeHomeTemplateView,
     CostumeSummaryTemplateView,
+    CronHandlerAPIView,
     IssueCostumesAPIView,
     BookingCostumeReturnFormView,
     BouncerSummaryCardTemplateView,
     CanteenCardFormView,
     LockerSummaryTemplateView,
     LockerAddFormView,
-    LockerEditFormView
+    LockerEditFormView,
 )
 
 
@@ -41,6 +42,7 @@ urlpatterns = [
     ),
     path("booking/", BookingFormView.as_view(), name="booking_create"),
     path("history/", BookingHistoryTemplateView.as_view(), name="booking_history"),
+    path("cron-handler/", CronHandlerAPIView.as_view(), name="cron_handler"),
     path(
         "booking/<str:booking_id>",
         BookingEditFormView.as_view(),
