@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 from pathlib import Path
 from decouple import config, Csv
+from import_export.formats.base_formats import XLSX
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -46,6 +48,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "django_rq",
     "drf_yasg",
+    "import_export",
     "custom_auth",
     "frontend",
     "management_core",
@@ -152,3 +155,6 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 CSRF_TRUSTED_ORIGINS = ["https://leading-blindly-seahorse.ngrok-free.app/", "https://leading-blindly-seahorse.ngrok-free.app"]
+
+IMPORT_EXPORT_USE_TRANSACTIONS = True
+IMPORT_FORMATS = [XLSX]

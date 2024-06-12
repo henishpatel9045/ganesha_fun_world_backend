@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import path
 from django.shortcuts import render
+from import_export.admin import ImportExportModelAdmin
 import logging
 
 from .models import (
@@ -11,6 +12,7 @@ from .models import (
     ExtraWhatsAppNumbers,
 )
 from .forms import TicketListPriceForm, LockerBulkAddForm
+from .resources import ExtraWANumbersResource
 
 
 logging.getLogger(__name__)
@@ -51,7 +53,7 @@ class TicketPriceAdmin(admin.ModelAdmin):
 @admin.register(Locker)
 class LockerAdmin(admin.ModelAdmin):
     change_list_template = "management/locker_admin_changelist.html"
-    
+
     list_display = (
         "locker_number",
         "is_available",
@@ -59,7 +61,7 @@ class LockerAdmin(admin.ModelAdmin):
     search_fields = ("locker_number",)
     list_editable = ("is_available",)
     list_per_page = 25
-    
+
     def get_urls(self):
         urls = super().get_urls()
         my_urls = [
@@ -94,7 +96,8 @@ class WhatsAppInquiryMessageAdmin(admin.ModelAdmin):
 
 
 @admin.register(ExtraWhatsAppNumbers)
-class ExtraWhatsAppNumbersAdmin(admin.ModelAdmin):
+class ExtraWhatsAppNumbersAdmin(ImportExportModelAdmin):
     list_display = ("number",)
     search_fields = ("number",)
+    resource_class = ExtraWANumbersResource
     

@@ -14,3 +14,4 @@ redis==5.0.4
 qrcode[pil]
 razorpay==1.4.2
 django-rq==2.10.2
+django-import-export[xlsx]==4.0.7
