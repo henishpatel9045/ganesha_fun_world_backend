@@ -29,9 +29,9 @@ SECRET_KEY = config("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# ALLOWED_HOSTS = config("ALLOWED_HOSTS", cast=Csv())
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", cast=Csv())
 
-ALLOWED_HOSTS = ["*"]
+# ALLOWED_HOSTS = ["*"]
 
 # Application definition
 
@@ -154,7 +154,7 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-CSRF_TRUSTED_ORIGINS = ["https://leading-blindly-seahorse.ngrok-free.app/", "https://leading-blindly-seahorse.ngrok-free.app"]
+CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", cast=Csv())
 
 IMPORT_EXPORT_USE_TRANSACTIONS = True
 IMPORT_FORMATS = [XLSX]

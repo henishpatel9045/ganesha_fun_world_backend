@@ -22,8 +22,8 @@ LOGO_URL = os.environ.get(
 
 
 whatsapp_config = WhatsAppClient(
-    "EAAabZCi7kE38BOznXZB3woyTPKZAyxZAd20Kf6VODNHZCH0XgRF2WBPOgtdmvZCHF1UHX4Ntfi0XLSN8xVJp6cQQGYiFYzNZBLT7oWmE62pwiWZCioFEVQUjGzdzvVN44shf1ZAhbi7AhcskcKBFIeWghUOYB3PfjAiCP9QYFzOvLJykZBqL5494J6ensMuvwNUhm7yaPgBiQgp9DQRpudRv8ZD",
-    "105976528928889",
+    os.environ.get("WA_SECRET_KEY"),
+    os.environ.get("WA_PHONE_ID"),
 )
 client = whatsapp_config.get_client()
 
