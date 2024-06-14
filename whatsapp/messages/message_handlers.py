@@ -1,17 +1,19 @@
 from datetime import timedelta
+from decimal import Decimal
 from django.utils import timezone
 from django.core.cache import cache
+from django.db import transaction
 import requests
 import os
 import logging
 import django_rq
 from django_rq.queues import get_queue
 
-from bookings.models import Booking
+from bookings.models import Booking, Payment
 from common_config.common import ADVANCE_PER_PERSON_AMOUNT_FOR_BOOKING, HOST_URL
 from whatsapp.utils import WhatsAppClient
 from management_core.models import TicketPrice, WhatsAppInquiryMessage
-from bookings.utils import confirm_razorpay_payment, create_or_update_booking, create_razorpay_order
+from bookings.utils import confirm_razorpay_payment, create_or_update_booking, create_razorpay_order, razorpay_client
 from bookings.ticket.utils import generate_ticket_pdf
 
 logging.getLogger(__name__)
@@ -110,6 +112,45 @@ def send_welcome_message(recipient_number: str) -> requests.Response:
         ],
     }
     return whatsapp_config.send_message(recipient_number, "template", payload).json()
+
+
+def confirm_razorpay_payment(payment_link_id: str):
+    try:
+        response = razorpay_client.payment_link.fetch(payment_link_id)
+        if response.get("payments"):
+            received_payment = response["payments"][0]
+            if received_payment["status"] != "captured":
+                return "Payment not captured"
+        
+            received_booking_id = response["notes"]["booking_id"]
+            logging.info(f"Payment captured for booking: {received_booking_id}")
+            booking = Booking.objects.get(id=received_booking_id)
+            if booking.received_amount > 0:
+                return f"Booking already paid and updated for booking_id: {received_booking_id}"
+            total_persons = booking.adult_male + booking.adult_female + booking.child
+            total_amount = total_persons * ADVANCE_PER_PERSON_AMOUNT_FOR_BOOKING
+
+            received_amount = int(received_payment["amount"]) / 100
+            if total_amount != received_amount:
+                raise Exception("Amount mismatched")
+
+            with transaction.atomic():
+                payment = Payment()
+                payment.booking = booking
+                payment.payment_mode = "payment_gateway"
+                payment.payment_for = "booking"
+                payment.amount = received_amount
+                payment.is_confirmed = True
+                payment.payment_data = response
+                payment.booking.received_amount += Decimal(payment.amount)
+                payment.booking.save()
+                payment.save()
+            handle_sending_booking_ticket(booking.wa_number, "", None, booking)
+            return "Payment confirmed successfully"
+        return "No payment received for the payment link."
+    except Exception as e:
+        logging.exception(e)
+        return "Payment not confirmed due to some error"
 
 
 def handle_booking_session_confirm(active_session: dict, sender: str, msg_context: dict|None):
