@@ -12,10 +12,13 @@ class ReactAppTemplateView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         BASE_DIR = settings.BASE_DIR
-        print(BASE_DIR)
         js_files = []
         css_files = []
-        FRONTEND_DIR = "frontend/build/assets"
+        FRONTEND_DIR = (
+            "frontend/prod/build/assets"
+            if os.environ.get("ENVIRONMENT", "test") == "prod"
+            else "frontend/test/build/assets"
+        )
         for file in os.listdir(BASE_DIR / f"staticfiles/{FRONTEND_DIR}"):
             if file.endswith(".js"):
                 js_files.append(f"{FRONTEND_DIR}/{file}")

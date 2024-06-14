@@ -1,5 +1,4 @@
 from datetime import timedelta
-from pprint import pprint
 from django.utils import timezone
 from django.core.cache import cache
 import requests

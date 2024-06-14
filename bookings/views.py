@@ -214,6 +214,12 @@ class AdminDataDashboard(APIView):
 class AdminDashboardTemplateView(LoginRequiredMixin, TemplateView):
     template_name = "admin_dashboard.html"
     
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        embed_url = os.environ.get("ADMIN_DASHBOARD_EMBED_URL")
+        return {
+            "dashboard_embed_url": embed_url
+        }
+    
     @user_type_required([ADMIN_USER])
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         return super().get(request, *args, **kwargs)
@@ -1116,7 +1122,7 @@ class LockerAddFormView(FormView):
                 locker_numbers = []
                 for single_form in form:
                     res: BookingLocker = single_form.save(booking)
-                    locker_numbers.append(res.locker.locker_number)
+                    locker_numbers.append(str(res.locker.locker_number))
                     booking_forms.append(res)
                     total_deposit_amount += res.deposit_amount
                 

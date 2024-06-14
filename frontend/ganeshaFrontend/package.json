@@ -6,8 +6,9 @@
   
   "scripts": {
     "test": "vite",
-    "dev": "tsc && vite build --watch --emptyOutDir --base /frontend --outDir ../../staticfiles/frontend/build",
-    "build": "tsc && vite build --emptyOutDir --base /frontend --outDir ../../staticfiles/frontend/build",
+    "dev": "tsc && vite build --watch --emptyOutDir --base /frontend --outDir ../../staticfiles/frontend/test/build",
+    "build-prod": "tsc && vite build --emptyOutDir --base /frontend --outDir ../../staticfiles/frontend/prod/build",
+    "build-test": "tsc && vite build --emptyOutDir --base /frontend --outDir ../../staticfiles/frontend/test/build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
