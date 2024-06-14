@@ -1350,6 +1350,7 @@ class SendLockerUpdateMessageAPIView(APIView):
                     "text",
                     {"body": f"No locker issued for this booking for date: {booking_date.strftime("%d-%m-%Y")}"}
                 )
+            return Response(200)
         except Exception as e:
             logging.exception(e)
             return Response(500)
