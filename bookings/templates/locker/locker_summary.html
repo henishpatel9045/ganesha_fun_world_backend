@@ -123,7 +123,7 @@
         </div>
 
         <script>
-            let sendUpdateBtn = document.getElementById('send-locker-ticket')
+            let sendUpdateBtn = document.getElementById('send-locker-update')
             sendUpdateBtn.addEventListener('click', async function() {
                 sendUpdateBtn.disabled = true
                 let res = await fetch("{% url 'locker_send_message' booking_id %}")
