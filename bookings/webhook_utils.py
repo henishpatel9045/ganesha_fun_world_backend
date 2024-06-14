@@ -26,6 +26,11 @@ def handle_razorpay_webhook_booking_payment(data: dict) -> bool:
         received_amount = received_amount / 100
 
         booking = Booking.objects.get(id=booking_id)
+        
+        if booking.received_amount > 0:
+            logging.info(f"Booking already paid and updated for booking_id: {booking_id}")
+            return True
+        
         # FIXME currently we are just taking advanced payment only, for the booking
         total_persons = booking.adult_male + booking.adult_female + booking.child
         total_amount = total_persons * ADVANCE_PER_PERSON_AMOUNT_FOR_BOOKING

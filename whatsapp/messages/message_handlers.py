@@ -5,12 +5,13 @@ import requests
 import os
 import logging
 import django_rq
+from django_rq.queues import get_queue
 
 from bookings.models import Booking
 from common_config.common import ADVANCE_PER_PERSON_AMOUNT_FOR_BOOKING, HOST_URL
 from whatsapp.utils import WhatsAppClient
 from management_core.models import TicketPrice, WhatsAppInquiryMessage
-from bookings.utils import create_or_update_booking, create_razorpay_order
+from bookings.utils import confirm_razorpay_payment, create_or_update_booking, create_razorpay_order
 from bookings.ticket.utils import generate_ticket_pdf
 
 logging.getLogger(__name__)
@@ -129,8 +130,14 @@ def handle_booking_session_confirm(active_session: dict, sender: str, msg_contex
         res = whatsapp_config.send_message(
             sender,
             "text",
-            {"preview_url": True,"body": f"Booking confirmed.\nMake payment by click on this link in next 15 minutes \n{order}"}, msg_context)       
+            {"preview_url": True,"body": f"Booking confirmed.\nMake payment by click on this link in next 15 minutes \n{order["short_url"]}"}, msg_context)
         cache.delete(f"booking_session_{sender}")
+        scheduled_queue = get_queue("default")
+        scheduled_queue.enqueue_in(
+            timedelta(minutes=17),
+            confirm_razorpay_payment,
+            order["id"],
+        )
         return res
     except Exception as e:
         cache.delete(f"booking_session_{sender}")
