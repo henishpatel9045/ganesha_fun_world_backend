@@ -1321,3 +1321,36 @@ class LockerReturnFormView(FormView):
         except Exception as e:
             logging.exception(e)
             return super().form_invalid(form)
+
+
+class SendLockerUpdateMessageAPIView(APIView):
+    def get(self, request: Request, booking_id: str) -> Response:
+        try:
+            lockers = BookingLocker.objects.prefetch_related("booking").filter(booking_id=booking_id)
+            locker_numbers = []
+            booking_number = None
+            booking_date = None
+            for locker in lockers:
+                if not booking_number:
+                    booking_number = locker.booking.wa_number
+                    booking_date = locker.booking.date
+                locker_numbers.append(str(locker.locker.locker_number))
+            
+            if locker_numbers:
+                default_queue.enqueue(
+                    send_locker_update_whatsapp_message,
+                    booking_number,
+                    booking_date.strftime("%d-%m-%Y"),
+                    locker_numbers
+                )
+            else:
+                default_queue.enqueue(
+                    whatsapp_config.send_message,
+                    booking_number,
+                    "text",
+                    {"body": f"No locker issued for this booking for date: {booking_date.strftime("%d-%m-%Y")}"}
+                )
+        except Exception as e:
+            logging.exception(e)
+            return Response(500)
+        

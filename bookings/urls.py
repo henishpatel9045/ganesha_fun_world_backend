@@ -27,6 +27,7 @@ from .views import (
     LockerSummaryTemplateView,
     LockerAddFormView,
     LockerEditFormView,
+    SendLockerUpdateMessageAPIView,
 )
 
 
@@ -124,5 +125,10 @@ urlpatterns = [
         "booking/<str:booking_id>/locker/return",
         LockerReturnFormView.as_view(),
         name="locker_return",
+    ),
+    path(
+        "booking/<str:booking_id>/locker/send-message",
+        SendLockerUpdateMessageAPIView.as_view(),
+        name="locker_send_message",
     ),
 ]

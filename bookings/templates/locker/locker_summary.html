@@ -123,15 +123,15 @@
         </div>
 
         <script>
-            {% comment %} let sendUpdateBtn = document.getElementById('send-locker-ticket')
+            let sendUpdateBtn = document.getElementById('send-locker-ticket')
             sendUpdateBtn.addEventListener('click', async function() {
                 sendUpdateBtn.disabled = true
-                let res = await fetch("{% url 'booking_ticket' booking_id %}")
+                let res = await fetch("{% url 'locker_send_message' booking_id %}")
                 if (!res.ok) {
                     alert(await res.json())
                 }
                 sendUpdateBtn.disabled = false
-            }) {% endcomment %}
+            })
         </script>
 
 {% endblock %}
