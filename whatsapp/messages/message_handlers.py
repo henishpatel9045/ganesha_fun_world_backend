@@ -13,7 +13,7 @@ from bookings.models import Booking, Payment
 from common_config.common import ADVANCE_PER_PERSON_AMOUNT_FOR_BOOKING, HOST_URL
 from whatsapp.utils import WhatsAppClient
 from management_core.models import TicketPrice, WhatsAppInquiryMessage
-from bookings.utils import confirm_razorpay_payment, create_or_update_booking, create_razorpay_order, razorpay_client
+from bookings.utils import create_or_update_booking, create_razorpay_order, razorpay_client
 from bookings.ticket.utils import generate_ticket_pdf
 
 logging.getLogger(__name__)
