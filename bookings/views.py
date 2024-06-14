@@ -1209,9 +1209,11 @@ class LockerEditFormView(FormView):
             form.is_valid()
             with transaction.atomic():
                 total_deposit_amount = 0
+                updated_lockers = []
                 for single_form in form:
                     res: BookingLocker = single_form.save()
                     total_deposit_amount += res.deposit_amount
+                    updated_lockers.append(str(res.locker.locker_number))
                 booking = Booking.objects.get(id=self.kwargs.get("booking_id"))
                 booking_payment = Payment.objects.filter(booking=booking, payment_for="locker", is_confirmed=True, is_returned_to_customer=False)
                 if booking_payment.exists():
@@ -1229,6 +1231,12 @@ class LockerEditFormView(FormView):
                 booking.save()
                 booking_payment.save()
                 messages.success(self.request, "Lockers edited successfully.")
+                default_queue.enqueue(
+                    send_locker_update_whatsapp_message,
+                    booking.wa_number,
+                    booking.date.strftime("%d-%m-%Y"),
+                    updated_lockers
+                )
                 return redirect(reverse("locker_summary", kwargs={"booking_id": self.kwargs.get("booking_id")}))
         except Exception as e:
             logging.exception(e)
