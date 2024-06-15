@@ -61,11 +61,7 @@ LOGGING = {
             "level": "WARNING",
             "propagate": False,  # Prevent logs from being propagated to the root logger
         }, 
-        "django": {"handlers": ["file"], "level": "DEBUG"},
-        "": {
-            "handlers": ["file", "console"],
-            "level": "DEBUG",
-        },
+        "": {"handlers": ["file"], "level": os.environ.get("LOG_LEVEL", "INFO")},
     },
     "formatters": {
         "verbose": {
