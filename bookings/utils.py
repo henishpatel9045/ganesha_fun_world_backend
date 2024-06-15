@@ -224,6 +224,7 @@ def create_razorpay_order(amount, wa_number: str, booking: Booking):
     amount = int(float(amount) * 100)
     note_data = {
         "booking_id": str(booking.id),
+        "wa_number": str(booking.wa_number),
         "amount": str(booking.total_amount),
         "received_amount": str(booking.received_amount),
         "adult_male": str(booking.adult_male),

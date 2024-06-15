@@ -114,7 +114,7 @@ def send_welcome_message(recipient_number: str) -> requests.Response:
     return whatsapp_config.send_message(recipient_number, "template", payload).json()
 
 
-def confirm_razorpay_payment(payment_link_id: str):
+def confirm_razorpay_payment(payment_link_id: str, available_tries: int = 3) -> str:
     try:
         response = razorpay_client.payment_link.fetch(payment_link_id)
         if response.get("payments"):
@@ -147,6 +147,15 @@ def confirm_razorpay_payment(payment_link_id: str):
                 payment.save()
             handle_sending_booking_ticket(booking.wa_number, "", None, booking)
             return "Payment confirmed successfully"
+        RETRY_AFTER = [1,2,3,5,7]
+        if available_tries > 0:
+            scheduled_queue = get_queue("default")
+            scheduled_queue.enqueue_in(
+                timedelta(minutes=RETRY_AFTER[5-available_tries]),
+                confirm_razorpay_payment,
+                payment_link_id,
+                available_tries - 1
+            )
         return "No payment received for the payment link."
     except Exception as e:
         logging.exception(e)
@@ -175,9 +184,10 @@ def handle_booking_session_confirm(active_session: dict, sender: str, msg_contex
         cache.delete(f"booking_session_{sender}")
         scheduled_queue = get_queue("default")
         scheduled_queue.enqueue_in(
-            timedelta(minutes=17),
+            timedelta(minutes=2),
             confirm_razorpay_payment,
             order["id"],
+            5
         )
         return res
     except Exception as e:
