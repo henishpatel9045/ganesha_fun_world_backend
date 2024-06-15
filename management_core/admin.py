@@ -89,6 +89,7 @@ class CostumeAdmin(admin.ModelAdmin):
 @admin.register(WhatsAppInquiryMessage)
 class WhatsAppInquiryMessageAdmin(admin.ModelAdmin):
     list_display = (
+        "name",
         "type",
         "sent_order",
     )

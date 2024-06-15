@@ -4,6 +4,6 @@ media-files
 *.pyc
 __pycache__
 
-*.log
+*general.log*
 .env*
 !.env.template

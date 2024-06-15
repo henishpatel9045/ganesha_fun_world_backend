@@ -9,7 +9,7 @@ from .views import (
 
 urlpatterns = [
     path("webhook/", WhatsAppWebhook.as_view(), name="whatsapp_webhook"),
-    path("trigger/", WhatsAppTestTriggerAPIView.as_view(), name="whatsapp_trigger"),
+    path("trigger", WhatsAppTestTriggerAPIView.as_view(), name="whatsapp_trigger"),
     path(
         "review-reminder/", DailyReviewReminderAPIView.as_view(), name="review_reminder"
     ),

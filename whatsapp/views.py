@@ -33,11 +33,18 @@ class WhatsAppTestTriggerAPIView(APIView):
         """
         Function to handle the get request.
         """
-        django_rq.enqueue(
-            send_welcome_message,
-            "917990577979",
-        )
-        return Response("Hello, World!", status=status.HTTP_200_OK)
+        try:
+            secret = request.GET.get("secret")
+            if secret != "secret9045":
+                return Response(
+                    {"message": "Invalid Secret"}, status=status.HTTP_200_OK
+                )
+            recipient_number = request.GET.get("number")
+            send_welcome_message(recipient_number)
+            return Response(200)
+        except Exception as e:
+            logging.exception(e)
+            return Response(200)
 
 
 class DailyReviewReminderAPIView(APIView):
