@@ -16,3 +16,4 @@ razorpay==1.4.2
 django-rq==2.10.2
 django-import-export[xlsx]==4.0.7
 rq-scheduler==0.13.1
+django-silk==5.1.0

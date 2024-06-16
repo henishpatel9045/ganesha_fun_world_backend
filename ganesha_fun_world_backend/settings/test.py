@@ -1,6 +1,38 @@
 from .common import *
 
 
+INSTALLED_APPS = [
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django.contrib.humanize",
+    "crispy_forms",
+    "crispy_bootstrap5",
+    "rest_framework",
+    "django_rq",
+    "drf_yasg",
+    "import_export",
+    "silk",
+    "custom_auth",
+    "frontend",
+    "management_core",
+    "bookings",
+]
+
+MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "silk.middleware.SilkyMiddleware",
+]
+
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
@@ -75,3 +107,6 @@ LOGGING = {
         },
     },
 }
+
+SILKY_PYTHON_PROFILER = True
+SILKY_AUTHENTICATION = True 

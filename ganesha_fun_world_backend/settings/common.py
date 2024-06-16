@@ -34,37 +34,6 @@ ALLOWED_HOSTS = config("ALLOWED_HOSTS", cast=Csv())
 # ALLOWED_HOSTS = ["*"]
 
 # Application definition
-
-INSTALLED_APPS = [
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
-    "django.contrib.humanize",
-    "crispy_forms",
-    "crispy_bootstrap5",
-    "rest_framework",
-    "django_rq",
-    "drf_yasg",
-    "import_export",
-    "custom_auth",
-    "frontend",
-    "management_core",
-    "bookings",
-]
-
-MIDDLEWARE = [
-    "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django.contrib.messages.middleware.MessageMiddleware",
-    "django.middleware.clickjacking.XFrameOptionsMiddleware",
-]
-
 ROOT_URLCONF = "ganesha_fun_world_backend.urls"
 
 TEMPLATES = [

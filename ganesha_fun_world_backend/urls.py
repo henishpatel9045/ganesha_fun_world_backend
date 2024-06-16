@@ -38,5 +38,5 @@ urlpatterns = [
 
 if os.environ.get("ENVIRONMENT", "test") == "test":
     urlpatterns += [
-        path("__debug__/", include("debug_toolbar.urls")),
+        path('silk/', include('silk.urls', namespace='silk')),
     ]
