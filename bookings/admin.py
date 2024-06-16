@@ -1,5 +1,6 @@
 from typing import Any
 from django.contrib import admin
+from django.db.models.fields.related import RelatedField
 from django.db.models.query import QuerySet
 from django.http import HttpRequest
 from django.utils import timezone
@@ -74,13 +75,54 @@ class BookingAdmin(admin.ModelAdmin):
         return (
             super()
             .get_queryset(request)
-            .prefetch_related(
-                "booking_payment",
-                "booking_costume",
-                "booking_canteen",
-                "booking_locker",
-            )
         )
 
 
-admin.site.register([Payment, BookingCostume, BookingCanteen, BookingLocker])
+@admin.register(Payment)
+class PaymentModelAdmin(admin.ModelAdmin):
+    list_display = [
+        "booking",
+        "payment_for",
+        "payment_mode",
+        "amount",
+    ]
+    search_fields = ["booking",]
+    list_filter = ["payment_mode", "payment_for",]
+    
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Any]:
+        return super().get_queryset(request).prefetch_related("booking")
+
+
+@admin.register(BookingLocker)
+class BookingLockerModelAdmin(admin.ModelAdmin):
+    list_display = [
+        "booking",
+        # "locker__number",
+    ]
+    search_fields = ["booking"]
+    
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Any]:
+        return super().get_queryset(request).prefetch_related("booking", "locker")
+
+
+@admin.register(BookingCostume)
+class BookingCostumeModelAdmin(admin.ModelAdmin):
+    list_display = [
+        "booking",
+        # "costume__name",
+    ]
+    search_fields = ["booking",]
+    
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Any]:
+        return super().get_queryset(request).prefetch_related("booking", "costume")
+
+
+@admin.register(BookingCanteen)
+class BookingCanteenModelAdmin(admin.ModelAdmin):
+    list_display = [
+        "booking",
+    ]
+    search_fields = ["booking",]
+    
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Any]:
+        return super().get_queryset(request).prefetch_related("booking")

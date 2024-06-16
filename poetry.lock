@@ -15,6 +15,20 @@ files = [
 tests = ["mypy (>=0.800)", "pytest", "pytest-asyncio"]
 
 [[package]]
+name = "autopep8"
+version = "2.2.0"
+description = "A tool that automatically formats Python code to conform to the PEP 8 style guide"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "autopep8-2.2.0-py2.py3-none-any.whl", hash = "sha256:05418a981f038969d8bdcd5636bf15948db7555ae944b9f79b5a34b35f1370d4"},
+    {file = "autopep8-2.2.0.tar.gz", hash = "sha256:d306a0581163ac29908280ad557773a95a9bede072c0fafed6f141f5311f43c1"},
+]
+
+[package.dependencies]
+pycodestyle = ">=2.11.0"
+
+[[package]]
 name = "brotli"
 version = "1.1.0"
 description = "Python bindings for the Brotli compression library"
@@ -503,6 +517,23 @@ sentry = ["raven (>=6.1.0)"]
 testing = ["mock (>=2.0.0)"]
 
 [[package]]
+name = "django-silk"
+version = "5.1.0"
+description = "Silky smooth profiling for the Django Framework"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "django-silk-5.1.0.tar.gz", hash = "sha256:34abb5852315f0f3303d45b7ab4a2caa9cf670102b614dbb2ac40a5d2d5cbffb"},
+    {file = "django_silk-5.1.0-py3-none-any.whl", hash = "sha256:35a2051672b0be86af4ce734a0df0b6674c8c63f2df730b3756ec6e52923707d"},
+]
+
+[package.dependencies]
+autopep8 = "*"
+Django = ">=3.2"
+gprof2dot = ">=2017.09.19"
+sqlparse = "*"
+
+[[package]]
 name = "djangorestframework"
 version = "3.15.1"
 description = "Web APIs for Django, made easy."
@@ -634,6 +665,17 @@ files = [
 
 [package.dependencies]
 python-dateutil = ">=2.7"
+
+[[package]]
+name = "gprof2dot"
+version = "2024.6.6"
+description = "Generate a dot graph from the output of several profilers."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "gprof2dot-2024.6.6-py2.py3-none-any.whl", hash = "sha256:45b14ad7ce64e299c8f526881007b9eb2c6b75505d5613e96e66ee4d5ab33696"},
+    {file = "gprof2dot-2024.6.6.tar.gz", hash = "sha256:fa1420c60025a9eb7734f65225b4da02a10fc6dd741b37fa129bc6b41951e5ab"},
+]
 
 [[package]]
 name = "gunicorn"
@@ -852,6 +894,17 @@ files = [
     {file = "psycopg2-2.9.9-cp39-cp39-win32.whl", hash = "sha256:c92811b2d4c9b6ea0285942b2e7cac98a59e166d59c588fe5cfe1eda58e72d59"},
     {file = "psycopg2-2.9.9-cp39-cp39-win_amd64.whl", hash = "sha256:de80739447af31525feddeb8effd640782cf5998e1a4e9192ebdf829717e3913"},
     {file = "psycopg2-2.9.9.tar.gz", hash = "sha256:d1454bde93fb1e224166811694d600e746430c006fbb031ea06ecc2ea41bf156"},
+]
+
+[[package]]
+name = "pycodestyle"
+version = "2.12.0"
+description = "Python style guide checker"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pycodestyle-2.12.0-py2.py3-none-any.whl", hash = "sha256:949a39f6b86c3e1515ba1787c2022131d165a8ad271b11370a8819aa070269e4"},
+    {file = "pycodestyle-2.12.0.tar.gz", hash = "sha256:442f950141b4f43df752dd303511ffded3a04c2b6fb7f65980574f0c31e6e79c"},
 ]
 
 [[package]]
@@ -1354,4 +1407,4 @@ test = ["pytest"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "b266876df5aff36e8487c8d44cfd12f194ff7dd31f5ba03c0a5214c0ea3d8bdb"
+content-hash = "57df412a8422911db48c616c3ffd3339bc6c6eb0f44fc802a21c6f8dccac0321"
