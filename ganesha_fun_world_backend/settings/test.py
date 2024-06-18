@@ -15,7 +15,7 @@ INSTALLED_APPS = [
     "django_rq",
     "drf_yasg",
     "import_export",
-    "silk",
+    # "silk",
     "custom_auth",
     "frontend",
     "management_core",
@@ -30,7 +30,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "silk.middleware.SilkyMiddleware",
+    # "silk.middleware.SilkyMiddleware",
 ]
 
 CACHES = {
