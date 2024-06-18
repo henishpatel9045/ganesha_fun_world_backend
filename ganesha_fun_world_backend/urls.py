@@ -38,5 +38,5 @@ urlpatterns = [
 
 if os.environ.get("ENVIRONMENT", "test") == "test":
     urlpatterns += [
-        path('silk/', include('silk.urls', namespace='silk')),
+        # path('silk/', include('silk.urls', namespace='silk')),
     ]
