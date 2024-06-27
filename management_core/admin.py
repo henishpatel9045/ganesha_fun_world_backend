@@ -1,9 +1,11 @@
 from django.contrib import admin
 from django.urls import path
+from django.utils import timezone
 from django.shortcuts import render
 from import_export.admin import ImportExportModelAdmin
 import logging
 
+from bookings.models import BookingLocker
 from .models import (
     TicketPrice,
     Costume,
@@ -56,11 +58,19 @@ class LockerAdmin(admin.ModelAdmin):
 
     list_display = (
         "locker_number",
+        "in_use_by",
         "is_available",
     )
     search_fields = ("locker_number",)
     list_editable = ("is_available",)
     list_per_page = 25
+
+    def in_use_by(self, obj):
+        if not obj.is_available:    
+            locker = self.lockers_info.get(str(obj.locker_number))
+            if locker:
+                return f"{locker.booking.wa_number} - {locker.booking.date}"
+        return ""
 
     def get_urls(self):
         urls = super().get_urls()
@@ -75,6 +85,16 @@ class LockerAdmin(admin.ModelAdmin):
             "management/bulk_locker_add_list.html",
             context={"form": LockerBulkAddForm()},
         )
+
+    def changelist_view(self, *args, **kwargs):
+        self.booking_lockers = BookingLocker.objects.prefetch_related("booking", "locker").filter(
+            is_returned=False
+        )
+        lockers_info = {}
+        for locker in self.booking_lockers:
+            lockers_info[str(locker.locker.locker_number)] = locker
+        self.lockers_info = lockers_info
+        return super().changelist_view(*args, **kwargs)
 
 
 @admin.register(Costume)
@@ -101,4 +121,3 @@ class ExtraWhatsAppNumbersAdmin(ImportExportModelAdmin):
     list_display = ("number",)
     search_fields = ("number",)
     resource_class = ExtraWANumbersResource
-    
