@@ -69,6 +69,6 @@ def generate_ticket_pdf(booking_id: str) -> str:
     path = f"{TEMPORARY_FILE_LOCATION}/booking_tickets"
     os.makedirs(path, exist_ok=True)
     path = f"{path}/booking_{booking_id}.pdf"
-    html_url = f"{LOCALHOST_URL}/bookings/booking/{booking_id}/ticket"
+    html_url = f"{HOST_URL}/bookings/booking/{booking_id}/ticket"
     html_to_pdf(html_url, path)
     return f"{HOST_URL}/{GENERATED_MEDIA_BASE_URL}/booking_tickets/booking_{booking_id}.pdf"
