@@ -5,7 +5,7 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 import os
 
-from bookings.views import admin_home_redirect
+from bookings.views import admin_home_redirect, PrivacyPolicyTemplateView
 from management_core.views import AdminHomeTemplateView
 
 schema_view = get_schema_view(
@@ -20,6 +20,7 @@ schema_view = get_schema_view(
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("home/", admin_home_redirect),
+    path("privacy-policy", PrivacyPolicyTemplateView.as_view(), name="privacy_policy"),
     path("admin_home/", AdminHomeTemplateView.as_view(), name="admin_home"),
     path("django-rq/", include("django_rq.urls")),
     path("frontend/", include("frontend.urls")),

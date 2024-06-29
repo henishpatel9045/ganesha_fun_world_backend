@@ -8,8 +8,8 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: ganesha
-    ports:
-      - 5432:5432
+    expose:
+      - 5432
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -50,7 +50,9 @@ services:
 
 volumes:
   postgres_data:
+    external: true
   redis_data:
+    external: true
   static_volume:
     external: true
   prod_media_volume:
