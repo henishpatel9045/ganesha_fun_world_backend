@@ -21,6 +21,7 @@ logging.getLogger(__name__)
 LOGO_URL = os.environ.get(
     "LOGO_URL", "https://www.shreeganeshafunworld.com/images/logo.png"
 )
+USE_TEMPLATE_MESSAGE_BOOKING_TICKET = int(os.environ.get("USE_TEMPLATE_MESSAGE_BOOKING_TICKET", 0)) == 1
 
 
 whatsapp_config = WhatsAppClient(
@@ -443,34 +444,42 @@ def send_booking_ticket(booking: Booking) -> str:
     try:
         booking_id = str(booking.id)
         pdf_path = generate_ticket_pdf(booking_id)
-        payload = {
-            "name": "booking_ticket",
-            "language": {"code": "en"},
-            "components": [
-                {
-                    "type": "header",
-                    "parameters": [
-                        {
-                            "type": "document",
-                            "document": {
-                                "link": pdf_path,
-                                "filename": f"{booking_id}.pdf",
-                            },
-                        }
-                    ],
-                },
-                {
-                    "type": "body",
-                    "parameters": [
-                        {
-                            "type": "text",
-                            "text": booking.date.strftime("%a, %d %b %Y"),
-                        }
-                    ],
-                },
-            ],
-        }
-        res = whatsapp_config.send_message(booking.wa_number, "template", payload)
+        if not USE_TEMPLATE_MESSAGE_BOOKING_TICKET:
+            payload = {
+                "link": pdf_path,
+                "filename": f"{booking_id}.pdf",
+                "caption": f"Your booking ticket is attached above for date: {booking.date.strftime("%a, %d %b %Y")}.",    
+            }
+            res = whatsapp_config.send_message(booking.wa_number, "document", payload)
+        else:
+            payload = {
+                "name": "booking_ticket",
+                "language": {"code": "en"},
+                "components": [
+                    {
+                        "type": "header",
+                        "parameters": [
+                            {
+                                "type": "document",
+                                "document": {
+                                    "link": pdf_path,
+                                    "filename": f"{booking_id}.pdf",
+                                },
+                            }
+                        ],
+                    },
+                    {
+                        "type": "body",
+                        "parameters": [
+                            {
+                                "type": "text",
+                                "text": booking.date.strftime("%a, %d %b %Y"),
+                            }
+                        ],
+                    },
+                ],
+            }
+            res = whatsapp_config.send_message(booking.wa_number, "template", payload)
         return f"Response: {res.json()}"
     except Exception as e:
         logging.exception(e)
