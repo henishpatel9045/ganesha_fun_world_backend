@@ -28,7 +28,7 @@ def handle_razorpay_webhook_booking_payment(data: dict) -> bool:
         booking = Booking.objects.get(id=booking_id)
         
         if booking.received_amount > 0:
-            logging.info(f"Booking already paid and updated for booking_id: {booking_id}")
+            logging.warning(f"Booking already paid and updated for booking_id: {booking_id}")
             return True
         
         # FIXME currently we are just taking advanced payment only, for the booking

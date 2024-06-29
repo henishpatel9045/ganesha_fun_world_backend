@@ -484,6 +484,32 @@ class CostumeReturnEditForm(forms.Form):
 BookingCostumeFormSet = formset_factory(CostumeReturnEditForm, extra=0)
 
 
+## BOUNCER FORMS
+class BouncerCheckInForm(forms.Form):
+    checked_in = forms.IntegerField(initial=0, required=True, min_value=0)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.add_layout(
+            Layout(
+                FloatingField("checked_in", css_class="w-100"),
+                Submit("submit", "Save Check In", css_class="mt-3 btn-success"),
+            )
+        )
+
+    def save(self, booking: Booking):
+        try:
+            if int(self.cleaned_data["checked_in"]) > booking.total_persons():
+                raise Exception(f"Checked in people can't be more than total people.")
+            booking.total_checked_in = self.cleaned_data["checked_in"]
+            booking.save()
+            return booking
+        except Exception as e:
+            self.add_error(None, e.args[0])
+            raise forms.ValidationError("")
+
+
 ## CANTEEN MANAGEMENT FORMS
 class CanteenCardForm(forms.Form):
     breakfast_currently_used = forms.IntegerField(
@@ -598,7 +624,10 @@ class LockerEditForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         locker_instance_list = [self.instance]
         # Create a queryset from the list
-        locker_instance_qs = QuerySet(model=Locker, query=Locker.objects.filter(pk=self.instance.locker.pk).query.clone())
+        locker_instance_qs = QuerySet(
+            model=Locker,
+            query=Locker.objects.filter(pk=self.instance.locker.pk).query.clone(),
+        )
         locker_instance_qs._result_cache = locker_instance_list
         self.fields["locker"].queryset = locker_instance_qs | Locker.objects.filter(
             is_available=True
@@ -626,14 +655,19 @@ class LockerReturnForm(forms.ModelForm):
         queryset=Locker.objects.filter(is_available=True),
         label="Locker",
         required=True,
-        widget=forms.Select(attrs={"class": "form-control text-center", "readonly": "readonly"}),
+        widget=forms.Select(
+            attrs={"class": "form-control text-center", "readonly": "readonly"}
+        ),
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         locker_instance_list = [self.instance]
         # Create a queryset from the list
-        locker_instance_qs = QuerySet(model=Locker, query=Locker.objects.filter(pk=self.instance.locker.pk).query.clone())
+        locker_instance_qs = QuerySet(
+            model=Locker,
+            query=Locker.objects.filter(pk=self.instance.locker.pk).query.clone(),
+        )
         locker_instance_qs._result_cache = locker_instance_list
         self.fields["locker"].queryset = locker_instance_qs
 
@@ -664,17 +698,15 @@ class LockerReturnForm(forms.ModelForm):
                 attrs={"class": "form-control form-check-input"}
             ),
         }
-        
+
     def save(self, commit: bool = ...) -> Any:
         locker: BookingLocker = super().save(commit)
         locker.locker.is_available = True
-        locker.locker.save()        
+        locker.locker.save()
         return locker
 
 
-LockerEditFormSet = modelformset_factory(
-    BookingLocker, form=LockerEditForm, extra=0
-)
+LockerEditFormSet = modelformset_factory(BookingLocker, form=LockerEditForm, extra=0)
 
 LockerReturnFormSet = modelformset_factory(
     BookingLocker, form=LockerReturnForm, extra=0
