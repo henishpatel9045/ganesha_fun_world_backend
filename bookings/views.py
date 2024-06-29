@@ -22,7 +22,7 @@ from bookings.models import Booking, BookingCanteen, BookingCostume, BookingLock
 from custom_auth.models import User
 from common_config.common import ADMIN_USER, BOUNCER_USER, COSTUME_MANAGER_USER, GATE_MANAGER_USER, CANTEEN_MANAGER_USER, LOCALHOST_URL, PAYMENT_MODES, LOCKER_MANAGER_USER
 from management_core.models import TicketPrice
-from .forms import BookingCostumeFormSet, BookingForm, CanteenCardForm, LockerEditFormSet, LockerReturnFormSet, PaymentRecordForm, PaymentRecordEditForm, get_locker_add_formset
+from .forms import BookingCostumeFormSet, BookingForm, BouncerCheckInForm, CanteenCardForm, LockerEditFormSet, LockerReturnFormSet, PaymentRecordForm, PaymentRecordEditForm, get_locker_add_formset
 from .webhook_utils import handle_razorpay_webhook_booking_payment
 from .ticket.utils import generate_booking_id_qrcode
 from whatsapp.messages.message_handlers import send_booking_ticket, whatsapp_config
@@ -114,7 +114,6 @@ class AdminDataDashboard(APIView):
                       "payment_mode", 
                       "payment_for",
                       "is_returned_to_customer",)
-        logging.info("Payments: %s", payments)
         total_bookings = len(bookings)
         total_persons = 0
         person_type = {
@@ -613,7 +612,6 @@ class BookingHistoryTemplateView(LoginRequiredMixin, TemplateView):
             bookings = paginator.page(1)
         except EmptyPage:
             bookings = paginator.page(paginator.num_pages)
-        logging.info(f"Bookings: {bookings}")
         context = {
             "bookings": bookings,
         }
@@ -888,12 +886,14 @@ class BookingCostumeReturnFormView(FormView):
     
 
 ## BOUNCER MANAGEMENT VIEWS
-class BouncerSummaryCardTemplateView(LoginRequiredMixin, TemplateView):
+class BouncerSummaryCardTemplateView(LoginRequiredMixin, FormView):
     template_name = "bouncer_summary.html"
+    form_class = BouncerCheckInForm
 
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        booking_id = kwargs.get("booking_id")
+    def get_context_data(self, form: BouncerCheckInForm|None=None, **kwargs: Any) -> dict[str, Any]:
+        booking_id = self.kwargs.get("booking_id")
         booking = Booking.objects.get(id=booking_id)
+        
         is_confirmed = True
         if booking.received_amount < booking.total_amount :
             is_confirmed = False
@@ -901,6 +901,11 @@ class BouncerSummaryCardTemplateView(LoginRequiredMixin, TemplateView):
         is_today_booking = False
         if booking.date == timezone.now().date():
             is_today_booking = True    
+            
+        if not form:
+            form = BouncerCheckInForm(initial={
+                "checked_in": booking.total_checked_in
+            })            
             
         context = {
             "booking_id": booking.id,
@@ -913,8 +918,10 @@ class BouncerSummaryCardTemplateView(LoginRequiredMixin, TemplateView):
             "child": booking.child,
             "is_confirmed": is_confirmed,
             "is_today_booking": is_today_booking,
+            "total_person": booking.total_persons(),
+            "total_checked_in": booking.total_checked_in,
+            "form": form
         }      
-        
         return context
     
     @user_type_required([ADMIN_USER, BOUNCER_USER])
@@ -937,6 +944,18 @@ class BouncerSummaryCardTemplateView(LoginRequiredMixin, TemplateView):
         context = self.get_context_data(**kwargs)
         return render(request, self.template_name, context=context)
 
+    def form_valid(self, form: BouncerCheckInForm):
+        try:
+            booking_id = self.kwargs.get("booking_id")
+            booking = Booking.objects.get(id=booking_id)
+            form.save(booking)
+            return super().form_valid(form)
+        except Exception as e:
+            logging.exception(e)
+            return super().form_invalid(form)
+    
+    def get_success_url(self) -> str:
+        return reverse("bouncer_ticket_summary", kwargs={"booking_id": self.kwargs.get("booking_id")})
 
 ## CANTEEN MANAGEMENT VIEWS
 class CanteenCardFormView(FormView):
@@ -1151,7 +1170,6 @@ class LockerAddFormView(FormView):
                 booking.locker_received_amount += total_deposit_amount
                 booking.save()
                 locker_payment.save()
-                logging.info(f"Booking forms: {booking_forms}") 
                 messages.success(self.request, "Locker added successfully.")
                 default_queue.enqueue(
                     send_locker_update_whatsapp_message,

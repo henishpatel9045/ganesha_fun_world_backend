@@ -24,6 +24,7 @@ class Booking(DateTimeBaseModel):
     adult_female = models.PositiveIntegerField(default=0)
     child = models.PositiveIntegerField(default=0)
     infant = models.PositiveIntegerField(default=0)
+    total_checked_in = models.PositiveIntegerField(default=0)
     booking_type = models.CharField(
         max_length=50, choices=BOOKING_TYPES, default=BOOKING_TYPES[0][0]
     )

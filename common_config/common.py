@@ -63,3 +63,4 @@ WHATSAPP_INQUIRY_MSG_TYPES = [
     ("image_with_text", "image_with_text"),
     ("document", "document"),
 ]
+CURRENT_ENVIRONMENT = os.environ.get("ENVIRONMENT", "test")

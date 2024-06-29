@@ -22,7 +22,6 @@ class TicketListPriceFormView(LoginRequiredMixin, APIView):
     @user_type_required([ADMIN_USER])
     def post(self, request):
         form = TicketListPriceForm(request.POST)
-        logging.info("Creating ticket price list: ", request.POST)
         # try:
         if form.is_valid():
             logging.info(f"Form is valid: {form.cleaned_data}")
@@ -40,7 +39,6 @@ class LockerBulkAddFormView(LoginRequiredMixin, APIView):
     @user_type_required([ADMIN_USER])
     def post(self, request):
         form = LockerBulkAddForm(request.POST)
-        logging.info("Creating locker list: ", request.POST)
         # try:
         if form.is_valid():
             logging.info(f"Form is valid: {form.cleaned_data}")

@@ -29,6 +29,9 @@ whatsapp_config = WhatsAppClient(
 )
 client = whatsapp_config.get_client()
 
+def delete_booking_session(sender: str):
+    cache.delete(f"booking_session_{sender}")
+
 
 def send_date_list_message(recipient_number: str, context: dict|None) -> requests.Response:
     """
@@ -59,9 +62,16 @@ def send_date_list_message(recipient_number: str, context: dict|None) -> request
             ],
         },
     }
-    return whatsapp_config.send_message(
-        recipient_number, "interactive", response_payload, context
-    )
+    if available_dates:
+        res = whatsapp_config.send_message(
+            recipient_number, "interactive", response_payload, context
+        )
+    else:
+        res = whatsapp_config.send_message(
+            recipient_number, "text", {"body": "No dates available for booking."}, context
+        )
+        delete_booking_session(recipient_number)
+    return res
 
 
 def send_welcome_message(recipient_number: str) -> requests.Response:
@@ -181,7 +191,7 @@ def handle_booking_session_confirm(active_session: dict, sender: str, msg_contex
             sender,
             "text",
             {"preview_url": True,"body": f"Booking confirmed.\nMake payment by click on this link in next 15 minutes \n{order["short_url"]}"}, msg_context)
-        cache.delete(f"booking_session_{sender}")
+        delete_booking_session(sender)
         scheduled_queue = get_queue("default")
         scheduled_queue.enqueue_in(
             timedelta(minutes=2),
@@ -191,7 +201,7 @@ def handle_booking_session_confirm(active_session: dict, sender: str, msg_contex
         )
         return res
     except Exception as e:
-        cache.delete(f"booking_session_{sender}")
+        delete_booking_session(sender)
         return whatsapp_config.send_message(
             sender,
             "text",
@@ -213,7 +223,7 @@ def handle_booking_session_messages(
     """
 
     if payload == "booking_session_cancel":
-        cache.delete(f"booking_session_{sender}")
+        delete_booking_session(sender)
         return whatsapp_config.send_message(
             sender,
             "text",
@@ -340,7 +350,7 @@ def handle_booking_session_messages(
                         active_session["adult_female"] <= 0
                         and active_session["child"] <= 0
                     ):
-                        cache.delete(f"booking_session_{sender}")
+                        delete_booking_session(sender)
                         return whatsapp_config.send_message(
                             sender,
                             "text",
@@ -354,7 +364,7 @@ def handle_booking_session_messages(
                         active_session["adult_male"] <= 0
                         and active_session["adult_female"] <= 0
                     ):
-                        cache.delete(f"booking_session_{sender}")
+                        delete_booking_session(sender)
                         return whatsapp_config.send_message(
                             sender,
                             "text",
@@ -398,7 +408,7 @@ def handle_booking_session_messages(
                     msg_context
                 )
 
-    # cache.delete(f"booking_session_{sender}")
+    # delete_booking_session(sender)
     return whatsapp_config.send_message(
         sender,
         "interactive",

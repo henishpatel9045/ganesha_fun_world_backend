@@ -9,6 +9,8 @@ import django_rq
 import logging
 import os
 
+from common_config.common import CURRENT_ENVIRONMENT
+
 from .messages.message_handlers import (
     handle_booking_session_messages,
     handle_sending_booking_ticket,
@@ -22,7 +24,6 @@ from .messages.message_handlers import (
 
 
 TESTING_NUMBERS = config("WA_TEST_NUMBERS", cast=Csv())
-CURRENT_ENVIRONMENT = config("ENVIRONMENT", "test")
 
 logging.getLogger(__name__)
 high_queue = django_rq.get_queue("high")

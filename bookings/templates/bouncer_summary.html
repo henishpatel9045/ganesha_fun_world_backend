@@ -3,7 +3,7 @@
 {% block title %}
 Bouncer Summary
 {% endblock %}
-
+{% load crispy_forms_tags %} 
 {% block content %}
 <style>
     thead > * {
@@ -27,6 +27,18 @@ Bouncer Summary
 <button class="btn btn-danger" onclick="window.close()" style="position: absolute; top: 1rem; right: 1rem; z-index: 50;">
     Close
 </button>
+
+{% if form.errors %}
+
+<div class="alert alert-danger alert-dismissible fade show mx-1" role="alert">
+    {% for field, error in form.errors.items %}
+    <p>{{ error }}</p>
+    {% endfor %}
+</div>
+
+    
+{% endif %}
+
 
 <div class="container mt-md-5 mt-2">
     <div class="row justify-content-center">
@@ -70,12 +82,55 @@ Bouncer Summary
                             <p><strong>Adult (Male):</strong> {{ adult_male }}</p>
                             <p><strong>Adult (Female):</strong> {{ adult_female }}</p>
                             <p><strong>Child:</strong> {{ child }}</p>
+                            <p><strong>Total Person:</strong> {{ total_person }}</p>
+                            <p><strong>Checked In:</strong> {{ total_checked_in }}</p>
                         </div>
                         
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="row">
+                        <div class="col mt-2">
+                            <button id="send-booking-ticket" class="btn btn-success w-100 h-100 text-center" data-bs-toggle="modal" data-bs-target="#checkinModal">Check In</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Modal -->
+<div class="modal fade" id="checkinModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="staticBackdropLabel">Edit Checked In Data</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            {% crispy form %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let inputs = document.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.addEventListener('focus', (e) => {
+            if (e.target.value == 0) {
+                e.target.value = '';
+            }
+        });
+        input.addEventListener('blur', (e) => {
+            if (e.target.value == '') {
+                e.target.value = 0;
+            }
+        });
+    });
+  </script>
 
     {% endblock %}
