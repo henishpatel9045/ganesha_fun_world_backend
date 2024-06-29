@@ -90,6 +90,10 @@ class RazorpayPaymentWebhookAPIView(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
         
 
+class PrivacyPolicyTemplateView(TemplateView):
+    template_name = "privacy_policy.html"
+
+
 class AdminDataDashboard(APIView):
     def get(self, request: Request) -> Response:
         from_date = request.GET.get("from_date", timezone.now().date().strftime("%d-%m-%Y"))
@@ -1171,12 +1175,13 @@ class LockerAddFormView(FormView):
                 booking.save()
                 locker_payment.save()
                 messages.success(self.request, "Locker added successfully.")
-                default_queue.enqueue(
-                    send_locker_update_whatsapp_message,
-                    booking.wa_number,
-                    booking.date.strftime("%d-%m-%Y"),
-                    locker_numbers
-                )
+                # TODO enable this after implementing numbering on the key and lock of lockers.
+                # default_queue.enqueue(
+                #     send_locker_update_whatsapp_message,
+                #     booking.wa_number,
+                #     booking.date.strftime("%d-%m-%Y"),
+                #     locker_numbers
+                # )
                 return redirect(reverse("locker_summary", kwargs={"booking_id": self.kwargs.get("booking_id")}))
         except Exception as e:
             logging.exception(e)
@@ -1261,12 +1266,13 @@ class LockerEditFormView(FormView):
                 booking.save()
                 booking_payment.save()
                 messages.success(self.request, "Lockers edited successfully.")
-                default_queue.enqueue(
-                    send_locker_update_whatsapp_message,
-                    booking.wa_number,
-                    booking.date.strftime("%d-%m-%Y"),
-                    updated_lockers
-                )
+                # TODO enable this after implementing numbering on the key and lock of lockers.
+                # default_queue.enqueue(
+                #     send_locker_update_whatsapp_message,
+                #     booking.wa_number,
+                #     booking.date.strftime("%d-%m-%Y"),
+                #     updated_lockers
+                # )
                 return redirect(reverse("locker_summary", kwargs={"booking_id": self.kwargs.get("booking_id")}))
         except Exception as e:
             logging.exception(e)

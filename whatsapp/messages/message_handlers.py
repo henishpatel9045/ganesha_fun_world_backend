@@ -444,11 +444,33 @@ def send_booking_ticket(booking: Booking) -> str:
         booking_id = str(booking.id)
         pdf_path = generate_ticket_pdf(booking_id)
         payload = {
-            "link": pdf_path,
-            "filename": f"{booking_id}.pdf",
-            "caption": f"Your booking ticket is attached above for date: {booking.date.strftime("%a, %d %b %Y")}.",    
+            "name": "booking_ticket",
+            "language": {"code": "en"},
+            "components": [
+                {
+                    "type": "header",
+                    "parameters": [
+                        {
+                            "type": "document",
+                            "document": {
+                                "link": pdf_path,
+                                "filename": f"{booking_id}.pdf",
+                            },
+                        }
+                    ],
+                },
+                {
+                    "type": "body",
+                    "parameters": [
+                        {
+                            "type": "text",
+                            "text": booking.date.strftime("%a, %d %b %Y"),
+                        }
+                    ],
+                },
+            ],
         }
-        res = whatsapp_config.send_message(booking.wa_number, "document", payload)
+        res = whatsapp_config.send_message(booking.wa_number, "template", payload)
         return f"Response: {res.json()}"
     except Exception as e:
         logging.exception(e)

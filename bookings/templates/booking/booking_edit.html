@@ -57,5 +57,19 @@
       toggleSpecialTicketAmountField
     );
   });
+
+  let inputs = document.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.addEventListener('focus', (e) => {
+            if (e.target.value == 0) {
+                e.target.value = '';
+            }
+        });
+        input.addEventListener('blur', (e) => {
+            if (e.target.value == '') {
+                e.target.value = 0;
+            }
+        });
+    });
 </script>
 {% endblock %}
