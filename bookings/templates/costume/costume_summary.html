@@ -106,10 +106,7 @@ Costume Summary
                 <div class="card-footer">
                     <div class="row">
                         <div class="col-6">
-                            <button id="issue-costume-btn"
-                                class="btn btn-success w-100 h-100 d-flex align-items-center justify-content-center"
-                                 {% if not is_issuable %} disabled {% endif %}>Issue
-                                Costumes</button>
+                            <button id="issue-costume-btn" class="btn btn-success w-100 h-100 text-center d-flex align-items-center justify-content-center" {% if not is_issuable %} disabled {% endif %} data-bs-toggle="modal" data-bs-target="#costumeIssueModal">Issue Costume</button>
                         </div>
                         <div class="col-6">
                             <a href="{% url 'costume_return' booking_id %}"
@@ -125,18 +122,49 @@ Costume Summary
             {% endif %}
         </div>
     </div>
-
+    <div class="modal fade" id="costumeIssueModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="staticBackdropLabel">Issue Costumes</h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="number" name="issueNumber" id="costumeIssueNumber" class="form-control mb-2">
+                <button type="button" class="btn btn-success w-100" data-bs-dismiss="modal" id="current-issue-number-btn">Issue</button>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
     <script>
-        let issueCostumeBtn = document.getElementById('issue-costume-btn')
+        let issueCostumeBtn = document.getElementById('current-issue-number-btn')
         issueCostumeBtn.addEventListener('click', async function () {
             issueCostumeBtn.disabled = true
-            let res = await fetch("{% url 'costume_issue_all' booking_id %}")
+            let issueNumberInput = document.getElementById('costumeIssueNumber')
+            let res = await fetch(`{% url 'costume_issue_all' booking_id %}?issue_number=${issueNumberInput.value}`)
             if (!res.ok) {
-                alert(await res.json())
+                alert(JSON.stringify(await res.json()))
             }
             window.location.reload()
             issueCostumeBtn.disabled = false
         })
+
+        let inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', (e) => {
+                if (e.target.value == 0) {
+                    e.target.value = '';
+                }
+            });
+            input.addEventListener('blur', (e) => {
+                if (e.target.value == '') {
+                    e.target.value = 0;
+                }
+            });
+        });
     </script>
 
     {% endblock %}

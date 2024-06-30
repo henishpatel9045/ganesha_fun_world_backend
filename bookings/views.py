@@ -780,6 +780,7 @@ class IssueCostumesAPIView(APIView):
                     {"error_message": "Booking ID is required."},
                 )
             booking = Booking.objects.filter(id=booking_id).exists()
+            issue_number = int(request.GET.get("issue_number", 0))
             if not booking:
                 return render(
                     request,
@@ -792,16 +793,28 @@ class IssueCostumesAPIView(APIView):
             costume_data: list[BookingCostume] = booking.booking_costume.all()
             
             with transaction.atomic():
+                current_number = 0
+                
                 for costume in costume_data:
-                    costume.issued_quantity = costume.quantity
-                    costume.save()
-            
+                    if current_number >= issue_number:
+                        break
+                    remaining_costume = costume.quantity - costume.issued_quantity
+                    if remaining_costume >= issue_number - current_number:
+                        costume.issued_quantity += issue_number - current_number
+                        current_number += issue_number - current_number
+                        costume.save()
+                    else:
+                        costume.issued_quantity += remaining_costume
+                        current_number += remaining_costume
+                        costume.save()
+                if current_number != issue_number:
+                    raise Exception("Please enter correct issue number.")
             return Response(200)
         except Exception as e:
             logging.exception(e)
             return Response({
                 "error": f"Error in issuing costumes. error: {e.args[0]}"
-            })        
+            }, status=status.HTTP_400_BAD_REQUEST)        
 
 
 class BookingCostumeReturnFormView(FormView):
