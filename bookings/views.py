@@ -173,7 +173,26 @@ class AdminDataDashboard(APIView):
             "payment_gateway": 0,
         }
         date_wise_income = {}
+        payment_source_data = {
+            "gate_income": 0,
+            "costume_return": 0,
+            "locker_deposit": 0,
+            "locker_return": 0
+        }
         for payment in payments:
+            if payment[3] == "locker":
+                if payment[4]:
+                    payment_source_data["locker_return"] += payment[1]
+                else:
+                    payment_source_data["locker_deposit"] += payment[1]
+            elif payment[3] == "costume_return":
+                if payment[4]:
+                    payment_source_data["costume_return"] += payment[1]
+            elif payment[3] == "booking":
+                if payment[4]:
+                    pass
+                else:
+                    payment_source_data["gate_income"] += payment[1]
             date = payment[0].strftime("%d-%m-%Y")
             if payment[4]: # If it's returned to customer than it will be reduced from the total income
                 total_income -= payment[1]
@@ -212,6 +231,7 @@ class AdminDataDashboard(APIView):
             "person_type_pie_chart": person_type_pie_chart,
             "total_persons_line_chart": total_persons_line_chart,
             "total_income_line_chart": total_income_line_chart,
+            **payment_source_data
         }, status=status.HTTP_200_OK)
         
 
@@ -244,13 +264,15 @@ class BookingHomeSummaryTemplateView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         bookings = Booking.objects.prefetch_related("booking_costume").filter(date=timezone.localtime(timezone.now()).date(), received_amount__gt=0)
         total_amount = 0
+        total_costumes = 0
         costumes: list[BookingCostume] = []
         for booking in bookings:
             costumes.extend(booking.booking_costume.all())
         for costume in costumes:
+            total_costumes += costume.quantity
             total_amount += costume.deposit_amount
         
-        return {"costume_total_deposit": total_amount, "date": timezone.localtime(timezone.now()).date(),}
+        return {"costume_total_deposit": total_amount, "total_costumes": total_costumes, "date": timezone.localtime(timezone.now()).date(),}
     
     @user_type_required([ADMIN_USER, GATE_MANAGER_USER])
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
