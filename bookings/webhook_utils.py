@@ -55,6 +55,7 @@ def handle_razorpay_webhook_booking_payment(data: dict) -> bool:
             "",
             None,
             booking,
+            True
         )
         return True
     except Exception as e:

@@ -526,7 +526,7 @@ def send_my_bookings_message(sender: str, msg_context: dict|None=None):
     return        
 
 
-def handle_sending_booking_ticket(sender: str, booking_id: str, msg_context: dict|None, booking: Booking|None=None):
+def handle_sending_booking_ticket(sender: str, booking_id: str, msg_context: dict|None, booking: Booking|None=None, welcome_message: bool=False):
     """
     Function to handle sending booking ticket to the user.
 
@@ -538,6 +538,8 @@ def handle_sending_booking_ticket(sender: str, booking_id: str, msg_context: dic
     if not booking:
         booking = Booking.objects.filter(id=booking_id).first()
     if booking:
+        if welcome_message:
+            send_welcome_message(booking.wa_number)
         res = send_booking_ticket(booking)
     else:
         res = whatsapp_config.send_message(sender, "text", {"body": "No booking found with given id."}, msg_context)
