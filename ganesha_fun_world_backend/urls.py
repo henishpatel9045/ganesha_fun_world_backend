@@ -15,6 +15,7 @@ schema_view = get_schema_view(
         contact=openapi.Contact(email="henishpatel9045@gmail.com"),
     ),
     public=False,
+    permission_classes=[permissions.IsAdminUser],
 )
 
 urlpatterns = [

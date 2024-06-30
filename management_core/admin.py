@@ -61,6 +61,7 @@ class LockerAdmin(admin.ModelAdmin):
         "in_use_by",
         "is_available",
     )
+    list_filter = ("is_available",)
     search_fields = ("locker_number",)
     list_editable = ("is_available",)
     list_per_page = 25
