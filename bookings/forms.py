@@ -47,7 +47,7 @@ class BookingForm(forms.Form):
     )
     infant = forms.IntegerField(min_value=0, label="Infants (0 - 5 years)", initial=0)
     date = forms.DateField(
-        widget=forms.DateInput(attrs={"type": "date", "value": timezone.now().date()}),
+        widget=forms.DateInput(attrs={"type": "date", "value": timezone.localtime(timezone.now()).date()}),
         required=True,
     )
     is_discounted_booking = forms.BooleanField(
@@ -164,7 +164,7 @@ class BookingForm(forms.Form):
             if data["adult_female"] == 0 and data["adult_male"] == 0:
                 self.add_error(None, "At least one adult is required.")
                 raise Exception()
-            if not edit_booking and self.cleaned_data["date"] != timezone.now().date():
+            if not edit_booking and self.cleaned_data["date"] != timezone.localtime(timezone.now()).date():
                 self.add_error(None, "Booking is allowed only for today.")
                 raise Exception()
             booking_data = {
@@ -464,7 +464,7 @@ class CostumeReturnEditForm(forms.Form):
             previous_returned_amount = booking_costume.returned_amount
 
             booking_costume.returned_quantity = self.cleaned_data["returned_quantity"]
-            booking_costume.returned_at = timezone.now()
+            booking_costume.returned_at = timezone.localtime(timezone.now())
             if booking_costume.returned_quantity > booking_costume.issued_quantity:
                 raise forms.ValidationError(
                     "Returned quantity can't be more than issued quantity."

@@ -8,6 +8,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
+from django.core.cache import cache
 from django.db import transaction
 from django.views.generic import FormView, TemplateView
 from rest_framework.views import APIView
@@ -96,8 +97,8 @@ class PrivacyPolicyTemplateView(TemplateView):
 
 class AdminDataDashboard(APIView):
     def get(self, request: Request) -> Response:
-        from_date = request.GET.get("from_date", timezone.now().date().strftime("%d-%m-%Y"))
-        to_date = request.GET.get("to_date", timezone.now().date().strftime("%d-%m-%Y"))
+        from_date = request.GET.get("from_date", timezone.localtime(timezone.now()).date().strftime("%d-%m-%Y"))
+        to_date = request.GET.get("to_date", timezone.localtime(timezone.now()).date().strftime("%d-%m-%Y"))
         
         from_date = timezone.datetime.strptime(from_date, "%d-%m-%Y").date()
         to_date = timezone.datetime.strptime(to_date, "%d-%m-%Y").date()
@@ -241,7 +242,7 @@ class BookingHomeSummaryTemplateView(LoginRequiredMixin, TemplateView):
     template_name = "booking/booking_home_summary.html"
     
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        bookings = Booking.objects.prefetch_related("booking_costume").filter(date=timezone.now().date(), received_amount__gt=0)
+        bookings = Booking.objects.prefetch_related("booking_costume").filter(date=timezone.localtime(timezone.now()).date(), received_amount__gt=0)
         total_amount = 0
         costumes: list[BookingCostume] = []
         for booking in bookings:
@@ -249,7 +250,7 @@ class BookingHomeSummaryTemplateView(LoginRequiredMixin, TemplateView):
         for costume in costumes:
             total_amount += costume.deposit_amount
         
-        return {"costume_total_deposit": total_amount, "date": timezone.now().date(),}
+        return {"costume_total_deposit": total_amount, "date": timezone.localtime(timezone.now()).date(),}
     
     @user_type_required([ADMIN_USER, GATE_MANAGER_USER])
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
@@ -494,7 +495,7 @@ class BookingSummaryCardTemplateView(LoginRequiredMixin, TemplateView):
             "received_amount": booking.received_amount,
             "amount_to_collect": booking.total_amount - booking.received_amount,
             "is_confirmed": booking.total_amount == booking.received_amount,
-            "is_today_booking": booking.date == timezone.now().date(),
+            "is_today_booking": booking.date == timezone.localtime(timezone.now()).date(),
         }
         return context
 
@@ -628,7 +629,10 @@ class CronHandlerAPIView(APIView):
             security_code = request.GET.get("security_code")
             if security_code != "9045":
                 return Response(status=status.HTTP_400_BAD_REQUEST)
-            today_date = timezone.now().date()
+            current_time = timezone.localtime(timezone.now()).hour
+            if cache.get("daily_cron_run_flag") or current_time < 19:
+                return Response(status=500)
+            today_date = timezone.localtime(timezone.now()).date()
             payments = Payment.objects.prefetch_related("booking").filter(is_confirmed=True, booking__date=today_date)
             bookings_record = {}
             for payment in payments:
@@ -670,6 +674,7 @@ class CronHandlerAPIView(APIView):
                 payment_type_return_str = ", ".join([f"{i['x']}: {i['y']}" for i in data["payment_method_returned_pie_chart"]])
                 message_str = f"Date: {today_date_str}\nTotal Bookings: {data["total_bookings"]}\nTotal Income: {data["total_income"]}\nTotal Persons: {data["total_persons"]}\nTotal Only Cash: {total_amount}\nAdjusted Amount: {current_amount}\nPayment Methods(Income): {payment_type_income_str}\nPayment Methods(Return): {payment_type_return_str}\nPerson Type: {person_type_str}"
                 res = whatsapp_config.send_message(os.environ.get("ADMIN_WHATSAPP_NUMBER"), "text", {"body": message_str})
+                cache.set("daily_cron_run_flag", True, timeout=18000)
                 return Response(status=status.HTTP_200_OK)
         except Exception as e:
             logging.exception(e)
@@ -730,7 +735,7 @@ class CostumeSummaryTemplateView(TemplateView):
             is_confirmed = False
             
         is_today_booking = False
-        if booking.date == timezone.now().date():
+        if booking.date == timezone.localtime(timezone.now()).date():
             is_today_booking = True            
             
         is_costume_issue_remaining = False
@@ -916,7 +921,7 @@ class BouncerSummaryCardTemplateView(LoginRequiredMixin, FormView):
             is_confirmed = False
             
         is_today_booking = False
-        if booking.date == timezone.now().date():
+        if booking.date == timezone.localtime(timezone.now()).date():
             is_today_booking = True    
             
         if not form:
@@ -1070,7 +1075,7 @@ class LockerSummaryTemplateView(TemplateView):
             is_confirmed = False
             
         is_today_booking = False
-        if booking.date == timezone.now().date():
+        if booking.date == timezone.localtime(timezone.now()).date():
             is_today_booking = True            
             
         total_locker_returned_amount = 0

@@ -40,7 +40,7 @@ def send_date_list_message(recipient_number: str, context: dict|None) -> request
 
     :param `recipient_number`: The number to which message is to be sent
     """
-    available_dates = list(TicketPrice.objects.filter(date__gt=timezone.now().date()).order_by("date")[:10].values_list("date", flat=True))
+    available_dates = list(TicketPrice.objects.filter(date__gt=timezone.localtime(timezone.now()).date()).order_by("date")[:10].values_list("date", flat=True))
     logging.info(f"Available Dates: {available_dates}")
     
     response_payload = {
@@ -247,7 +247,7 @@ def handle_booking_session_messages(
 
     if active_session.get("date") is None:
         if message_type == "interactive":
-            if timezone.datetime.strptime(payload, "%d-%m-%Y").date() - timezone.now().date() <= timedelta(days=0):
+            if timezone.datetime.strptime(payload, "%d-%m-%Y").date() - timezone.localtime(timezone.now()).date() <= timedelta(days=0):
                 return whatsapp_config.send_message(
                     sender,
                     "text",
@@ -493,7 +493,7 @@ def send_my_bookings_message(sender: str, msg_context: dict|None=None):
     :param `sender`: The number to which message is to be sent
     :param `msg_context`: The context of the message i.e. for replying to msg
     """
-    bookings = Booking.objects.filter(wa_number=sender, date__gte=timezone.now().date(), received_amount__gt=0).order_by("date")
+    bookings = Booking.objects.filter(wa_number=sender, date__gte=timezone.localtime(timezone.now()).date(), received_amount__gt=0).order_by("date")
     if bookings.exists():
         for booking in bookings:
             msg_str = f"Date: *{booking.date.strftime("%a, %d %b %Y")}*\nAdult (Male)): *{booking.adult_male}*\nAdult (Female): *{booking.adult_female}*\nChild: *{booking.child}*\nInfant: *{booking.infant}*\nTotal Amount: *{booking.total_amount} INR*\nAmount Paid: *{booking.received_amount} INR*\nAmount to be paid: *{booking.total_amount - booking.received_amount} INR*"
@@ -586,7 +586,7 @@ def send_daily_review_message():
     """
     Function to send daily review message to the user.
     """
-    bookings = Booking.objects.filter(date=timezone.now().date(), received_amount__gt=0)
+    bookings = Booking.objects.filter(date=timezone.localtime(timezone.now()).date(), received_amount__gt=0)
     review_url = os.environ.get("GOOGLE_REVIEW_LINK", "https://maps.app.goo.gl/KvjuDHHtCr6ZJFsu7")
     queue = django_rq.get_queue("low")
     if bookings.exists():

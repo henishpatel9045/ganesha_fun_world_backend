@@ -231,7 +231,7 @@ def create_razorpay_order(amount, wa_number: str, booking: Booking):
         "adult_female": str(booking.adult_female),
         "child": str(booking.child),
     }
-    expire_time = timezone.now() + timedelta(minutes=16)
+    expire_time = timezone.localtime(timezone.now()) + timedelta(minutes=16)
     expire_time = int(expire_time.timestamp())
     order = razorpay_client.payment_link.create(
         {
