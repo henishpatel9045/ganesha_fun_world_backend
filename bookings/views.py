@@ -177,7 +177,10 @@ class AdminDataDashboard(APIView):
             "gate_income": 0,
             "costume_return": 0,
             "locker_deposit": 0,
-            "locker_return": 0
+            "locker_return": 0,
+            "total_income_cash": 0,
+            "total_income_upi": 0,
+            "total_income_gateway": 0,
         }
         for payment in payments:
             if payment[3] == "locker":
@@ -197,9 +200,21 @@ class AdminDataDashboard(APIView):
             if payment[4]: # If it's returned to customer than it will be reduced from the total income
                 total_income -= payment[1]
                 payment_methods_returned[payment[2]] += payment[1]
+                if payment[2] == "gate_cash":
+                    payment_source_data["total_income_cash"] += payment[1]
+                elif payment[2] == "gate_upi":
+                    payment_source_data["total_income_upi"] += payment[1]
+                elif payment[2] == "payment_gateway":
+                    payment_source_data["total_income_gateway"] += payment[1]
             else:
                 total_income += payment[1]
                 payment_methods_income[payment[2]] += payment[1]
+                if payment[2] == "gate_cash":
+                    payment_source_data["total_income_cash"] -= payment[1]
+                elif payment[2] == "gate_upi":
+                    payment_source_data["total_income_upi"] -= payment[1]
+                elif payment[2] == "payment_gateway":
+                    payment_source_data["total_income_gateway"] -= payment[1]
             if payment[4]: # Do not count the returned amount in the payment methods
                 pass
             elif payment[2] == "gate_cash":

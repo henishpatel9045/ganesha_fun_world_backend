@@ -118,8 +118,7 @@ def get_combined_numbers_for_promotional_message() -> set:
 
 
 class TextOnlyPromotionalMessageForm(forms.Form):
-    text = forms.CharField(
-        widget=forms.Textarea(attrs={"rows": "5"}),
+    template_name = forms.CharField(
         required=True,
         initial="",
     )
@@ -129,13 +128,13 @@ class TextOnlyPromotionalMessageForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_method = "post"
         self.helper.layout = Layout(
-            FloatingField("text"),
+            FloatingField("template_name"),
             Submit("submit", "Submit"),
         )
 
     def send_messages(self) -> None:
         try:
-            msg_text = self.cleaned_data["text"]
+            msg_template = self.cleaned_data["template_name"]
             phone_numbers = get_combined_numbers_for_promotional_message()
 
             for number in phone_numbers:
@@ -143,8 +142,11 @@ class TextOnlyPromotionalMessageForm(forms.Form):
                     low_queue.enqueue(
                         whatsapp_config.send_message,
                         number,
-                        "text",
-                        {"preview_url": True, "body": msg_text},
+                        "template",
+                        {
+                            "name": msg_template,
+                            "language": {"code": "en"},
+                        },
                         None,
                     )
                 except Exception as e:
@@ -171,6 +173,10 @@ def save_promotional_image(image: InMemoryUploadedFile) -> str:
 
 
 class ImageOnlyPromotionalMessageForm(forms.Form):
+    template_name = forms.CharField(
+        required=True,
+        initial="",
+    )
     image = forms.ImageField(
         required=True,
     )
@@ -180,13 +186,14 @@ class ImageOnlyPromotionalMessageForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_method = "post"
         self.helper.layout = Layout(
-            FloatingField("image"),
+            FloatingField("template_name", "image"),
             Submit("submit", "Submit"),
         )
 
     def send_messages(self) -> None:
         try:
             image: InMemoryUploadedFile = self.cleaned_data["image"]
+            template_name: str = self.cleaned_data["template_name"]
             hosted_image_path = save_promotional_image(image)
 
             phone_numbers = get_combined_numbers_for_promotional_message()
@@ -196,8 +203,24 @@ class ImageOnlyPromotionalMessageForm(forms.Form):
                     low_queue.enqueue(
                         whatsapp_config.send_message,
                         phone,
-                        "image",
-                        {"link": hosted_image_path},
+                        "template",
+                        {
+                            "name": template_name,
+                            "language": {"code": "en"},
+                            "components": [
+                                {
+                                    "type": "header",
+                                    "parameters": [
+                                        {
+                                            "type": "image",
+                                            "image": {
+                                                "link": hosted_image_path
+                                            },
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
                         None,
                     )
                 except Exception as e:
@@ -211,13 +234,12 @@ class ImageOnlyPromotionalMessageForm(forms.Form):
 
 
 class ImageWithCaptionPromotionalMessageForm(forms.Form):
-    image = forms.ImageField(
-        required=True,
-    )
-    caption = forms.CharField(
-        widget=forms.Textarea(attrs={"rows": "5"}),
+    template_name = forms.CharField(
         required=True,
         initial="",
+    )
+    image = forms.ImageField(
+        required=True,
     )
 
     def __init__(self, *args, **kwargs):
@@ -225,15 +247,15 @@ class ImageWithCaptionPromotionalMessageForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_method = "post"
         self.helper.layout = Layout(
+            FloatingField("template_name"),
             FloatingField("image"),
-            FloatingField("caption"),
             Submit("submit", "Submit"),
         )
 
     def send_messages(self) -> None:
         try:
+            template_name: str = self.cleaned_data["template_name"]
             image: InMemoryUploadedFile = self.cleaned_data["image"]
-            caption: str = self.cleaned_data["caption"]
             hosted_image_path = save_promotional_image(image)
             phone_numbers = get_combined_numbers_for_promotional_message()
 
@@ -242,8 +264,24 @@ class ImageWithCaptionPromotionalMessageForm(forms.Form):
                     low_queue.enqueue(
                         whatsapp_config.send_message,
                         phone,
-                        "image",
-                        {"link": hosted_image_path, "caption": caption},
+                        "template",
+                        {
+                            "name": template_name,
+                            "language": {"code": "en"},
+                            "components": [
+                                {
+                                    "type": "header",
+                                    "parameters": [
+                                        {
+                                            "type": "image",
+                                            "image": {
+                                                "link": hosted_image_path
+                                            },
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
                         None,
                     )
                 except Exception as e:
