@@ -143,3 +143,31 @@ class BookingCanteen(DateTimeBaseModel):
 
     def __str__(self) -> str:
         return f"{self.booking.wa_number} - {self.breakfast_quantity_used} - {self.lunch_quantity_used} - {self.evening_snacks_quantity_used} - {self.dinner_quantity_used}"
+
+
+class RFIDBandBase(DateTimeBaseModel):
+    id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False, db_index=True
+    )
+    rfid_number = models.CharField(
+        max_length=50, db_index=True, null=False, unique=True
+    )
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        abstract = True
+        ordering = ["-updated_at"]
+
+
+class RFIDBandIssue(DateTimeBaseModel):
+    booking = models.ForeignKey(
+        Booking, on_delete=models.CASCADE, db_index=True, related_name="booking_rfid"
+    )
+    band = models.ForeignKey(
+        RFIDBandBase, on_delete=models.CASCADE, db_index=True, related_name="band_issue"
+    )
+    checked_in = models.BooleanField(default=False)
+    
+
+    def __str__(self) -> str:
+        return f"{self.booking.wa_number} - {self.rfid_number}"
