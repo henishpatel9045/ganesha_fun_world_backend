@@ -41,6 +41,7 @@ def generate_qr_code(data: str) -> None:
     img = qr.make_image(fill_color="black", back_color="white")
     img_io = io.BytesIO()
     img.save(img_io)
+    img.save(f"{TEMPORARY_FILE_LOCATION}/qr_codes/{data}.png")
     img_base64 = base64.b64encode(img_io.getvalue()).decode()
     return img_base64
 
@@ -71,4 +72,4 @@ def generate_ticket_pdf(booking_id: str) -> str:
     path = f"{path}/booking_{booking_id}.pdf"
     html_url = f"{HOST_URL}/bookings/booking/{booking_id}/ticket"
     html_to_pdf(html_url, path)
-    return f"{HOST_URL}/{GENERATED_MEDIA_BASE_URL}/booking_tickets/booking_{booking_id}.pdf"
+    return f"{HOST_URL}{GENERATED_MEDIA_BASE_URL}/booking_tickets/booking_{booking_id}.pdf"

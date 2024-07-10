@@ -10,7 +10,7 @@ import django_rq
 from django_rq.queues import get_queue
 
 from bookings.models import Booking, Payment
-from common_config.common import ADVANCE_PER_PERSON_AMOUNT_FOR_BOOKING, HOST_URL
+from common_config.common import ADVANCE_PER_PERSON_AMOUNT_FOR_BOOKING, GENERATED_MEDIA_BASE_URL, HOST_URL
 from whatsapp.utils import WhatsAppClient
 from management_core.models import TicketPrice, WhatsAppInquiryMessage
 from bookings.utils import create_or_update_booking, create_razorpay_order, razorpay_client
@@ -156,7 +156,7 @@ def confirm_razorpay_payment(payment_link_id: str, available_tries: int = 3) -> 
                 payment.booking.received_amount += Decimal(payment.amount)
                 payment.booking.save()
                 payment.save()
-            handle_sending_booking_ticket(booking.wa_number, "", None, booking)
+            handle_sending_booking_ticket(booking.wa_number, "", None, booking, send_ticket_directly=True)
             return "Payment confirmed successfully"
         RETRY_AFTER = [1,2,3,5,7]
         if available_tries > 0:
@@ -434,7 +434,7 @@ def handle_booking_session_messages(
     )
 
 
-def send_booking_ticket(booking: Booking) -> str:
+def send_booking_ticket(booking: Booking, send_ticket_directly: bool= False) -> str:
     """
     Function to send booking ticket to the user.
 
@@ -444,7 +444,7 @@ def send_booking_ticket(booking: Booking) -> str:
     try:
         booking_id = str(booking.id)
         pdf_path = generate_ticket_pdf(booking_id)
-        if not USE_TEMPLATE_MESSAGE_BOOKING_TICKET:
+        if not USE_TEMPLATE_MESSAGE_BOOKING_TICKET or send_ticket_directly:
             payload = {
                 "link": pdf_path,
                 "filename": f"{booking_id}.pdf",
@@ -452,6 +452,57 @@ def send_booking_ticket(booking: Booking) -> str:
             }
             res = whatsapp_config.send_message(booking.wa_number, "document", payload)
         else:
+            payload = {
+                "name": "booking_ticket_qr_image",
+                "language": {"code": "en"},
+                "components": [
+                    {
+                        "type": "header",
+                        "parameters": [
+                            {
+                                "type": "image",
+                                "image": {
+                                    "link": f"{HOST_URL}{GENERATED_MEDIA_BASE_URL}/qr_codes/{booking_id}.png"
+                                },
+                            }
+                        ],
+                    },
+                   {
+                        "type": "body",
+                        "parameters": [
+                            {
+                                "type": "text",
+                                "text": booking.date.strftime("%a, %d %b %Y"),
+                            },
+                            {
+                                "type": "text",
+                                "text": str(booking.adult_male),
+                            },
+                            {
+                                "type": "text",
+                                "text": str(booking.adult_female),
+                            },
+                            {
+                                "type": "text",
+                                "text": str(booking.child),
+                            },
+                            {
+                                "type": "text",
+                                "text": str(booking.infant),
+                            },
+                            {
+                                "type": "text",
+                                "text": f"{booking.total_amount} INR",
+                            },
+                            {
+                                "type": "text",
+                                "text": f"{booking.received_amount} INR",
+                            },
+                        ],
+                    },
+                ],
+            }
+            
             payload = {
                 "name": "booking_ticket",
                 "language": {"code": "en"},
@@ -526,7 +577,7 @@ def send_my_bookings_message(sender: str, msg_context: dict|None=None):
     return        
 
 
-def handle_sending_booking_ticket(sender: str, booking_id: str, msg_context: dict|None, booking: Booking|None=None, welcome_message: bool=False):
+def handle_sending_booking_ticket(sender: str, booking_id: str, msg_context: dict|None, booking: Booking|None=None, send_ticket_directly: bool=False):
     """
     Function to handle sending booking ticket to the user.
 
@@ -538,9 +589,7 @@ def handle_sending_booking_ticket(sender: str, booking_id: str, msg_context: dic
     if not booking:
         booking = Booking.objects.filter(id=booking_id).first()
     if booking:
-        if welcome_message:
-            send_welcome_message(booking.wa_number)
-        res = send_booking_ticket(booking)
+        res = send_booking_ticket(booking, send_ticket_directly)
     else:
         res = whatsapp_config.send_message(sender, "text", {"body": "No booking found with given id."}, msg_context)
         res.json()

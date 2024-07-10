@@ -47,7 +47,7 @@ class BookingForm(forms.Form):
     )
     infant = forms.IntegerField(min_value=0, label="Infants (0 - 5 years)", initial=0)
     date = forms.DateField(
-        widget=forms.DateInput(attrs={"type": "date", "value": timezone.localtime(timezone.now()).date()}),
+        widget=forms.DateInput(attrs={"type": "date", "value": timezone.now().date()}),
         required=True,
     )
     is_discounted_booking = forms.BooleanField(
