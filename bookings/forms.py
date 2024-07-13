@@ -263,7 +263,7 @@ class PaymentRecordForm(forms.Form):
                 "",
                 None,
                 booking,
-                True
+                False
             )
             return self.cleaned_data["booking"]
         except Exception as e:
@@ -386,6 +386,7 @@ class PaymentRecordEditForm(forms.Form):
                     "",
                     None,
                     payment.booking,
+                    False
                 )
             return payment.booking
         except Exception as e:

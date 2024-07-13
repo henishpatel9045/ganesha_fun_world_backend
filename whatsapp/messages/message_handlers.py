@@ -156,7 +156,7 @@ def confirm_razorpay_payment(payment_link_id: str, available_tries: int = 3) -> 
                 payment.booking.received_amount += Decimal(payment.amount)
                 payment.booking.save()
                 payment.save()
-            handle_sending_booking_ticket(booking.wa_number, "", None, booking)
+            handle_sending_booking_ticket(booking.wa_number, "", None, booking, True)
             return "Payment confirmed successfully"
         RETRY_AFTER = [1,2,3,5,7]
         if available_tries > 0:
@@ -444,7 +444,8 @@ def send_booking_ticket(booking: Booking, send_ticket_directly: bool=False) -> s
     try:
         booking_id = str(booking.id)
         pdf_path = generate_ticket_pdf(booking_id)
-        if send_ticket_directly or (not USE_TEMPLATE_MESSAGE_BOOKING_TICKET):
+        active_conversation = cache.get(f"active_{booking.wa_number.strip()}")
+        if active_conversation or (not USE_TEMPLATE_MESSAGE_BOOKING_TICKET):
             payload = {
                 "link": pdf_path,
                 "filename": f"{booking_id}.pdf",
@@ -527,7 +528,7 @@ def send_my_bookings_message(sender: str, msg_context: dict|None=None):
     return        
 
 
-def handle_sending_booking_ticket(sender: str, booking_id: str, msg_context: dict|None, booking: Booking|None=None, welcome_message: bool=False):
+def handle_sending_booking_ticket(sender: str, booking_id: str, msg_context: dict|None, booking: Booking|None=None, send_ticket_directly: bool=True):
     """
     Function to handle sending booking ticket to the user.
 
@@ -539,7 +540,7 @@ def handle_sending_booking_ticket(sender: str, booking_id: str, msg_context: dic
     if not booking:
         booking = Booking.objects.filter(id=booking_id).first()
     if booking:
-        res = send_booking_ticket(booking, send_ticket_directly=True)
+        res = send_booking_ticket(booking)
     else:
         res = whatsapp_config.send_message(sender, "text", {"body": "No booking found with given id."}, msg_context)
         res.json()

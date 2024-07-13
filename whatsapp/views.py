@@ -24,6 +24,7 @@ from .messages.message_handlers import (
 
 
 TESTING_NUMBERS = config("WA_TEST_NUMBERS", cast=Csv())
+CONVERSATION_TIMEOUT = 24*60*60
 
 logging.getLogger(__name__)
 high_queue = django_rq.get_queue("high")
@@ -108,6 +109,8 @@ class WhatsAppWebhook(APIView):
                 return Response(200)
             message_payload, message_type = "", ""
 
+            cache.set(f"active_{sender}", True, timeout=CONVERSATION_TIMEOUT)
+            
             if message.get("text"):
                 message_payload = message["text"]["body"]
                 message_type = "text"
