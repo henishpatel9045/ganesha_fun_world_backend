@@ -434,7 +434,7 @@ def handle_booking_session_messages(
     )
 
 
-def send_booking_ticket(booking: Booking) -> str:
+def send_booking_ticket(booking: Booking, send_ticket_directly: bool=False) -> str:
     """
     Function to send booking ticket to the user.
 
@@ -444,7 +444,7 @@ def send_booking_ticket(booking: Booking) -> str:
     try:
         booking_id = str(booking.id)
         pdf_path = generate_ticket_pdf(booking_id)
-        if not USE_TEMPLATE_MESSAGE_BOOKING_TICKET:
+        if send_ticket_directly or (not USE_TEMPLATE_MESSAGE_BOOKING_TICKET):
             payload = {
                 "link": pdf_path,
                 "filename": f"{booking_id}.pdf",
@@ -539,7 +539,7 @@ def handle_sending_booking_ticket(sender: str, booking_id: str, msg_context: dic
     if not booking:
         booking = Booking.objects.filter(id=booking_id).first()
     if booking:
-        res = send_booking_ticket(booking)
+        res = send_booking_ticket(booking, send_ticket_directly=True)
     else:
         res = whatsapp_config.send_message(sender, "text", {"body": "No booking found with given id."}, msg_context)
         res.json()
@@ -576,10 +576,10 @@ def send_review_message(recipient_number: str, review_url: str) -> None:
     :param `review_url`: The review url
     """
     payload = {
-        "preview_url": True,
-        "body": f"Please rate your experience with us.\n{review_url}",
+        "name": "daily_review_reminder",
+        "language": {"code": "en"},
     }
-    whatsapp_config.send_message(recipient_number, "text", payload)
+    whatsapp_config.send_message(recipient_number, "template", payload)
 
 def send_daily_review_message():
     """
