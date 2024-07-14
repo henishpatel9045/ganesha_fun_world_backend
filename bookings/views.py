@@ -172,7 +172,28 @@ class AdminDataDashboard(APIView):
             "gate_upi": 0,
             "payment_gateway": 0,
         }
+        # its for booking ticket and costume deposit
+        payment_methods_income_gate = {
+            "gate_cash": 0,
+            "gate_upi": 0,
+            "payment_gateway": 0,
+        }
+        payment_methods_income_locker = {
+            "gate_cash": 0,
+            "gate_upi": 0,
+            "payment_gateway": 0,
+        }
         payment_methods_returned = {
+            "gate_cash": 0,
+            "gate_upi": 0,
+            "payment_gateway": 0,
+        }
+        payment_methods_returned_costume = {
+            "gate_cash": 0,
+            "gate_upi": 0,
+            "payment_gateway": 0,
+        }
+        payment_methods_returned_locker = {
             "gate_cash": 0,
             "gate_upi": 0,
             "payment_gateway": 0,
@@ -205,6 +226,11 @@ class AdminDataDashboard(APIView):
             if payment[4]: # If it's returned to customer than it will be reduced from the total income
                 total_income -= payment[1]
                 payment_methods_returned[payment[2]] += payment[1]
+                if payment[3] == "costume_return":
+                    payment_methods_returned_costume[payment[2]] += payment[1]
+                elif payment[3] == "locker":
+                    payment_methods_returned_locker[payment[2]] += payment[1]
+                    
                 if payment[2] == "gate_cash":
                     payment_source_data["total_income_cash"] += payment[1]
                 elif payment[2] == "gate_upi":
@@ -214,6 +240,10 @@ class AdminDataDashboard(APIView):
             else:
                 total_income += payment[1]
                 payment_methods_income[payment[2]] += payment[1]
+                if payment[3] == "booking":
+                    payment_methods_income_gate[payment[2]] += payment[1]
+                elif payment[3] == "locker":
+                    payment_methods_income_locker[payment[2]] += payment[1]
                 if payment[2] == "gate_cash":
                     payment_source_data["total_income_cash"] -= payment[1]
                 elif payment[2] == "gate_upi":
@@ -240,7 +270,11 @@ class AdminDataDashboard(APIView):
         
         total_income_line_chart = [{"x": data["date"].strftime("%d-%m-%Y"), "y": data["total_income"]} for data in date_wise_income]
         payment_method_income_pie_chart = [{"x": key, "y": value} for key, value in payment_methods_income.items()]
+        payment_method_income_gate_pie_chart = [{"x": key, "y": value} for key, value in payment_methods_income_gate.items()]
+        payment_method_income_locker_pie_chart = [{"x": key, "y": value} for key, value in payment_methods_income_locker.items()]
         payment_method_returned_pie_chart = [{"x": key, "y": value} for key, value in payment_methods_returned.items()]
+        payment_method_returned_costume_pie_chart = [{"x": key, "y": value} for key, value in payment_methods_returned_costume.items()]
+        payment_method_returned_locker_pie_chart = [{"x": key, "y": value} for key, value in payment_methods_returned_locker.items()]
         
         return Response({
             "total_bookings": total_bookings,
@@ -249,6 +283,10 @@ class AdminDataDashboard(APIView):
             "total_persons": total_persons,
             "payment_method_income_pie_chart": payment_method_income_pie_chart,
             "payment_method_returned_pie_chart": payment_method_returned_pie_chart,
+            "payment_method_income_gate_pie_chart": payment_method_income_gate_pie_chart,
+            "payment_method_returned_costume_pie_chart": payment_method_returned_costume_pie_chart,
+            "payment_method_income_locker_pie_chart": payment_method_income_locker_pie_chart,
+            "payment_method_returned_locker_pie_chart": payment_method_returned_locker_pie_chart,
             "person_type_pie_chart": person_type_pie_chart,
             "total_persons_line_chart": total_persons_line_chart,
             "total_income_line_chart": total_income_line_chart,
