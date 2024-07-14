@@ -110,7 +110,12 @@ class AdminDataDashboard(APIView):
                                                                                                                "booking_type",
                                                                                                                "total_amount",
                                                                                                                "received_amount",)
-        # FIXME currently I am counting the advance payment in that date income instead of booking date income                          
+        # FIXME currently I am counting the advance payment in that date income instead of booking date income    
+        booking_costumes = BookingCostume.objects.prefetch_related("booking").filter(booking__date=timezone.localtime(timezone.now()).date())
+        total_costume_deposit = 0
+        for b_costume in booking_costumes:
+            if b_costume.booking.received_amount > 0:
+                total_costume_deposit += b_costume.deposit_amount 
         payments = Payment.objects.prefetch_related("booking").filter(
             booking__date__range=[from_date, to_date], 
             is_confirmed=True,
@@ -240,6 +245,7 @@ class AdminDataDashboard(APIView):
         return Response({
             "total_bookings": total_bookings,
             "total_income": total_income,
+            "total_costume_deposit": total_costume_deposit,
             "total_persons": total_persons,
             "payment_method_income_pie_chart": payment_method_income_pie_chart,
             "payment_method_returned_pie_chart": payment_method_returned_pie_chart,
@@ -643,10 +649,26 @@ class BookingHistoryTemplateView(LoginRequiredMixin, TemplateView):
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         wa_number = request.GET.get("wa_number")
         page = request.GET.get("page", 1)
-        bookings = Booking.objects.all().order_by("-date")
+        bookings = Booking.objects.filter(date=timezone.now().date()).order_by("-date")
+        costumes = BookingCostume.objects.filter(booking__date=timezone.now().date())
+        total_booking_costumes = {}
+        for costume in costumes:
+            booking_id = str(costume.booking.id)
+            if total_booking_costumes.get(booking_id):
+                total_booking_costumes[booking_id]["total_costumes"] += costume.quantity
+                total_booking_costumes[booking_id]["total_issued"] += costume.issued_quantity
+            else:
+                total_booking_costumes[booking_id] = {
+                    "total_costumes": costume.quantity,
+                    "total_issued": costume.issued_quantity,
+                }
+        
+        for booking in bookings:
+            booking_costume_data = total_booking_costumes.get(str(booking.id), {})
+            booking.total_costumes = booking_costume_data.get("total_costumes", 0)
+            booking.total_issued = booking_costume_data.get("total_issued", 0)
         if wa_number:
             bookings = bookings.filter(wa_number__contains=wa_number)
-
         try:
             paginator = Paginator(bookings, self.PAGE_SIZE)
             bookings = paginator.page(page)

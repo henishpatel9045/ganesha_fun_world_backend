@@ -57,7 +57,9 @@ class BookingAdmin(admin.ModelAdmin):
         "total_amount",
         "received_amount",
         "is_today_booking",
+        "created_at",
     ]
+    ordering = ["-created_at"]
     list_filter = [
         "date",
         "booking_type",
@@ -75,6 +77,23 @@ class BookingAdmin(admin.ModelAdmin):
         return (
             super()
             .get_queryset(request)
+        )
+
+
+class ConfirmBookingModel(Booking):
+    class Meta:
+        proxy = True
+        verbose_name = "Confirm Booking"
+        verbose_name_plural = "Confirm Bookings"
+        
+    
+@admin.register(ConfirmBookingModel)
+class ConfirmBookingAdmin(BookingAdmin):
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Any]:
+        return (
+            super()
+            .get_queryset(request)
+            .filter(received_amount__gt=0)
         )
 
 

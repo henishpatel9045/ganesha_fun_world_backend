@@ -22,6 +22,14 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
+    const today = new Date();
+            
+            // Format the date as yyyy-mm-dd
+    const formattedDate = today.toISOString().split('T')[0];
+    
+    let date_input = document.getElementById("id_date")
+    date_input.value = formattedDate
+
     const specialBookingAccordion = document.getElementById(
       "special-booking-accordion"
     );
