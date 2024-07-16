@@ -111,7 +111,7 @@ class AdminDataDashboard(APIView):
                                                                                                                "total_amount",
                                                                                                                "received_amount",)
         # FIXME currently I am counting the advance payment in that date income instead of booking date income    
-        booking_costumes = BookingCostume.objects.prefetch_related("booking").filter(booking__date=timezone.localtime(timezone.now()).date())
+        booking_costumes = BookingCostume.objects.prefetch_related("booking").filter(booking__date__range=[from_date, to_date], booking__received_amount__gt=0)
         total_costume_deposit = 0
         for b_costume in booking_costumes:
             if b_costume.booking.received_amount > 0:
