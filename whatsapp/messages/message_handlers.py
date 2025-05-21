@@ -40,7 +40,7 @@ def send_date_list_message(recipient_number: str, context: dict|None) -> request
 
     :param `recipient_number`: The number to which message is to be sent
     """
-    available_dates = list(TicketPrice.objects.filter(date__gt=timezone.localtime(timezone.now()).date()).order_by("date")[:10].values_list("date", flat=True))
+    available_dates = list(TicketPrice.objects.filter(date__gte=timezone.localtime(timezone.now()).date()).order_by("date")[:10].values_list("date", flat=True))
     logging.info(f"Available Dates: {available_dates}")
     
     response_payload = {
