@@ -191,7 +191,7 @@ def handle_booking_session_confirm(active_session: dict, sender: str, msg_contex
         res = whatsapp_config.send_message(
             sender,
             "text",
-            {"preview_url": True,"body": f"Booking confirmed.\nMake payment by click on this link in next 15 minutes \n{order["short_url"]}"}, msg_context)
+            {"preview_url": True,"body": f"Booking confirmed.\nMake payment by click on this link in next 15 minutes \n{order['short_url']}"}, msg_context)
         delete_booking_session(sender)
         scheduled_queue = get_queue("default")
         scheduled_queue.enqueue_in(
@@ -247,7 +247,7 @@ def handle_booking_session_messages(
 
     if active_session.get("date") is None:
         if message_type == "interactive":
-            if timezone.datetime.strptime(payload, "%d-%m-%Y").date() - timezone.localtime(timezone.now()).date() <= timedelta(days=0):
+            if timezone.datetime.strptime(payload, "%d-%m-%Y").date() - timezone.localtime(timezone.now()).date() < timedelta(days=0):
                 return whatsapp_config.send_message(
                     sender,
                     "text",
@@ -383,7 +383,7 @@ def handle_booking_session_messages(
                         {
                             "type": "button",
                             "body": {
-                            "text": f"Your booking details are as follows:\n*Date*: {active_session.get("date")}\n*Adults (Male)*: {active_session.get("adult_male")}\n*Adults (Female)*: {active_session.get("adult_female")}\n*Children*: {active_session.get("child")}\n*Infants*: {active_session.get("infant")}",
+                            "text": f"Your booking details are as follows:\n*Date*: {active_session.get('date')}\n*Adults (Male)*: {active_session.get('adult_male')}\n*Adults (Female)*: {active_session.get('adult_female')}\n*Children*: {active_session.get('child')}\n*Infants*: {active_session.get('infant')}",
                             },
                             "action": {
                             "buttons": [
